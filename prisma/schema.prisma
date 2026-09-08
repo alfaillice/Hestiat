@@ -70,7 +70,6 @@ model User {
   aiConversations AIConversation[]
   notifications Notification[]
   whatsappInboundEvents WhatsAppInboundEvent[]
-  communicationPreferences CommunicationPreference?
   payments PaymentRecord[]
   payouts HostPayout[]
 }

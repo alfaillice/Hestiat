@@ -1,0 +1,13 @@
+"use client";
+import {useEffect,useState} from "react";
+export default function Mensajes(){
+ const [items,setItems]=useState<any[]>([]); const [active,setActive]=useState<any|null>(null); const [body,setBody]=useState(""); const [loading,setLoading]=useState(true);
+ async function load(){const r=await fetch("/api/anfitrion/mensajes"); const j=await r.json(); setItems(j.messages||[]); if(!active&&j.messages?.[0])setActive(j.messages[0]); setLoading(false);}
+ useEffect(()=>{load()},[]);
+ async function reply(){if(!active||!body.trim())return; await fetch("/api/anfitrion/mensajes",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({bookingId:active.booking.id,body})}); setBody(""); await load();}
+ return <main className="hostPage"><aside className="hostSidebar"><a href="/" className="hostLogo"><span>⌒</span>hestiat</a><div className="hostUser"><div>J</div><span><b>Anfitrión</b><small>Centro de mensajes</small></span></div><nav><a href="/anfitrion">▦ Resumen</a><a className="active" href="/anfitrion/mensajes">◉ Mensajes</a><a href="/anfitrion/alojamientos/instrucciones">⚙ Check-in</a></nav><div className="hostBottom"><a href="/">← Volver a Hestiat</a></div></aside>
+ <section className="hostContent"><header className="hostHeader"><div><span className="eyebrow">MENSAJES</span><h1>Habla con tus huéspedes</h1><p>Los mensajes enviados desde Hestiat IA aparecen aquí.</p></div></header>
+ <div className="messageLayout"><section className="hostPanel"><h2>Conversaciones</h2>{loading?<p>Cargando…</p>:items.length===0?<p>No tienes mensajes pendientes.</p>:items.map(m=><button key={m.id} onClick={()=>setActive(m)} className={"messageRow "+(active?.id===m.id?"selected":"")}><b>{m.guest?.name||m.guest?.email}</b><span>{m.listing?.title||"Alojamiento"} · {m.senderRole==="GUEST"?"Huésped":"Tú"}</span><p>{m.body}</p><small>{new Date(m.createdAt).toLocaleString("es-ES")}</small></button>)}</section>
+ <section className="hostPanel conversation">{active?<><div className="conversationHead"><h2>{active.guest?.name||"Huésped"}</h2><p>{active.listing?.title} · Reserva {active.booking?.id}</p></div><div className="bubble guest">{active.body}</div><div className="reply"><textarea value={body} onChange={e=>setBody(e.target.value)} placeholder="Escribe tu respuesta…"/><button onClick={reply}>Enviar respuesta</button></div></>:<p>Selecciona una conversación.</p>}</section></div>
+ </section></main>
+}

@@ -1,0 +1,623 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  GUEST
+  HOST
+  ADMIN
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  PAUSED
+  ARCHIVED
+}
+
+enum ListingType {
+  HOUSE
+  APARTMENT
+  VILLA
+  PRIVATE_ROOM
+  SHARED_ROOM
+  OTHER
+}
+
+enum AvailabilityStatus {
+  AVAILABLE
+  BLOCKED
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  EXPIRED
+}
+
+enum CancellationPolicy {
+  FLEXIBLE
+  MODERATE
+  FIRM
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  phone        String?
+  stripeAccountId String? @unique
+  role         UserRole  @default(GUEST)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  listings     Listing[] @relation("HostListings")
+  bookings     Booking[] @relation("GuestBookings")
+  supportRequests SupportRequest[]
+  hostMessages HostMessage[] @relation("HostMessages")
+  guestMessages HostMessage[] @relation("GuestMessages")
+  sentMessages HostMessage[] @relation("SentMessages")
+  authTokens   AuthToken[]
+  sessions     AuthSession[]
+  aiInteractions AIInteraction[] @relation("GuestAIInteractions")
+  aiConversations AIConversation[]
+  notifications Notification[]
+  whatsappInboundEvents WhatsAppInboundEvent[]
+  communicationPreferences CommunicationPreference?
+  payments PaymentRecord[]
+  payouts HostPayout[]
+}
+
+model Listing {
+  id                   String             @id @default(cuid())
+  hostId               String
+  host                 User               @relation("HostListings", fields: [hostId], references: [id])
+  title                String?
+  description          String?
+  type                 ListingType
+  status               ListingStatus      @default(DRAFT)
+  address              String?
+  city                 String?
+  postalCode           String?
+  region               String?
+  country              String             @default("España")
+  latitude             Decimal?           @db.Decimal(10, 7)
+  longitude            Decimal?           @db.Decimal(10, 7)
+  maxGuests            Int?
+  bedrooms             Int?
+  beds                 Int?
+  bathrooms            Int?
+  amenities             String[]
+  houseRules            Json?
+  basePriceCents        Int?
+  currency              String             @default("EUR")
+  minNights             Int                @default(1)
+  advanceNoticeHours   Int                @default(24)
+  checkInFromMinutes   Int                @default(900)
+  checkInToMinutes     Int                @default(1320)
+  checkInInstructions  Json?
+  cancellationPolicy   CancellationPolicy @default(FLEXIBLE)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  photos               ListingPhoto[]
+  availability         AvailabilityDay[]
+  bookings             Booking[]
+  channelConnections   ListingChannelConnection[]
+  externalReservations ExternalReservation[]
+}
+
+model ListingPhoto {
+  id         String   @id @default(cuid())
+  listingId  String
+  listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  url        String
+  altText    String?
+  sortOrder  Int      @default(0)
+  isCover    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model AvailabilityDay {
+  id         String             @id @default(cuid())
+  listingId  String
+  listing    Listing            @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  date       DateTime
+  status     AvailabilityStatus @default(AVAILABLE)
+  priceCents Int?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
+  @@unique([listingId, date])
+  @@index([listingId, date])
+}
+
+model Booking {
+  id               String        @id @default(cuid())
+  listingId        String
+  guestId          String
+  listing          Listing       @relation(fields: [listingId], references: [id])
+  guest            User          @relation("GuestBookings", fields: [guestId], references: [id])
+  checkIn          DateTime
+  checkOut         DateTime
+  guests           Int
+  nights           Int
+  subtotalCents    Int
+  cleaningCents    Int           @default(0)
+  taxesCents       Int           @default(0)
+  platformFeeCents Int           @default(0)
+  totalCents       Int
+  currency         String        @default("EUR")
+  status           BookingStatus @default(PENDING)
+  paymentIntentId  String?       @unique
+  paymentFailureMessage String?
+  expiresAt        DateTime?
+  paidAt           DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([listingId, checkIn, checkOut])
+  @@index([guestId, createdAt])
+  hostMessages HostMessage[] @relation("BookingMessages")
+  aiInteractions AIInteraction[] @relation("BookingAIInteractions")
+  aiConversation AIConversation?
+  notifications Notification[]
+  whatsappInboundEvents WhatsAppInboundEvent[]
+  communicationPreferences CommunicationPreference?
+  payment PaymentRecord?
+  payout HostPayout?
+  refunds RefundRecord[]
+}
+
+
+enum PaymentRecordStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model PaymentRecord {
+  id String @id @default(cuid())
+  bookingId String @unique
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  stripePaymentIntentId String @unique
+  amountCents Int
+  platformFeeCents Int
+  hostAmountCents Int
+  currency String
+  status PaymentRecordStatus @default(PENDING)
+  refundedCents Int @default(0)
+  stripeRefundId String? @unique
+  refunds RefundRecord[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([userId, createdAt])
+}
+
+
+model RefundRecord {
+  id String @id @default(cuid())
+  paymentId String
+  payment PaymentRecord @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  bookingId String
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  stripeRefundId String @unique
+  amountCents Int
+  reason String
+  status String @default("SUCCEEDED")
+  createdAt DateTime @default(now())
+  @@index([bookingId, createdAt])
+}
+
+model HostPayout {
+  id String @id @default(cuid())
+  bookingId String @unique
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  hostId String
+  host User @relation(fields: [hostId], references: [id])
+  stripeTransferId String? @unique
+  amountCents Int
+  currency String
+  status PayoutStatus @default(PENDING)
+  availableAt DateTime
+  paidAt DateTime?
+  failureMessage String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([hostId, status, availableAt])
+}
+
+model StripeWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+}
+
+model AuthToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+
+model AuthSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model SupportRequest {
+  id          String   @id @default(cuid())
+  bookingId   String
+  guestId     String
+  category    String
+  message     String
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  booking     Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  guest       User     @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId, createdAt])
+  @@index([guestId, status])
+}
+
+
+enum MessageChannel {
+  WEB
+  WHATSAPP
+  EMAIL
+}
+
+enum MessageSender {
+  GUEST
+  HOST
+  HESTIAT
+}
+
+enum MessageStatus {
+  UNREAD
+  READ
+}
+
+model HostMessage {
+  id         String        @id @default(cuid())
+  bookingId  String
+  listingId  String
+  guestId    String
+  hostId     String
+  senderId   String
+  senderRole MessageSender
+  channel    MessageChannel @default(WEB)
+  providerMessageId String? @unique
+  aiProcessedAt DateTime?
+  body       String
+  status     MessageStatus @default(UNREAD)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  booking Booking @relation("BookingMessages", fields: [bookingId], references: [id], onDelete: Cascade)
+  listing Listing @relation("ListingMessages", fields: [listingId], references: [id], onDelete: Cascade)
+  guest User @relation("GuestMessages", fields: [guestId], references: [id], onDelete: Cascade)
+  host User @relation("HostMessages", fields: [hostId], references: [id], onDelete: Cascade)
+  sender User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([hostId, status, createdAt])
+  @@index([bookingId, createdAt])
+}
+
+
+model AIInteraction {
+  id              String   @id @default(cuid())
+  bookingId       String
+  guestId         String
+  booking         Booking  @relation("BookingAIInteractions", fields: [bookingId], references: [id], onDelete: Cascade)
+  guest           User     @relation("GuestAIInteractions", fields: [guestId], references: [id], onDelete: Cascade)
+  intent          String
+  confidence      Float
+  urgency         String
+  autonomous      Boolean  @default(true)
+  externalAIUsed  Boolean  @default(false)
+  decision        String
+  response        String?
+  createdAt       DateTime @default(now())
+
+  @@index([bookingId, createdAt])
+  @@index([guestId, createdAt])
+}
+
+enum AIConversationStatus {
+  OPEN
+  WAITING_FOR_GUEST
+  WAITING_FOR_HOST
+  WAITING_FOR_EXTERNAL_AI
+  ACTION_REQUIRED
+  RESOLVED
+  ESCALATED
+}
+
+model AIConversation {
+  id             String              @id @default(cuid())
+  bookingId      String
+  guestId        String
+  status         AIConversationStatus @default(OPEN)
+  intent         String?
+  urgency        String?
+  confidence     Float?
+  lastSummary    String?
+  lastAction     String?
+  waitingSince   DateTime?
+  resolvedAt     DateTime?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  guest   User    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, guestId])
+  @@index([guestId, status, updatedAt])
+}
+
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  userId      String
+  bookingId   String?
+  channel     NotificationChannel
+  type        String
+  title       String
+  body        String
+  status      NotificationStatus @default(PENDING)
+  dedupeKey   String?            @unique
+  readAt      DateTime?
+  sentAt      DateTime?
+  attempts    Int                @default(0)
+  lastError   String?
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, createdAt])
+  @@index([bookingId, createdAt])
+}
+
+
+model CommunicationPreference {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  emailTransactional    Boolean  @default(true)
+  whatsappTransactional Boolean  @default(false)
+  emailMarketing       Boolean  @default(false)
+  whatsappMarketing    Boolean  @default(false)
+  whatsappOptInAt      DateTime?
+  whatsappOptOutAt     DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+enum WhatsAppInboundStatus {
+  PROCESSING
+  PROCESSED
+  IGNORED
+  FAILED
+}
+
+model WhatsAppInboundEvent {
+  id                String              @id @default(cuid())
+  providerMessageId String              @unique
+  fromPhone         String
+  body              String
+  status            WhatsAppInboundStatus @default(PROCESSING)
+  guestId           String?
+  bookingId         String?
+  response          String?
+  error             String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  guest             User?               @relation(fields: [guestId], references: [id], onDelete: SetNull)
+  booking           Booking?            @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([fromPhone, createdAt])
+  @@index([guestId, createdAt])
+  @@index([bookingId, createdAt])
+}
+
+
+enum EventJobStatus {
+  PENDING
+  PROCESSING
+  RETRY_WAIT
+  COMPLETED
+  FAILED
+}
+
+enum OperationsCircuitState {
+  CLOSED
+  OPEN
+  HALF_OPEN
+}
+
+model EventDeadLetter {
+  id         String   @id @default(cuid())
+  jobId      String
+  type       String
+  payload    Json
+  attempts   Int
+  lastError  String
+  failedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([type, failedAt])
+  @@index([jobId])
+}
+
+model OperationsCircuit {
+  provider    String                 @id
+  state       OperationsCircuitState @default(CLOSED)
+  failures    Int                    @default(0)
+  openedAt    DateTime?
+  halfOpenAt  DateTime?
+  updatedAt   DateTime               @updatedAt
+}
+
+model EventJobRun {
+  id         String   @id @default(cuid())
+  jobId      String
+  type       String
+  attempt    Int
+  status     String
+  durationMs Int?
+  error      String?
+  startedAt  DateTime @default(now())
+  finishedAt DateTime?
+
+  @@index([jobId, startedAt])
+  @@index([type, status, startedAt])
+}
+
+model EventJob {
+  id             String        @id @default(cuid())
+  type           String
+  payload        Json
+  status         EventJobStatus @default(PENDING)
+  dedupeKey      String        @unique
+  attempts       Int           @default(0)
+  maxAttempts    Int           @default(6)
+  provider       String?
+  availableAt    DateTime      @default(now())
+  lockedAt       DateTime?
+  completedAt    DateTime?
+  lastError      String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([status, availableAt])
+  @@index([status, lockedAt])
+  @@index([type, status, availableAt])
+}
+
+enum ChannelProvider {
+  ICAL
+  AIRBNB
+  BOOKING_COM
+  CHANNEL_MANAGER
+}
+
+enum ChannelConnectionStatus {
+  CONNECTED
+  SYNCING
+  ATTENTION
+  DISCONNECTED
+}
+
+model ListingChannelConnection {
+  id                    String                  @id @default(cuid())
+  listingId             String
+  listing               Listing                 @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  provider              ChannelProvider
+  status                ChannelConnectionStatus @default(CONNECTED)
+  externalListingId     String?
+  externalCalendarUrl   String?
+  feedToken             String?                 @unique
+  capabilities          String[]
+  syncIntervalMinutes   Int                     @default(30)
+  lastSuccessfulSyncAt  DateTime?
+  lastErrorAt           DateTime?
+  lastError              String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  externalReservations  ExternalReservation[]
+  syncEvents             ChannelSyncEvent[]
+
+  @@unique([listingId, provider])
+  @@index([listingId, status])
+}
+
+model ExternalReservation {
+  id                    String                  @id @default(cuid())
+  listingId             String
+  listing               Listing                 @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  connectionId          String
+  connection             ListingChannelConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  provider              ChannelProvider
+  externalReservationId String
+  checkIn               DateTime
+  checkOut              DateTime
+  guests                Int?
+  status                String                  @default("ACTIVE")
+  lastSeenAt            DateTime                @default(now())
+  payloadHash           String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  @@unique([provider, externalReservationId, listingId])
+  @@index([listingId, checkIn, checkOut])
+  @@index([connectionId, lastSeenAt])
+}
+
+model ChannelSyncEvent {
+  id                    String                  @id @default(cuid())
+  connectionId          String
+  connection             ListingChannelConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  provider              ChannelProvider
+  eventType             String
+  externalEventId       String?
+  status                String                  @default("PENDING")
+  attempts              Int                     @default(0)
+  nextAttemptAt         DateTime?
+  payloadHash           String?
+  lastError             String?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  @@unique([provider, externalEventId])
+  @@index([connectionId, createdAt])
+  @@index([status, nextAttemptAt])
+}

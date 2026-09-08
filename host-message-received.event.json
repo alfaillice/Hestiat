@@ -1,0 +1,13 @@
+{
+  "event": "HOST_MESSAGE_RECEIVED",
+  "version": "1.0",
+  "idempotency_key": "messageId",
+  "required": [
+    "conversationId",
+    "bookingId",
+    "hostId",
+    "messageId",
+    "channel"
+  ],
+  "next_state": "PROCESSING_HOST_REPLY"
+}

@@ -110,6 +110,7 @@ model Listing {
   bookings             Booking[]
   channelConnections   ListingChannelConnection[]
   externalReservations ExternalReservation[]
+hostMessages HostMessage[] @relation("ListingMessages")
 }
 
 model ListingPhoto {
@@ -165,8 +166,9 @@ model Booking {
   @@index([guestId, createdAt])
   hostMessages HostMessage[] @relation("BookingMessages")
   aiInteractions AIInteraction[] @relation("BookingAIInteractions")
-  aiConversation AIConversation?
+  aiConversations AIConversation[]
   notifications Notification[]
+  supportRequests SupportRequest[]
   whatsappInboundEvents WhatsAppInboundEvent[]
   communicationPreferences CommunicationPreference?
   payment PaymentRecord?

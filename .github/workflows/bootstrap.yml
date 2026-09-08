@@ -1,5 +1,6 @@
 name: Bootstrap Hestiat
-
+permissions:
+  contents: write
 on:
   push:
     branches:

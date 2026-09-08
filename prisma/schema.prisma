@@ -69,6 +69,7 @@ model User {
   aiInteractions AIInteraction[] @relation("GuestAIInteractions")
   aiConversations AIConversation[]
   notifications Notification[]
+  communicationPreferences CommunicationPreference?
   whatsappInboundEvents WhatsAppInboundEvent[]
   payments PaymentRecord[]
   payouts HostPayout[]
@@ -170,7 +171,6 @@ model Booking {
   notifications Notification[]
   supportRequests SupportRequest[]
   whatsappInboundEvents WhatsAppInboundEvent[]
-  communicationPreferences CommunicationPreference?
   payment PaymentRecord?
   payout HostPayout?
   refunds RefundRecord[]

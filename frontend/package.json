@@ -1,0 +1,23 @@
+{
+  "name": "hestiat2-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hestiat 2.0 — frontend definitivo. Next.js App Router (SSR) sobre el esquema nuevo (db/migrations/001_init.sql).",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "mysql2": "^3.11.3",
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.6.3"
+  }
+}

@@ -40,14 +40,14 @@ html,body{background:var(--background);color:var(--foreground)}
 body{font-family:var(--fuente-texto),ui-sans-serif,system-ui,sans-serif;font-size:15.2px;line-height:1.55;-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-family:var(--fuente-titulo),ui-sans-serif,system-ui,sans-serif;font-weight:700;letter-spacing:-.02em;line-height:1.12}
 a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
-.wrap{max-width:1180px;margin:0 auto;padding:0 18px}
+.wrap{max-width:1360px;margin:0 auto;padding:0 18px}
 /* cabecera */
 .cab{border-bottom:1px solid var(--border);background:var(--background);position:sticky;top:0;z-index:40}
 .cab-in{display:flex;align-items:center;gap:14px;height:60px}
 .marca{font-weight:700;letter-spacing:-.01em;font-size:20px;color:var(--primary);font-family:var(--fuente-titulo)}
 .cab-btn{margin-left:auto;border:1px solid var(--border);background:var(--card);border-radius:var(--radio-pill);padding:8px 16px;font:inherit;cursor:pointer}
 /* buscador pill */
-.buscador{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio-pill);padding:6px;box-shadow:0 10px 30px rgba(20,40,50,.10)}
+.buscador{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio-pill);padding:6px;box-shadow:0 10px 30px rgba(20,40,50,.10);max-width:940px}
 .buscador .campo{flex:1;display:flex;flex-direction:column;padding:6px 14px;min-width:0}
 .buscador .etq{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted-fg);text-transform:uppercase}
 .buscador input{border:0;background:transparent;font:inherit;outline:none;color:var(--ink);width:100%}
@@ -63,7 +63,7 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .hero p.sub{color:rgba(255,255,255,.9);max-width:54ch;margin-bottom:18px;font-size:14.5px}
 .hero .credito{position:absolute;right:14px;bottom:8px;color:rgba(255,255,255,.55);font-size:10.5px}
 /* secciones */
-.seccion{margin:34px 0}
+.seccion{margin:64px 0}
 .seccion-cab{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
 .seccion-cab h2{font-size:24px}
 .seccion-cab .mas{margin-left:auto;color:var(--primary);font-weight:600;font-size:13.5px}
@@ -72,24 +72,26 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .carrusel{display:flex;gap:14px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
 .carrusel::-webkit-scrollbar{height:6px}.carrusel::-webkit-scrollbar-thumb{background:var(--border);border-radius:9px}
 /* tarjetas de estilo */
-.estilo{position:relative;flex:0 0 260px;height:180px;border-radius:var(--radio);overflow:hidden;background:var(--surface-strong)}
+.estilo{position:relative;display:block;flex:1 1 0;min-width:240px;height:200px;border-radius:var(--radio);overflow:hidden;background:var(--surface-strong)}
 .estilo img{width:100%;height:100%;object-fit:cover}
 .estilo .velo{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(12,30,36,.75) 100%)}
 .estilo .txt{position:absolute;left:14px;bottom:12px;color:#fff}
 .estilo .txt b{font-family:var(--fuente-titulo);font-size:16.5px;display:block}
 .estilo .txt span{font-size:12.5px;opacity:.85}
 /* destinos */
-.destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+.destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .destino{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);overflow:hidden}
-.destino img{height:96px;width:100%;object-fit:cover;background:var(--surface-strong)}
+.destino img{height:110px;width:100%;object-fit:cover;background:var(--surface-strong)}
 .destino .d{padding:10px 12px 12px}
 .destino b{font-family:var(--fuente-titulo);font-size:15px;display:block}
 .destino span{color:var(--muted-fg);font-size:12.5px;font-variant-numeric:tabular-nums}
 /* tarjetas de alojamiento */
-.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
 .aloj{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);overflow:hidden;transition:box-shadow .18s ease,transform .18s ease}
 .aloj:hover{box-shadow:0 12px 28px rgba(20,40,50,.12);transform:translateY(-2px)}
-.aloj .foto{position:relative;height:172px;background:var(--surface-strong)}
+/* display:block imprescindible: un <span> ignora la altura y la foto se desborda
+   (medido en producción: 333px en lugar de 190px, con la rejilla irregular). */
+.aloj .foto{display:block;position:relative;height:190px;background:var(--surface-strong)}
 .aloj .foto img{width:100%;height:100%;object-fit:cover}
 .aloj .fav{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:var(--radio-pill);border:0;background:rgba(255,255,255,.9);cursor:pointer}
 .aloj .d{padding:11px 13px 14px}

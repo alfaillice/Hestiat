@@ -79,7 +79,8 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .estilo .txt b{font-family:var(--fuente-titulo);font-size:16.5px;display:block}
 .estilo .txt span{font-size:12.5px;opacity:.85}
 /* destinos */
-.destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+/* 200px: con 1360 de contenedor, 6 columnas de 210 se quedaban a 6px de entrar. */
+.destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .destino{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);overflow:hidden}
 .destino img{height:110px;width:100%;object-fit:cover;background:var(--surface-strong)}
 .destino .d{padding:10px 12px 12px}

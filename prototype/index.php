@@ -124,7 +124,9 @@ a{color:inherit;text-decoration:none}img{display:block;max-width:100%}
 .estilo .velo{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(12,30,36,.75))}
 .estilo .txt{position:absolute;left:14px;bottom:12px;color:#fff}.estilo b{font-family:"DM Sans",sans-serif;font-size:16.5px;display:block}
 .estilo span.sub{font-size:12.5px;opacity:.85}
-.destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+/* 200px y no 210: con 1360 de contenedor, 6 columnas de 210 se quedaban a 6px de entrar
+   (6*210+5*14=1330 > 1324) y la ultima fila quedaba en 2. Con 200: 6+6 limpias. */
+.destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
 .destino{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);overflow:hidden}
 .destino img{height:110px;width:100%;object-fit:cover;background:var(--surface-strong)}
 .destino .d{padding:10px 12px 12px}.destino b{font-family:"DM Sans",sans-serif;font-size:15px;display:block}

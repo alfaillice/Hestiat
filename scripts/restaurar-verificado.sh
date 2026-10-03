@@ -166,7 +166,7 @@ fi
 log "== PASO 3: contenido del volcado y cierre limpio =="
 N_TABLAS="$(gzip -dc "$VOLCADO" | grep -c '^CREATE TABLE')"
 CIERRE="$(gzip -dc "$VOLCADO" | tail -5 | grep -c 'Dump completed')"
-CABECERA="$(gzip -dc "$VOLCADO" | head -3 | grep -o 'MariaDB dump[^*]*' | head -1)"
+CABECERA="$(gzip -dc "$VOLCADO" | head -20 | grep -oE '(MariaDB|MySQL) dump [^ ]+' | head -1)"
 N_INSERT="$(gzip -dc "$VOLCADO" | grep -c '^INSERT INTO')"
 log "CREATE TABLE: $N_TABLAS (esperado $ESPERADO_TABLAS) · INSERT INTO: $N_INSERT"
 log "cabecera: ${CABECERA:-desconocida} · cierre limpio: $([ "$CIERRE" -ge 1 ] && echo SI || echo NO)"

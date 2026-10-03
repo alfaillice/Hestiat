@@ -1,5 +1,20 @@
 # HESTIAT-OPERATIONS.md
 
+> **ACTUALIZACIÓN 2026-10-03 · COPIA VERIFICADA**
+> La verificación por restauración se ha cerrado con resultado **COPIA VERIFICADA**:
+> 33 de 33 tablas restauradas en `ppxgfdyc_hestiat2`, **cero diferencias en tablas
+> persistentes** y una única deriva admisible (`usuario_sesion`, 21 vs 20, una sesión
+> creada después del volcado). Acta completa en `docs/ACTA-COPIA-VERIFICADA.md`.
+> SHA-256 del volcado: `b3b997257658bbe11c90a35f7425ff0d9e6873dcbb3645d3be662d1ac8f39c12`.
+>
+> **QUEDA LEVANTADA LA PROHIBICIÓN DE BORRAR** el código de la aplicación anterior, al
+> cumplirse también la auditoría fresca (ver `docs/AUDITORIA-2026-10-03.md`) y la copia
+> de la aplicación con hash y prueba de extracción (3.106.370 B, 314 ficheros, entry
+> idéntico al de producción).
+>
+> Pendiente aún: el token de R2 para el bucket privado (acción manual en Cloudflare) y,
+> con él, subir el volcado y el acta fuera del servidor.
+
 Requisitos previos pendientes, estado real de las copias y procedimiento para retomar la operación.
 Última actualización: 2026-10-03. Ámbito: SOLO `hestiat.com`.
 

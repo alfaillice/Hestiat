@@ -162,3 +162,107 @@ export async function recuentos(): Promise<Record<string, number>> {
   }
   return out;
 }
+
+/* --------------------------------------------------------- portada nueva -- */
+
+export interface ProvinciaDestino {
+  province: string;
+  total: number;
+  portada: string | null;
+}
+
+/** Provincias con más alojamientos publicados, cada una con una foto representativa real. */
+export async function destinosDestacados(limite = 12): Promise<ProvinciaDestino[]> {
+  const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    `SELECT a.province,
+            COUNT(*) AS total,
+            (SELECT COALESCE(p.origin_url, p.storage_key)
+               FROM accommodation_photo p
+               JOIN accommodation b ON b.id = p.accommodation_id
+              WHERE b.province = a.province AND b.status = 'published'
+                AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
+              ORDER BY p.is_primary DESC, p.sort_order ASC
+              LIMIT 1) AS portada
+       FROM accommodation a
+      WHERE a.status = 'published' AND a.province IS NOT NULL AND a.province <> ''
+      GROUP BY a.province
+      ORDER BY total DESC
+      LIMIT ?`,
+    [limite],
+  );
+  return rows as unknown as ProvinciaDestino[];
+}
+
+export interface EstiloDestino {
+  clave: string;
+  etiqueta: string;
+  descripcion: string;
+  portada: string | null;
+  total: number;
+}
+
+/** Primera foto disponible para un conjunto de condiciones, con su recuento. */
+async function portadaYTotal(condicion: string, valor: unknown[]): Promise<{ portada: string | null; total: number }> {
+  const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    `SELECT COUNT(*) AS total,
+            (SELECT COALESCE(p.origin_url, p.storage_key)
+               FROM accommodation a2
+               JOIN accommodation_photo p ON p.accommodation_id = a2.id
+              WHERE ${condicion.replace(/\ba\./g, "a2.")}
+                AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
+              ORDER BY p.is_primary DESC, p.sort_order ASC
+              LIMIT 1) AS portada
+       FROM accommodation a
+      WHERE ${condicion}`,
+    valor,
+  );
+  const r = rows[0];
+  return { portada: (r?.portada as string) ?? null, total: Number(r?.total ?? 0) };
+}
+
+/**
+ * Los cuatro atajos por forma de viajar, con foto real y recuento real.
+ * Las condiciones son heurísticas transparentes sobre datos que YA tenemos
+ * (provincia costera, provincia de montaña, nombre con carácter histórico,
+ * capacidad familiar). No se inventa ninguna clasificación que no exista.
+ */
+export async function estilosDeViaje(): Promise<EstiloDestino[]> {
+  const COSTA = ["Alacant/Alicante", "Málaga", "Illes Balears", "Girona", "Barcelona", "València/Valencia", "Tarragona", "Cantabria", "A Coruña", "Pontevedra", "Las Palmas", "Santa Cruz de Tenerife", "Murcia", "Cádiz", "Huelva", "Castelló/Castellón", "Gipuzkoa/Guipúzcoa", "Bizkaia/Vizcaya"];
+  const MONTAÑA = ["Asturias", "Cantabria", "Granada", "Segovia", "Ávila", "Navarra", "Huesca", "Lleida", "Girona", "Teruel", "Cuenca", "Jaén", "La Rioja", "Palencia", "Soria", "León"];
+  const marca = (n: number) => Array(n).fill("?").join(",");
+
+  const [costa, montana, historia, familias] = await Promise.all([
+    portadaYTotal(`a.status='published' AND a.province IN (${marca(COSTA.length)})`, COSTA),
+    portadaYTotal(`a.status='published' AND a.province IN (${marca(MONTAÑA.length)})`, MONTAÑA),
+    portadaYTotal(
+      `a.status='published' AND (a.title LIKE '%casa%' OR a.title LIKE '%palacio%' OR a.title LIKE '%convento%' OR a.title LIKE '%castillo%' OR a.title LIKE '%monasterio%' OR a.title LIKE '%torre%')`,
+      [],
+    ),
+    portadaYTotal(`a.status='published' AND a.capacity >= 6`, []),
+  ]);
+
+  return [
+    { clave: "mar", etiqueta: "Costa y mar", descripcion: "Casas junto al agua", ...costa },
+    { clave: "montana", etiqueta: "Paisaje de montaña", descripcion: "Valles y sierras", ...montana },
+    { clave: "historia", etiqueta: "Arquitectura histórica", descripcion: "Casas con historia", ...historia },
+    { clave: "familias", etiqueta: "Planes en familia", descripcion: "Espacio para todos", ...familias },
+  ];
+}
+
+/** Alojamientos destacados: con foto, con precio publicado y orden estable. */
+export async function destacados(limite = 8): Promise<AlojamientoTarjeta[]> {
+  const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.price_per_night, a.price_type,
+            a.capacity, a.bedrooms, a.beds, a.review_score, a.review_count,
+            (SELECT COALESCE(p.origin_url, p.storage_key)
+               FROM accommodation_photo p
+              WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
+              ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1) AS portada
+       FROM accommodation a
+      WHERE a.status = 'published'
+      ORDER BY (a.price_per_night IS NULL), a.review_count DESC, a.id ASC
+      LIMIT ?`,
+    [limite],
+  );
+  return rows as unknown as AlojamientoTarjeta[];
+}

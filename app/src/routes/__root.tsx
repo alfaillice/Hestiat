@@ -21,8 +21,8 @@ import appMetaJson from "../app-meta.json";
 declare const __HF_DESIGN_INSPECTOR__: boolean;
 
 // Built-in defaults for any field that isn't set in app-meta.json.
-const DEFAULT_TITLE = "Higgsfield App";
-const DEFAULT_DESCRIPTION = "Higgsfield Generated Project";
+const DEFAULT_TITLE = "Hestiat";
+const DEFAULT_DESCRIPTION = "Hestiat conecta alojamientos con experiencias y servicios locales.";
 
 type AppMeta = {
   og_title?: string | null;
@@ -99,6 +99,8 @@ function buildHead(meta: AppMeta) {
     links: [
       { rel: "stylesheet", href: appCss },
       ...(favicon ? [{ rel: "icon", href: favicon }] : []),
+      { rel: "apple-touch-icon", href: "/assets/head/apple-touch-icon.png" },
+      { rel: "manifest", href: "/site.webmanifest" },
     ],
   };
 }

@@ -183,7 +183,7 @@ export function calcularResumen(
 /* -------------------------------------------------------------- creación -- */
 
 export type ResultadoReserva =
-  | { ok: true; codigo: string; resumen: ResumenPrecio }
+  | { ok: true; codigo: string; reservaId: number; resumen: ResumenPrecio }
   | { ok: false; error: string };
 
 export async function crearSolicitud(entrada: {
@@ -282,7 +282,7 @@ export async function crearSolicitud(entrada: {
     }
 
     await conn.commit();
-    return { ok: true, codigo, resumen };
+    return { ok: true, codigo, reservaId, resumen };
   } catch (error) {
     await conn.rollback();
     const mensaje = error instanceof Error ? error.message : "Error al guardar la reserva.";

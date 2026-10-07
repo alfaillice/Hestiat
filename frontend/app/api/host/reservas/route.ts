@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireHost } from "@/lib/auth.server";
 import { cambiarEstado, type EstadoReserva } from "@/lib/reservas.server";
+import { avisarCambioEstado } from "@/lib/correo-reservas.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +31,15 @@ export async function POST(request: Request) {
 
   try {
     const r = await cambiarEstado({ id: host.id, rol: host.rol }, id, nuevo);
+    // Si el cambio se ha aplicado, se avisa: huésped, anfitrión y copia interna a Hestiat. Nunca
+    // tumba la operación —el estado ya está guardado— y no lanza.
+    if (r.ok) {
+      try {
+        await avisarCambioEstado(id, nuevo);
+      } catch (error) {
+        console.error("[hestiat] /api/host/reservas (avisos)", error instanceof Error ? error.message.slice(0, 200) : error);
+      }
+    }
     const aviso = r.ok ? "Reserva actualizada." : r.error ?? "No se ha podido actualizar.";
     return redirigir(`/host/reservas?aviso=${encodeURIComponent(aviso)}&ok=${r.ok ? "1" : "0"}`);
   } catch (error) {

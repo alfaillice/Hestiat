@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth.server";
 import { crearSolicitud } from "@/lib/reservas.server";
+import { avisarReservaCreada } from "@/lib/correo-reservas.server";
 
 import { limitar } from "@/lib/limite.server";
 
@@ -53,6 +54,16 @@ export async function POST(request: Request) {
     if (!r.ok) {
       const p = new URLSearchParams({ desde, hasta, huespedes: String(huespedes), error: r.error });
       return redirigir(`${base}?${p}`);
+    }
+
+    // Correos de la reserva: al anfitrión, al huésped y copia interna a Hestiat. Se espera a que
+    // terminen para poder decir con verdad qué se ha enviado y qué no, pero un fallo de correo NO
+    // puede tumbar una reserva ya registrada: `avisarReservaCreada` no lanza nunca y aquí se
+    // protege igualmente. La reserva está confirmada en la base antes de esta línea.
+    try {
+      await avisarReservaCreada(r.reservaId);
+    } catch (error) {
+      console.error("[hestiat] /api/reservas (avisos)", error instanceof Error ? error.message.slice(0, 200) : error);
     }
     const p = new URLSearchParams({
       codigo: r.codigo,

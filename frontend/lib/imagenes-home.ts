@@ -75,4 +75,5 @@ export const IMAGEN_CATEGORIA: Record<string, string> = {
   "experiencia:Arte": BASE_IMG + "hf_20261007_230342_1b644888-9201-4fee-a226-8456b8ca7000.png",
   "experiencia:Lugares de interés": BASE_IMG + "hf_20261007_230342_d1a9310f-e33e-4ca1-9f68-e89526e6d0a7.png",
   "experiencia:Cultura": BASE_IMG + "hf_20261007_230423_ac58a80e-b345-4779-a8fd-1bf509bf9d28.png",
+  "experiencia:Agua": BASE_IMG + "hf_20261007_230932_2caa38d6-2385-4cb5-9376-38bd73a85fe6.png",
 };

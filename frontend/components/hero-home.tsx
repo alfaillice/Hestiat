@@ -35,17 +35,18 @@ export default function HeroHome({
   const [fuente, setFuente] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
 
+  // PRIMERO se decide si hay vídeo (y cuál). El elemento se pinta a partir de aquí.
   useEffect(() => {
-    const menosMovimiento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (menosMovimiento) return; // solo póster: es lo que ha pedido el sistema
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return; // solo póster
+    setFuente(window.matchMedia("(max-width: 820px)").matches ? videoMovil : video);
+  }, [video, videoMovil]);
+
+  // DESPUÉS se pide el vídeo, cuando el navegador está libre, no antes de pintar la página.
+  // (Antes esto estaba en el mismo efecto que decidía la fuente, y como el elemento todavía no
+  // existía, la referencia era nula y el vídeo no llegaba a pintarse nunca.)
+  useEffect(() => {
     const el = referencia.current;
-    if (!el) return;
-
-    // Se elige el archivo pequeño en pantallas estrechas (1,7 MB en vez de 4,7 MB).
-    const archivo = window.matchMedia("(max-width: 820px)").matches ? videoMovil : video;
-    setFuente(archivo);
-
-    // El vídeo se pide cuando el navegador está libre, no antes de pintar la página.
+    if (!fuente || !el) return;
     const pedir = () => {
       el.preload = "auto";
       el.load();
@@ -54,11 +55,16 @@ export default function HeroHome({
       });
     };
     const ocioso = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-    const t = ocioso ? ocioso(pedir, { timeout: 2500 }) : window.setTimeout(pedir, 1200);
-    return () => {
-      if (typeof t === "number") window.clearTimeout(t);
-    };
-  }, [video, videoMovil]);
+    if (ocioso) {
+      const manejar = ocioso(pedir, { timeout: 2500 });
+      return () => {
+        const cancelar = (window as unknown as { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback;
+        cancelar?.(manejar);
+      };
+    }
+    const t = window.setTimeout(pedir, 1200);
+    return () => window.clearTimeout(t);
+  }, [fuente]);
 
   return (
     <section className="hero2">

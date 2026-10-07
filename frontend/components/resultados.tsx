@@ -1,72 +1,78 @@
 import { buscar } from "@/lib/db";
+import { Vacio } from "@/components/estados";
+import GaleriaAlojamientos from "@/components/galeria-alojamientos";
+import { aTarjeta } from "@/lib/tarjetas";
+import { getCurrentUser } from "@/lib/auth.server";
+import { guardadosEntre } from "@/lib/favoritos.server";
+import type { FiltrosBusqueda } from "@/lib/db";
 
 /**
- * Bloque de resultados de búsqueda, compartido por `/` y `/search`.
- * Una sola implementación: la duplicación de lógica fue uno de los problemas
- * estructurales de la versión anterior y no se repite.
+ * Resultados de búsqueda, compartidos por `/` y `/search`.
+ *
+ * Es una GRAN GALERÍA visual de tarjetas con scroll infinito, no una lista: la fotografía manda y
+ * la tarjeta se entiende de un vistazo. La primera tanda se dibuja en el servidor (para que la
+ * página tenga contenido sin JavaScript) y las siguientes las añade el cliente al mismo cuadrícula.
+ *
+ * Aviso sobre las imágenes: se dice UNA vez, sobre la galería, que las fotografías del catálogo
+ * proceden de fuentes públicas. Poner la etiqueta en las 42 tarjetas sería ruido y taparía la foto,
+ * que es justo lo que tiene que destacar; en la ficha sí va foto por foto, porque ahí se decide.
  */
 export default async function Resultados({
   q,
   pagina,
   basePath,
+  filtros,
+  porPagina = 42,
 }: {
   q: string;
   pagina: number;
   basePath: string;
+  /** Filtros completos (provincia, precio, servicios, orden). Si no se pasan, solo texto libre. */
+  filtros?: FiltrosBusqueda;
+  porPagina?: number;
 }) {
-  const { total, items, porPagina } = await buscar({ q, pagina });
-  const desde = total === 0 ? 0 : (pagina - 1) * porPagina + 1;
-  const hasta = Math.min(pagina * porPagina, total);
-  const enlace = (p: number) => `${basePath}?q=${encodeURIComponent(q)}&p=${p}`;
+  const sesion = await getCurrentUser();
+  const { total, items, porPagina: tanda } = await buscar({ ...(filtros ?? {}), q, pagina, porPagina });
+  const tarjetas = items.map((i) => aTarjeta(i as unknown as Record<string, unknown>));
+  const guardados = sesion ? await guardadosEntre(Number(sesion.id), tarjetas.map((t) => t.id)) : new Set<number>();
+
+  // Filtros en formato de consulta, sin `p`: es lo que usan el scroll infinito y el enlace de
+  // respaldo. Así las tandas siguientes llevan exactamente los mismos criterios.
+  const params = new URLSearchParams();
+  if (q) params.set("q", q);
+  if (filtros?.provincia) params.set("provincia", filtros.provincia);
+  if (typeof filtros?.precioMin === "number") params.set("precioMin", String(filtros.precioMin));
+  if (typeof filtros?.precioMax === "number") params.set("precioMax", String(filtros.precioMax));
+  for (const s of filtros?.servicios ?? []) params.append("servicios", s);
+  if (filtros?.orden && filtros.orden !== "recomendados") params.set("orden", filtros.orden);
+
+  if (items.length === 0) {
+    return (
+      <>
+        <p className="galeria-cuenta">0 alojamientos</p>
+        <Vacio
+          titulo="No hay resultados con ese criterio"
+          explicacion="Prueba con otra ciudad o provincia, amplía el rango de precio o quita algún servicio."
+          accion={{ texto: "Quitar todos los filtros", href: basePath }}
+        />
+      </>
+    );
+  }
 
   return (
     <>
-      <form className="search" method="get" action={basePath}>
-        <input name="q" defaultValue={q} placeholder="Ciudad, provincia…" aria-label="Buscar destino" />
-        <button type="submit">Buscar</button>
-      </form>
-
-      <p className="count">
-        {total.toLocaleString("es-ES")} alojamientos
-        {q ? ` para «${q}»` : ""}
-        {total > 0 ? ` · mostrando ${desde}–${hasta}` : ""}
-      </p>
-
-      {items.length === 0 ? (
-        <p className="warn">
-          No hay resultados con ese criterio. Prueba con otra ciudad o provincia, o quita el filtro.
-        </p>
-      ) : (
-        <div className="cards">
-          {items.map((a) => (
-            <a className="card" key={a.id} href={`/alojamiento/${a.slug}`}>
-              {a.portada ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={a.portada} alt={a.title} loading="lazy" />
-              ) : (
-                <div className="nofoto" />
-              )}
-              <div className="body">
-                <div className="t">{a.title}</div>
-                <div className="m">{[a.city, a.province].filter(Boolean).join(", ")}</div>
-                <div className="p">
-                  {a.price_per_night ? `${Number(a.price_per_night).toLocaleString("es-ES")} € / noche` : "Consultar"}
-                  {a.price_type !== "real" && <span className="ref"> · orientativo</span>}
-                </div>
-              </div>
-            </a>
-          ))}
-        </div>
-      )}
-
-      <nav className="nav">
-        {pagina > 1 && <a href={enlace(pagina - 1)}>← Anterior</a>}
-        {hasta < total && <a href={enlace(pagina + 1)}>Siguiente →</a>}
-      </nav>
-
-      <p className="warn">
-        Datos reales del esquema nuevo (<code>accommodation</code>, <code>accommodation_photo</code>).
-        Los precios se distinguen siempre entre publicados y orientativos, con su fuente.
+      <GaleriaAlojamientos
+        iniciales={tarjetas}
+        total={total}
+        porPagina={tanda}
+        consulta={params.toString()}
+        haySesion={Boolean(sesion)}
+        guardadosIniciales={[...guardados]}
+        basePath={basePath}
+      />
+      <p className="aviso" style={{ marginTop: 18 }}>
+        Las fotografías del catálogo proceden de fuentes públicas y se muestran como
+        <strong> referencia del entorno</strong>, no siempre como imágenes propias de cada propiedad.
       </p>
     </>
   );

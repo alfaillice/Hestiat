@@ -76,14 +76,22 @@ process.env.PORT = process.env.PORT ?? process.env.NITRO_PORT ?? "3000";
    Se fijan los dos para que el enlace sea el mismo que espera LiteSpeed. */
 process.env.HOSTNAME = process.env.HOST;
 
-/* 4. Arrancar el servidor de Next. Si no está desplegado, se avisa con claridad en vez de
-      morir en silencio: un error legible ahorra media hora de diagnóstico. */
+/* 4. Arrancar el servidor de Next.
+
+      OJO, ESTO ES CRITICO Y COSTO UNA CAIDA: aqui NO puede haber `await` de nivel
+      superior. LiteSpeed carga este fichero con `require()` desde app.cjs, y `require()`
+      no puede cargar un grafo ESM con top-level await: falla con
+      ERR_REQUIRE_ASYNC_MODULE y la aplicacion no arranca (503).
+
+      Por eso el import va SIN await: la promesa se lanza y se queda en vuelo, el modulo
+      termina de cargarse de inmediato y el servidor de Next levanta en segundo plano.
+      Los errores se registran igual, sin morir en silencio.
+
+      El propio app.cjs lo documenta: ".output/server/index.mjs no usa top-level await,
+      asi que require() de ESM funciona (Node 24)". */
 const servidor = resolve(docroot, ".next-standalone/server.js");
-try {
-  console.log("[hestiat] arrancando Next desde", servidor, "· HOST=" + process.env.HOST, "PORT=" + process.env.PORT);
-  await import(servidor);
-} catch (error) {
-  console.error("[hestiat] FALLO al arrancar Next.", "¿Está desplegado .next-standalone/? →", error.message);
-  console.error("[hestiat] Vuelve atrás: restaura .output desde .output.antes-del-cutover.");
-  process.exitCode = 1;
-}
+console.log("[hestiat] arrancando Next - HOST=" + process.env.HOST + " PORT=" + process.env.PORT);
+import(servidor).catch(function (e) {
+  console.error("[hestiat] FALLO al arrancar Next:", e && e.message ? e.message : e);
+  console.error("[hestiat] Vuelve atras: restaura .output desde .output.antes-del-cutover.");
+});

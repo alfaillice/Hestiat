@@ -19,6 +19,32 @@ const nextConfig = {
   poweredByHeader: false,
   images: { unoptimized: true },
   experimental: { optimizePackageImports: ["mysql2"] },
+
+  /**
+   * MAPA DE REDIRECCIONES — imprescindible para no perder el posicionamiento.
+   *
+   * Las fichas publicadas hasta hoy viven en `/stays/<slug>`; el frontend nuevo sirve
+   * `/alojamiento/<slug>`. Sin esto, cada URL indexada se convertiría en un 404 y Google
+   * iría soltando el catálogo. Se conservan con un 301 permanente.
+   *
+   * Nota honesta: `/admin/*` y `/host/*` NO se redirigen. No existe todavía su equivalente
+   * en el frontend nuevo, y redirigir un panel a la portada confundiría a quien lo usa:
+   * es preferible un 404 claro mientras se construyen.
+   */
+  async redirects() {
+    return [
+      { source: "/stays/:slug", destination: "/alojamiento/:slug", permanent: true },
+      { source: "/stays", destination: "/search", permanent: true },
+      { source: "/alojamientos", destination: "/search", permanent: true },
+      { source: "/cerca", destination: "/search", permanent: true },
+      { source: "/buscar", destination: "/search", permanent: true },
+      { source: "/servicios", destination: "/search", permanent: true },
+      { source: "/servicios/:ciudad", destination: "/search", permanent: true },
+      { source: "/servicio/:slug", destination: "/search", permanent: true },
+      { source: "/experiencia/:slug", destination: "/experiencias", permanent: true },
+      { source: "/accesibilidad", destination: "/", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -94,15 +94,15 @@ export default async function Ficha({
    */
   const tri = (v: unknown, si: string, no: string) => (v === null || v === undefined ? null : Number(v) === 1 ? si : no);
   const reglas = [
-    a.check_in_time ? { etiqueta: "Entrada", valor: `a partir de las ${String(a.check_in_time)}` } : null,
-    a.check_out_time ? { etiqueta: "Salida", valor: `antes de las ${String(a.check_out_time)}` } : null,
-    Number(a.min_nights) > 0 ? { etiqueta: "Estancia mínima", valor: `${Number(a.min_nights)} ${Number(a.min_nights) === 1 ? "noche" : "noches"}` } : null,
-    Number(a.max_nights) > 0 ? { etiqueta: "Estancia máxima", valor: `${Number(a.max_nights)} ${Number(a.max_nights) === 1 ? "noche" : "noches"}` } : null,
-    Number(a.min_age) > 0 ? { etiqueta: "Edad mínima", valor: `${Number(a.min_age)} años` } : null,
-    a.pets_allowed !== null && a.pets_allowed !== undefined ? { etiqueta: "Mascotas", valor: Number(a.pets_allowed) === 1 ? "se admiten" : "no se admiten" } : null,
-    a.smoking_allowed !== null && a.smoking_allowed !== undefined ? { etiqueta: "Fumar", valor: Number(a.smoking_allowed) === 1 ? "permitido" : "no permitido" } : null,
-    a.parties_allowed !== null && a.parties_allowed !== undefined ? { etiqueta: "Fiestas y eventos", valor: Number(a.parties_allowed) === 1 ? "permitidos" : "no permitidos" } : null,
-  ].filter(Boolean) as { etiqueta: string; valor: string }[];
+    a.check_in_time ? { etiqueta: "Entrada", valor: `a partir de las ${String(a.check_in_time)}`, i: "🕓" } : null,
+    a.check_out_time ? { etiqueta: "Salida", valor: `antes de las ${String(a.check_out_time)}`, i: "🕚" } : null,
+    Number(a.min_nights) > 0 ? { etiqueta: "Estancia mínima", valor: `${Number(a.min_nights)} ${Number(a.min_nights) === 1 ? "noche" : "noches"}`, i: "🌙" } : null,
+    Number(a.max_nights) > 0 ? { etiqueta: "Estancia máxima", valor: `${Number(a.max_nights)} ${Number(a.max_nights) === 1 ? "noche" : "noches"}`, i: "📅" } : null,
+    Number(a.min_age) > 0 ? { etiqueta: "Edad mínima", valor: `${Number(a.min_age)} años`, i: "🔞" } : null,
+    a.pets_allowed !== null && a.pets_allowed !== undefined ? { etiqueta: "Mascotas", valor: Number(a.pets_allowed) === 1 ? "se admiten" : "no se admiten", i: "🐾" } : null,
+    a.smoking_allowed !== null && a.smoking_allowed !== undefined ? { etiqueta: "Fumar", valor: Number(a.smoking_allowed) === 1 ? "permitido" : "no permitido", i: "🚭" } : null,
+    a.parties_allowed !== null && a.parties_allowed !== undefined ? { etiqueta: "Fiestas y eventos", valor: Number(a.parties_allowed) === 1 ? "permitidos" : "no permitidos", i: "🎉" } : null,
+  ].filter(Boolean) as { etiqueta: string; valor: string; i: string }[];
   const reglasExtra = a.extra_rules ? String(a.extra_rules) : null;
   void tri;
 
@@ -166,16 +166,16 @@ export default async function Ficha({
     ...(Number(a.bedrooms) ? { numberOfRooms: Number(a.bedrooms) } : {}),
     ...(media ? { aggregateRating: { "@type": "AggregateRating", ratingValue: media, reviewCount: Number(a.review_count), bestRating: 5 } } : {}),
     ...(servicios.length > 0
-      ? { amenityFeature: servicios.slice(0, 20).map((s) => ({ "@type": "LocationFeatureSpecification", name: s, value: true })) }
+      ? { amenityFeature: servicios.slice(0, 20).map((s) => ({ "@type": "LocationFeatureSpecification", name: s.nombre, value: true })) }
       : {}),
   };
 
   const caracteristicas = [
-    capacidad ? { n: capacidad, t: capacidad === 1 ? "huésped" : "huéspedes" } : null,
-    Number(a.bedrooms) ? { n: Number(a.bedrooms), t: Number(a.bedrooms) === 1 ? "dormitorio" : "dormitorios" } : null,
-    Number(a.beds) ? { n: Number(a.beds), t: Number(a.beds) === 1 ? "cama" : "camas" } : null,
-    Number(a.baths) ? { n: Number(a.baths), t: Number(a.baths) === 1 ? "baño" : "baños" } : null,
-  ].filter(Boolean) as { n: number; t: string }[];
+    capacidad ? { n: capacidad, t: capacidad === 1 ? "huésped" : "huéspedes", i: "🧑" } : null,
+    Number(a.bedrooms) ? { n: Number(a.bedrooms), t: Number(a.bedrooms) === 1 ? "dormitorio" : "dormitorios", i: "🛏️" } : null,
+    Number(a.beds) ? { n: Number(a.beds), t: Number(a.beds) === 1 ? "cama" : "camas", i: "🛌" } : null,
+    Number(a.baths) ? { n: Number(a.baths), t: Number(a.baths) === 1 ? "baño" : "baños", i: "🛁" } : null,
+  ].filter(Boolean) as { n: number; t: string; i: string }[];
 
   return (
     <main className="wrap ficha">
@@ -214,7 +214,10 @@ export default async function Ficha({
             <ul className="ficha-hechos">
               {caracteristicas.map((c) => (
                 <li key={c.t}>
-                  <strong>{c.n}</strong> {c.t}
+                  <span className="hecho-icono" aria-hidden="true">{c.i}</span>
+                  <span>
+                    <strong>{c.n}</strong> {c.t}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -235,13 +238,23 @@ export default async function Ficha({
             <section className="ficha-seccion">
               <h2>Lo que ofrece este alojamiento</h2>
               <ul className="servicios-grid">
-                {servicios.slice(0, 12).map((s) => <li key={s}>{s}</li>)}
+                {servicios.slice(0, 12).map((s) => (
+                  <li key={s.id}>
+                    <span className="servicio-icono" aria-hidden="true">{s.icono ?? "✨"}</span>
+                    <span>{s.nombre}</span>
+                  </li>
+                ))}
               </ul>
               {servicios.length > 12 && (
                 <details>
                   <summary className="ficha-resumen">Ver los {servicios.length} servicios</summary>
                   <ul className="servicios-grid" style={{ marginTop: 10 }}>
-                    {servicios.map((s) => <li key={`t-${s}`}>{s}</li>)}
+                    {servicios.map((s) => (
+                      <li key={`t-${s.id}`}>
+                        <span className="servicio-icono" aria-hidden="true">{s.icono ?? "✨"}</span>
+                        <span>{s.nombre}</span>
+                      </li>
+                    ))}
                   </ul>
                 </details>
               )}
@@ -380,7 +393,9 @@ export default async function Ficha({
                 <ul className="reglas-lista">
                   {reglas.map((r) => (
                     <li key={r.etiqueta}>
-                      <span>{r.etiqueta}</span>
+                      <span>
+                        <span className="regla-icono" aria-hidden="true">{r.i}</span> {r.etiqueta}
+                      </span>
                       <strong>{r.valor}</strong>
                     </li>
                   ))}

@@ -72,7 +72,7 @@ export interface DatosFicha {
   alojamiento: any;
   fotos: FotoFicha[];
   todasReferenciales: boolean;
-  servicios: string[];
+  servicios: { id: number; slug: string | null; nombre: string; icono: string | null }[];
   nochesBloqueadas: NocheBloqueada[];
   anfitrion: AnfitrionFicha | null;
   similares: SimilarFicha[];
@@ -132,7 +132,7 @@ export async function datosDeFicha(slug: string): Promise<DatosFicha | null> {
     // que existen en el diccionario `servicio`; los que no están se omiten en vez de enseñar un
     // número suelto.
     pool.query<any[]>(
-      `SELECT DISTINCT s.nombre
+      `SELECT DISTINCT s.id, s.slug, s.nombre, s.icono
          FROM accommodation_amenity am
          JOIN servicio s ON s.id = CAST(am.amenity AS UNSIGNED)
         WHERE am.accommodation_id = ?
@@ -252,7 +252,12 @@ export async function datosDeFicha(slug: string): Promise<DatosFicha | null> {
     alojamiento: a,
     fotos,
     todasReferenciales: fotos.length > 0 && fotos.every((f) => !f.propia),
-    servicios: serviciosFilas.map((s) => String(s.nombre)),
+    servicios: serviciosFilas.map((s) => ({
+      id: Number(s.id),
+      slug: s.slug ? String(s.slug) : null,
+      nombre: String(s.nombre),
+      icono: s.icono ? String(s.icono) : null,
+    })),
     nochesBloqueadas: bloquesFilas.map((b) => ({ fecha: String(b.fecha).slice(0, 10), motivo: String(b.motivo ?? "") })),
     anfitrion,
     similares,

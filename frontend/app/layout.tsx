@@ -347,6 +347,23 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
   .hero-cine-credito{right:10px;bottom:auto;top:10px}
 }
 @media(prefers-reduced-motion:reduce){.hero-cine{height:auto}}
+/* ---------- ficha divertida: iconos ilustrativos y acento fucsia ---------- */
+:root{--fucsia:oklch(58% .25 348); --fucsia-soft:oklch(95.5% .035 348); --fucsia-tinta:oklch(38% .17 348)}
+/* Los accesorios se ven antes de leerse: cada uno con su icono, que viene del diccionario de
+   servicios (su campo de icono), no de una lista metida en el código. */
+.servicio-icono{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radio-pill);background:var(--fucsia-soft);font-size:17px;flex:0 0 auto}
+/* Selector con .ficha delante a propósito: las reglas de la ficha vienen después en la hoja y, con
+   la misma especificidad, ganarían ellas. */
+.ficha .servicios-grid li{display:flex;align-items:center;gap:10px;border-radius:var(--radio-pill);padding:8px 15px 8px 9px;background:var(--card)}
+.hecho-icono{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--radio-pill);background:var(--fucsia-soft);font-size:15px;flex:0 0 auto}
+.ficha .ficha-hechos li{display:flex;align-items:center;gap:8px}
+.regla-icono{display:inline-block;width:20px;text-align:center}
+/* El botón de reservar es la acción de la ficha: va en fucsia, que es lo único de la página con
+   ese color, y por eso se encuentra sin buscarlo. */
+.rc-boton,.barra-movil .f-aplicar,.accion-reservar{background:var(--fucsia)!important;color:#fff!important}
+.rc-boton:hover,.accion-reservar:hover{background:var(--fucsia-tinta)!important}
+.reserva-caja .rc-precio strong{color:var(--fucsia)}
+.corazon-ok{color:var(--fucsia)}
 /* ---------- ficha de alojamiento ---------- */
 .migas{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted-fg);padding:16px 0 12px;flex-wrap:wrap}
 .migas a{text-decoration:underline}

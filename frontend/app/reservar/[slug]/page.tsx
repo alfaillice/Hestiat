@@ -158,7 +158,7 @@ export default async function Reservar({
             adelantado y no se pide ningún dato de pago.
           </p>
           <div className="f-acciones">
-            <button className="f-aplicar" type="submit">Enviar solicitud</button>
+            <button className="f-aplicar accion-reservar" type="submit">Enviar solicitud</button>
             <Link className="f-limpiar" href={`/alojamiento/${slug}`}>Cancelar</Link>
           </div>
         </form>

@@ -13,8 +13,35 @@ import { NextResponse, type NextRequest } from "next/server";
  * el servidor, en la página y en cada guardado— porque el middleware no debe consultar la base de
  * datos. Si el token no vale, la página lo rechazará igual.
  */
+/**
+ * Páginas del panel antiguo que ahora viven dentro del editor único. Se redirigen AQUÍ, antes de
+ * renderizar, para que el código de estado sea un 307 de verdad y no un 200 con la orden de
+ * redirección dentro de la página (lo que además obligaría a tener JavaScript encendido).
+ */
+const PESTANAS_DEL_EDITOR: Record<string, string> = {
+  "/host/precios": "precios",
+  "/host/calendario": "disponibilidad",
+  "/host/integraciones": "calendarios",
+};
+
 export function middleware(request: NextRequest) {
   const token = request.cookies.get("hestiat_sesion")?.value;
+
+  // Las tres rutas antiguas llevan al editor conservando el alojamiento seleccionado.
+  const pestana = PESTANAS_DEL_EDITOR[request.nextUrl.pathname];
+  if (pestana) {
+    const id = Number(request.nextUrl.searchParams.get("a"));
+    if (Number.isInteger(id) && id > 0) {
+      const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host;
+      const proto = request.headers.get("x-forwarded-proto") ?? "https";
+      // Sin sesión se pasa por el inicio de sesión; con ella, directo a la pestaña.
+      const destino = token
+        ? new URL(`/editar/${id}?pestana=${pestana}`, `${proto}://${host}`)
+        : new URL(`/login?volver=${encodeURIComponent(`/editar/${id}?pestana=${pestana}`)}`, `${proto}://${host}`);
+      return NextResponse.redirect(destino);
+    }
+  }
+
   if (token) return NextResponse.next();
 
   // Detrás de nginx la aplicación se ve a sí misma como localhost:3000, así que construir la

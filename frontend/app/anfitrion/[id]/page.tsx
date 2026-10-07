@@ -14,10 +14,15 @@ export const dynamic = "force-dynamic";
  */
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const usuarioId = Number(id);
+  // El 404 se decide aquí para que sea un 404 de verdad: en la página ya no se puede cambiar el
+  // estado, porque la respuesta se ha empezado a enviar.
+  if (!Number.isInteger(usuarioId) || usuarioId <= 0) notFound();
   const [filas] = await poolLegacy.query<any[]>(
     `SELECT COALESCE(nombre_mostrado, nombre, apellidos) AS n FROM usuario WHERE id = ? LIMIT 1`,
-    [Number(id)],
+    [usuarioId],
   );
+  if (!filas[0]) notFound();
   const nombre = filas[0]?.n ? String(filas[0].n) : null;
   return {
     title: nombre ? `${nombre} — Anfitrión en Hestiat` : "Anfitrión — Hestiat",

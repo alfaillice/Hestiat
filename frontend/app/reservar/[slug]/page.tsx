@@ -7,11 +7,20 @@ import { alojamientoReservable, calcularResumen, nochesEntre } from "@/lib/reser
 
 export const dynamic = "force-dynamic";
 
-/** Título propio: antes heredaba el de la portada. No se indexa, es un formulario. */
-export const metadata: Metadata = {
-  title: "Solicitar reserva — Hestiat",
-  robots: { index: false, follow: true },
-};
+/**
+ * La existencia del alojamiento se comprueba aquí, no solo en la página: es el único momento en el
+ * que un 404 puede ser un 404 de verdad. En la página, cuando la comprobación se ejecuta, el estado
+ * ya se ha enviado y solo se puede mostrar la página de «no encontrado» con un 200.
+ */
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const [filas] = await pool.query<any[]>(
+    `SELECT id FROM accommodation WHERE slug = ? AND status = 'published' LIMIT 1`,
+    [decodeURIComponent(slug)],
+  );
+  if (!filas[0]) notFound();
+  return { title: "Solicitar reserva — Hestiat", robots: { index: false, follow: true } };
+}
 
 /**
  * Solicitar reserva.

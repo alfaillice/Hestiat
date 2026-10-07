@@ -12,10 +12,23 @@ import type { EstadoCanalVista } from "@/components/calendarios";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Editar alojamiento — Hestiat",
-  robots: { index: false, follow: false },
-};
+/**
+ * El permiso se comprueba también aquí, y no solo en la página: es el único sitio donde todavía se
+ * puede responder con un 404 de verdad. Cuando la guarda de la página se ejecuta, la respuesta ya
+ * ha empezado a enviarse y el estado no se puede cambiar.
+ */
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const legacyId = Number(id);
+  if (!Number.isInteger(legacyId) || legacyId <= 0) notFound();
+  const sesion = await getCurrentUser();
+  const permiso = await permisoEdicion(sesion ?? null, legacyId);
+  if (!permiso.puede) notFound();
+  // Y que exista: un administrador tiene permiso sobre cualquiera, pero no sobre uno que no existe.
+  const [existe] = await poolLegacy.query<any[]>(`SELECT id FROM alojamiento WHERE id = ? LIMIT 1`, [legacyId]);
+  if (!existe[0]) notFound();
+  return { title: "Editar alojamiento — Hestiat", robots: { index: false, follow: false } };
+}
 
 type Pestana = "general" | "fotos" | "precios" | "caracteristicas" | "disponibilidad" | "calendarios" | "reglas" | "publicacion";
 const PESTANAS: Pestana[] = ["general", "fotos", "precios", "caracteristicas", "disponibilidad", "calendarios", "reglas", "publicacion"];

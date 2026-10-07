@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { cache } from "react";
 import type { Metadata } from "next";
 import { datosDeFicha } from "@/lib/ficha.server";
+import type { DatosFicha } from "@/lib/ficha.server";
 import { getCurrentUser, ownsListing } from "@/lib/auth.server";
 import Galeria from "@/components/galeria";
 import ReservaCaja from "@/components/reserva-caja";
@@ -11,12 +13,49 @@ export const dynamic = "force-dynamic";
 
 const BASE = "https://hestiat.com";
 
-/** Metadatos por ficha: SEO real, sin contenido duplicado, con canónica. */
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const datos = await datosDeFicha(decodeURIComponent(slug));
-  if (!datos) return { title: "Alojamiento no encontrado — Hestiat" };
+/** Los mismos datos para los metadatos y para la página: se piden una vez por visita, no dos. */
+const cargarFicha = cache(async (slug: string) => datosDeFicha(slug));
+
+function vistaDe(sp: Record<string, string | string[] | undefined>): string {
+  return String(Array.isArray(sp?.vista) ? sp.vista[0] : (sp?.vista ?? ""));
+}
+
+/**
+ * ¿Se puede ver esta ficha? Y si sí, ¿como vista previa?
+ *
+ * Se decide aquí y se llama desde los DOS sitios: desde `generateMetadata`, porque en ese momento
+ * todavía no se ha enviado nada y el 404 puede ser un 404 de verdad; y desde la página, como red de
+ * seguridad. Antes solo estaba en la página, y por eso un alojamiento inexistente respondía 200 con
+ * la página de «no encontrado» dentro: cuando la guarda se ejecutaba, el estado ya estaba enviado.
+ */
+async function permisoDeFicha(datos: DatosFicha | null, vista: string): Promise<"publica" | "previa" | "no"> {
+  if (!datos) return "no";
   const a = datos.alojamiento;
+  if (String(a.status ?? "") === "published") return "publica";
+  if (vista !== "previa") return "no";
+  const sesion = await getCurrentUser();
+  if (!sesion) return "no";
+  if (sesion.rol === "admin") return "previa";
+  const legacyId = a.legacy_id ? Number(a.legacy_id) : 0;
+  if (legacyId > 0 && (await ownsListing(Number(sesion.id), legacyId))) return "previa";
+  return "no";
+}
+
+/** Metadatos por ficha: SEO real, sin contenido duplicado, con canónica. */
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const sp = await searchParams;
+  const datos = await cargarFicha(decodeURIComponent(slug));
+  // Este es el sitio donde el 404 es real: es lo único que se resuelve antes de enviar la respuesta.
+  if ((await permisoDeFicha(datos, vistaDe(sp))) === "no") notFound();
+  const ficha: DatosFicha = datos!;
+  const a = ficha.alojamiento;
   const lugar = [a.city, a.province].filter(Boolean).join(", ");
   return {
     title: `${a.title}${lugar ? ` — ${lugar}` : ""} — Hestiat`,
@@ -28,7 +67,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       type: "website",
       title: `${a.title}${lugar ? ` — ${lugar}` : ""}`,
       description: a.description?.slice(0, 155) ?? undefined,
-      images: datos.fotos[0]?.url ? [datos.fotos[0].url] : [],
+      images: ficha.fotos[0]?.url ? [ficha.fotos[0].url] : [],
     },
   };
 }
@@ -56,29 +95,16 @@ export default async function Ficha({
 }) {
   const { slug } = await params;
   const sp = await searchParams;
-  const datos = await datosDeFicha(decodeURIComponent(slug));
+  const datos = await cargarFicha(decodeURIComponent(slug));
   if (!datos) notFound();
+  const permiso = await permisoDeFicha(datos, vistaDe(sp));
+  if (permiso === "no") notFound();
 
   const { alojamiento: a, fotos, servicios, nochesBloqueadas, anfitrion, similares, resenas } = datos;
 
-  /*
-   * Solo se muestra lo publicado. Los estados «borrador», «oculto» o «bloqueado» no se enseñan al
-   * público —eso es exactamente lo que significan—, pero el anfitrión o un administrador pueden
-   * verlos con «Vista previa», que es la misma página con los mismos datos, sin copias ni maquetas.
-   */
-  const publicado = String(a.status ?? "") === "published";
-  let esPrevia = false;
-  if (!publicado) {
-    const vista = String(Array.isArray(sp.vista) ? sp.vista[0] : (sp.vista ?? ""));
-    const sesion = await getCurrentUser();
-    const legacyId = a.legacy_id ? Number(a.legacy_id) : 0;
-    const puedeVerlo =
-      vista === "previa" &&
-      Boolean(sesion) &&
-      (sesion!.rol === "admin" || (legacyId > 0 && (await ownsListing(Number(sesion!.id), legacyId))));
-    if (!puedeVerlo) notFound();
-    esPrevia = true;
-  }
+  // La misma decisión que en los metadatos: solo se muestra lo publicado, y un borrador únicamente
+  // a quien puede editarlo y entrando con «vista=previa».
+  const esPrevia = permiso === "previa";
 
   const lugar = [a.city, a.province, a.country && a.country !== "ES" ? a.country : null].filter(Boolean).join(", ");
   const precio = Number(a.price_per_night) > 0 ? Number(a.price_per_night) : null;

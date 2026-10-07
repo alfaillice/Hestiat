@@ -1,5 +1,7 @@
 "use client";
 
+import { iconoPin } from "@/components/icono-mapa";
+
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 
@@ -53,7 +55,7 @@ export default function MapaEditor({
       }).addTo(mapa);
       mapaRef.current = mapa;
       if (latInicial !== null && lngInicial !== null) {
-        marcadorRef.current = L.marker(centro, { draggable: true }).addTo(mapa);
+        marcadorRef.current = L.marker(centro, { draggable: true, icon: iconoPin(L) }).addTo(mapa);
         marcadorRef.current.on("dragend", () => {
           const p = marcadorRef.current.getLatLng();
           setLat(Math.round(p.lat * 1e6) / 1e6);
@@ -85,7 +87,7 @@ export default function MapaEditor({
     if (marcadorRef.current) {
       marcadorRef.current.setLatLng([nuevoLat, nuevoLng]);
     } else {
-      marcadorRef.current = L.marker([nuevoLat, nuevoLng], { draggable: true }).addTo(mapa);
+      marcadorRef.current = L.marker([nuevoLat, nuevoLng], { draggable: true, icon: iconoPin(L) }).addTo(mapa);
       marcadorRef.current.on("dragend", () => {
         const p = marcadorRef.current.getLatLng();
         setLat(Math.round(p.lat * 1e6) / 1e6);

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
+import { iconoPin } from "@/components/icono-mapa";
 
 /**
  * Mapa de la ficha: un solo marcador, en la propia página.
@@ -55,7 +56,12 @@ export default function MapaFicha({
             .addTo(mapa)
             .bindPopup(`${titulo}${lugar ? ` · ${lugar}` : ""}<br><em>Ubicación aproximada</em>`);
         } else {
-          L.marker([lat, lng]).addTo(mapa).bindPopup(`${titulo}${lugar ? ` · ${lugar}` : ""}`);
+          // Icono propio: si no se le pasa, Leaflet usa el suyo por defecto, que apunta a unas
+          // imágenes con ruta relativa que el paquete no sirve, y el marcador salía como imagen
+          // rota. Ver `components/icono-mapa`.
+          L.marker([lat, lng], { icon: iconoPin(L) })
+            .addTo(mapa)
+            .bindPopup(`${titulo}${lugar ? ` · ${lugar}` : ""}`);
         }
 
         // Leaflet pone sus controles en inglés ("Zoom in", "Marker"). Se traducen el título y el

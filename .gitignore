@@ -8,3 +8,8 @@ dist/
 .next/
 next-env.d.ts
 *.tsbuildinfo
+
+# Artefactos de despliegue y paquetes: se generan, no se versionan.
+*.zip
+next-standalone*/
+pkg*/

@@ -125,8 +125,18 @@ export interface FiltrosBusqueda {
   precioMax?: number;
   servicios?: string[];
   orden?: "recomendados" | "precio_asc" | "precio_desc";
+  /** Entrada y salida (AAAA-MM-DD). Con las dos, se descartan los alojamientos ocupados. */
+  desde?: string;
+  hasta?: string;
+  /** Viajeros: con dos o más, se descartan los alojamientos de menor capacidad. */
+  huespedes?: number;
   pagina?: number;
   porPagina?: number;
+}
+
+/** ¿Es una fecha AAAA-MM-DD de verdad? Sin esto, un valor raro en la URL filtraría de más. */
+function esFecha(v: string | undefined): boolean {
+  return typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
 }
 
 /* --------------------------------------------------------------- consultas -- */
@@ -168,6 +178,22 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
   for (const serv of opciones.servicios ?? []) {
     filtros.push("EXISTS (SELECT 1 FROM accommodation_amenity am WHERE am.accommodation_id = a.id AND am.amenity = ?)");
     valores.push(serv);
+  }
+  /* Capacidad: solo se filtra cuando se piden dos o más viajeros. Con el valor por defecto (1) no
+     se toca nada, para no cambiarle el resultado a quien no ha usado ese campo. */
+  if (typeof opciones.huespedes === "number" && opciones.huespedes >= 2) {
+    filtros.push("a.capacity IS NOT NULL AND a.capacity >= ?");
+    valores.push(opciones.huespedes);
+  }
+  /* Fechas: se descartan los alojamientos con alguna noche ocupada o bloqueada en el rango. La
+     disponibilidad vive en el esquema antiguo y se enlaza por `legacy_id`; la convención es la
+     misma que usan las reservas: la noche de salida no cuenta como ocupada. */
+  if (esFecha(opciones.desde) && esFecha(opciones.hasta) && (opciones.desde as string) < (opciones.hasta as string)) {
+    filtros.push(
+      `NOT EXISTS (SELECT 1 FROM hestiat.disponibilidad d
+                    WHERE d.alojamiento_id = a.legacy_id AND d.fecha >= ? AND d.fecha < ?)`,
+    );
+    valores.push(opciones.desde, opciones.hasta);
   }
   const where = filtros.join(" AND ");
 
@@ -212,6 +238,8 @@ export interface PuntoMapa {
   lat: string | null;
   lng: string | null;
   price_per_night: string | null;
+  /** Precio estimado. Va aquí porque el marcador debe enseñar el MISMO precio que la tarjeta. */
+  indicative_price: string | null;
   price_type: string;
 }
 
@@ -222,12 +250,74 @@ export async function puntosDelMapa(opciones: FiltrosBusqueda = {}, limite = 300
   if (ids.length === 0) return [];
   const marcas = ids.map(() => "?").join(",");
   const [rows] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT id, slug, title, lat, lng, price_per_night, price_type
+    `SELECT id, slug, title, lat, lng, price_per_night, indicative_price, price_type
        FROM accommodation
       WHERE id IN (${marcas}) AND lat IS NOT NULL AND lng IS NOT NULL`,
     ids,
   );
   return rows as unknown as PuntoMapa[];
+}
+
+/* ------------------------------------------------------------ sugerencias -- */
+
+export interface Sugerencia {
+  /** ciudad | provincia | alojamiento */
+  tipo: string;
+  texto: string;
+  /** Cuántos alojamientos publicados coinciden. Dato real, no estimado. */
+  total: number;
+}
+
+/**
+ * Sugerencias para la barra de búsqueda, sacadas del propio catálogo.
+ *
+ * Se buscan ciudades, provincias y nombres de alojamiento que empiecen o contengan lo escrito, y se
+ * ordenan por cuántos alojamientos hay detrás: así lo primero que se ofrece es lo que de verdad
+ * tiene resultados. Nada inventado: todo sale de `accommodation`.
+ */
+export async function sugerenciasDestino(consulta: string, limite = 8): Promise<Sugerencia[]> {
+  const q = (consulta ?? "").trim();
+  if (q.length < 2) return [];
+  const like = `%${q}%`;
+  const empieza = `${q}%`;
+
+  const [ciudades, provincias, titulos] = await Promise.all([
+    pool.query<mysql.RowDataPacket[]>(
+      `SELECT city AS texto, COUNT(*) AS total FROM accommodation
+        WHERE status = 'published' AND city IS NOT NULL AND city <> '' AND city LIKE ?
+        GROUP BY city ORDER BY (city LIKE ?) DESC, total DESC LIMIT 5`,
+      [like, empieza],
+    ),
+    pool.query<mysql.RowDataPacket[]>(
+      `SELECT province AS texto, COUNT(*) AS total FROM accommodation
+        WHERE status = 'published' AND province IS NOT NULL AND province <> '' AND province LIKE ?
+        GROUP BY province ORDER BY (province LIKE ?) DESC, total DESC LIMIT 3`,
+      [like, empieza],
+    ),
+    pool.query<mysql.RowDataPacket[]>(
+      `SELECT title AS texto, COUNT(*) AS total FROM accommodation
+        WHERE status = 'published' AND title LIKE ?
+        GROUP BY title ORDER BY (title LIKE ?) DESC, total DESC LIMIT 4`,
+      [like, empieza],
+    ),
+  ]);
+
+  const lista: Sugerencia[] = [
+    ...ciudades[0].map((f) => ({ tipo: "ciudad", texto: String(f.texto), total: Number(f.total ?? 0) })),
+    ...provincias[0].map((f) => ({ tipo: "provincia", texto: String(f.texto), total: Number(f.total ?? 0) })),
+    ...titulos[0].map((f) => ({ tipo: "alojamiento", texto: String(f.texto), total: Number(f.total ?? 0) })),
+  ];
+
+  // Sin repetidos: una ciudad que además es provincia se enseña una sola vez.
+  const vistos = new Set<string>();
+  return lista
+    .filter((s) => {
+      const clave = s.texto.toLowerCase();
+      if (vistos.has(clave)) return false;
+      vistos.add(clave);
+      return true;
+    })
+    .slice(0, limite);
 }
 
 /* ---------------------------------------------------- opciones de filtro -- */

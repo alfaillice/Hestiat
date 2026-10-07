@@ -289,6 +289,32 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .vista{display:flex;gap:6px;margin-left:auto;background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio-pill);padding:4px}
 .vista a{padding:7px 15px;border-radius:var(--radio-pill);font-size:13.5px;font-weight:600;color:var(--muted-fg)}
 .vista a.vista-activa{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,40,50,.10)}
+/* --- Barra de búsqueda de Explorar -------------------------------------------------------------
+   Primero lo que la persona viene a hacer: buscar. Va en una sola fila en pantalla grande y se
+   apila en móvil sin comerse la pantalla. Reutiliza los tokens y el botón que ya existen. */
+.buscador{display:grid;grid-template-columns:minmax(230px,1.7fr) repeat(2,minmax(126px,.72fr)) minmax(104px,.5fr) auto;gap:10px;align-items:end;background:var(--card);border:1px solid var(--border);border-radius:calc(var(--radio) + 6px);padding:12px;margin-bottom:16px;box-shadow:0 6px 22px rgba(20,40,50,.07)}
+.buscador-destino{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
+.buscador-campo{display:flex;flex-direction:column;gap:4px;min-width:0}
+.buscador-etq{font-size:12px;font-weight:600;color:var(--muted-fg);letter-spacing:.02em;white-space:nowrap}
+.buscador input[type=text],.buscador input[type=date],.buscador select{width:100%;min-width:0;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radio);background:var(--bg);color:var(--ink);font:inherit;font-size:14.5px}
+.buscador input[type=text]{font-weight:600}
+.buscador-boton{padding:12px 22px;white-space:nowrap}
+.sugerencias{position:absolute;top:100%;left:0;right:0;z-index:1200;margin:6px 0 0;padding:6px;list-style:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);box-shadow:0 14px 34px rgba(20,40,50,.16);max-height:330px;overflow:auto}
+.sugerencias button{display:flex;align-items:baseline;gap:8px;width:100%;padding:9px 10px;border:0;background:none;border-radius:calc(var(--radio) - 4px);cursor:pointer;text-align:left;font:inherit}
+.sugerencias button:hover,.sugerencias li[aria-selected=true] button{background:var(--secondary)}
+.sug-tipo{font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted-fg);min-width:78px}
+.sug-texto{font-size:14.5px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sug-total{margin-left:auto;font-size:12.5px;color:var(--muted-fg)}
+.vacio-enlaces{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:14px}
+.vacio-enlaces a{font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:underline}
+@media(max-width:1000px){.buscador{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:760px){
+  .buscador{grid-template-columns:1fr 1fr;gap:8px;padding:10px;border-radius:var(--radio)}
+  .buscador-destino{grid-column:1/-1}
+  .buscador-boton{grid-column:1/-1;width:100%}
+  .buscador-etq{font-size:11.5px}
+  .sugerencias{max-height:250px}
+}
 .galeria-cuenta{color:var(--muted-fg);font-size:13.5px;margin:4px 0 14px}
 /* Columnas derivadas del ancho REAL disponible, no de tramos fijos: la cuadrícula llena siempre el
    contenedor y no deja huecos, y las filas del scroll infinito salen con esta misma regla, así que

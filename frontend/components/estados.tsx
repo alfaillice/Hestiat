@@ -32,10 +32,13 @@ export function Vacio({
   titulo,
   explicacion,
   accion,
+  enlaces,
 }: {
   titulo: string;
   explicacion: ReactNode;
   accion?: { texto: string; href: string };
+  /** Salidas concretas para seguir buscando. Se muestran como enlaces, no como texto decorativo. */
+  enlaces?: { texto: string; href: string }[];
 }) {
   return (
     <div className="vacio">
@@ -47,6 +50,15 @@ export function Vacio({
             {accion.texto}
           </Link>
         </p>
+      )}
+      {enlaces && enlaces.length > 0 && (
+        <ul className="vacio-enlaces">
+          {enlaces.map((e) => (
+            <li key={e.href}>
+              <Link href={e.href}>{e.texto}</Link>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

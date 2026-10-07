@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
+import { aTarjeta, textoPrecioMarcador } from "@/lib/tarjetas";
 
 /**
  * Mapa real de Hestiat 2.0 (Leaflet + OpenStreetMap), como el de la aplicación antigua.
@@ -53,15 +54,18 @@ export default function Mapa({
       marcadoresRef.current.clear();
 
       const texto = (p: PuntoMapa) =>
-        p.price_per_night
-          ? `${Number(p.price_per_night).toLocaleString("es-ES")} €`
-          : "Consultar";
+        // MISMO precio que la tarjeta: se construye con `aTarjeta` (idéntico a como lo hace la
+        // galería) y se formatea con `textoPrecioMarcador`. Antes el mapa leía solo
+        // `price_per_night`, que es nulo en 17.608 de los 27.357 alojamientos porque su precio es
+        // estimado, así que casi todos salían como «Consultar» aunque tuvieran precio.
+        textoPrecioMarcador(aTarjeta({ ...p, portada: null } as unknown as Record<string, unknown>));
 
       for (const p of ubicados) {
         const activoEste = activo === p.slug;
+        const precio = texto(p);
         const icono = leaflet.divIcon({
           className: "hx-pin-wrapper",
-          html: `<span class="hx-pin${activoEste ? " hx-pin--activo" : ""}">${texto(p)}</span>`,
+          html: `<span class="hx-pin${activoEste ? " hx-pin--activo" : ""}" title="${p.title} · ${precio}">${precio}</span>`,
           iconSize: [0, 0],
           iconAnchor: [0, 0],
         });

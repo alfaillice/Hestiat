@@ -56,3 +56,15 @@ export function textoPrecio(t: TarjetaGaleria): { principal: string; sufijo: str
   const valor = `${t.precio.toLocaleString("es-ES")} €`;
   return { principal: `${t.orientativo ? "Desde " : ""}${valor}`, sufijo: " / noche" };
 }
+
+/**
+ * El precio del marcador del mapa, en versión corta.
+ *
+ * No es un segundo cálculo: consume `textoPrecio`, que es el mismo que usa la tarjeta. Así es
+ * imposible que la tarjeta diga «95 €» y el marcador diga «Consultar»: los dos leen lo mismo. Lo
+ * único propio de aquí es acortar el caso sin precio a «Consultar», porque el marcador es pequeño.
+ */
+export function textoPrecioMarcador(t: TarjetaGaleria): string {
+  if (t.precio === null) return "Consultar";
+  return textoPrecio(t).principal;
+}

@@ -16,7 +16,19 @@ export default function Filtros({
   basePath,
 }: {
   opciones: OpcionesFiltros;
-  actuales: { q?: string; provincia?: string; precioMin?: string; precioMax?: string; servicios?: string[]; orden?: string };
+  actuales: {
+    q?: string;
+    provincia?: string;
+    precioMin?: string;
+    precioMax?: string;
+    servicios?: string[];
+    orden?: string;
+    /** Fechas, viajeros y vista actual: viajan ocultos para que aplicar un filtro no los pierda. */
+    desde?: string;
+    hasta?: string;
+    huespedes?: string;
+    vista?: string;
+  };
   basePath: string;
 }) {
   const sel = actuales.servicios ?? [];
@@ -24,6 +36,11 @@ export default function Filtros({
   return (
     <form className="filtros" method="get" action={basePath}>
       <input type="hidden" name="q" value={actuales.q ?? ""} />
+      {/* Criterios de la barra de búsqueda: se conservan al aplicar filtros. */}
+      {actuales.desde && <input type="hidden" name="desde" value={actuales.desde} />}
+      {actuales.hasta && <input type="hidden" name="hasta" value={actuales.hasta} />}
+      {actuales.huespedes && <input type="hidden" name="huespedes" value={actuales.huespedes} />}
+      {actuales.vista && <input type="hidden" name="vista" value={actuales.vista} />}
 
       <label className="f-campo">
         <span className="etq">Provincia</span>

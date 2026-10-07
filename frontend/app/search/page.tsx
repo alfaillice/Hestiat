@@ -3,6 +3,7 @@ import Link from "next/link";
 import Resultados from "@/components/resultados";
 import Filtros from "@/components/filtros";
 import Mapa from "@/components/mapa";
+import BuscadorExplorar from "@/components/buscador-explorar";
 import { opcionesDeFiltros, puntosDelMapa } from "@/lib/db";
 import type { FiltrosBusqueda } from "@/lib/db";
 
@@ -24,6 +25,15 @@ function leerFiltros(sp: Record<string, string | string[] | undefined>): Filtros
   };
   const servs = sp.servicios;
   const orden = uno(sp.orden);
+  // Fechas y viajeros: se aceptan solo si tienen forma válida; si no, se ignoran en vez de filtrar
+  // por un valor raro que llegue en la dirección.
+  const fecha = (v: string | string[] | undefined) => {
+    const x = uno(v) ?? "";
+    return /^\d{4}-\d{2}-\d{2}$/.test(x) ? x : undefined;
+  };
+  const desde = fecha(sp.desde);
+  const hasta = fecha(sp.hasta);
+  const huespedes = num(sp.huespedes);
   return {
     q: (uno(sp.q) ?? "").trim(),
     provincia: uno(sp.provincia) || undefined,
@@ -31,6 +41,10 @@ function leerFiltros(sp: Record<string, string | string[] | undefined>): Filtros
     precioMax: num(sp.precioMax),
     servicios: Array.isArray(servs) ? servs : servs ? [servs] : [],
     orden: orden === "precio_asc" || orden === "precio_desc" ? orden : "recomendados",
+    desde: desde && hasta && desde < hasta ? desde : undefined,
+    hasta: desde && hasta && desde < hasta ? hasta : undefined,
+    // Con 1 viajero no se filtra nada: es el valor por defecto y no debe cambiar los resultados.
+    huespedes: huespedes && huespedes >= 2 ? huespedes : undefined,
   };
 }
 
@@ -65,9 +79,12 @@ export default async function Explorar({
     if (filtros.q) qs.set("q", filtros.q);
     if (filtros.provincia) qs.set("provincia", filtros.provincia);
     if (typeof filtros.precioMin === "number") qs.set("precioMin", String(filtros.precioMin));
-    if (typeof filtros.precioMax === "number") qs.set("precioMax", String(filtros.precioMax));
+    if (filtros.precioMax) qs.set("precioMax", String(filtros.precioMax));
     for (const s of filtros.servicios ?? []) qs.append("servicios", s);
     if (filtros.orden && filtros.orden !== "recomendados") qs.set("orden", filtros.orden);
+    if (filtros.desde) qs.set("desde", filtros.desde);
+    if (filtros.hasta) qs.set("hasta", filtros.hasta);
+    if (filtros.huespedes) qs.set("huespedes", String(filtros.huespedes));
     if (vista === "mapa") qs.set("vista", "mapa");
     const cadena = qs.toString();
     return `/search${cadena ? `?${cadena}` : ""}`;
@@ -83,6 +100,24 @@ export default async function Explorar({
         </nav>
       </div>
 
+      {/* La búsqueda va primero: es lo que la persona viene a hacer. Los filtros siguen debajo,
+          intactos, y las dos cosas se suman en la misma dirección. */}
+      <BuscadorExplorar
+        destino={filtros.q ?? ""}
+        desde={filtros.desde}
+        hasta={filtros.hasta}
+        huespedes={filtros.huespedes}
+        basePath="/search"
+        conservar={{
+          provincia: filtros.provincia,
+          precioMin: filtros.precioMin ? String(filtros.precioMin) : undefined,
+          precioMax: filtros.precioMax ? String(filtros.precioMax) : undefined,
+          servicios: filtros.servicios,
+          orden: filtros.orden && filtros.orden !== "recomendados" ? filtros.orden : undefined,
+          vista: verMapa ? "mapa" : undefined,
+        }}
+      />
+
       <Filtros
         opciones={opciones}
         actuales={{
@@ -92,6 +127,10 @@ export default async function Explorar({
           precioMax: filtros.precioMax ? String(filtros.precioMax) : undefined,
           servicios: filtros.servicios,
           orden: filtros.orden,
+          desde: filtros.desde,
+          hasta: filtros.hasta,
+          huespedes: filtros.huespedes ? String(filtros.huespedes) : undefined,
+          vista: verMapa ? "mapa" : undefined,
         }}
         basePath="/search"
       />

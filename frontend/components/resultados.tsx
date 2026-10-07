@@ -45,15 +45,30 @@ export default async function Resultados({
   if (typeof filtros?.precioMax === "number") params.set("precioMax", String(filtros.precioMax));
   for (const s of filtros?.servicios ?? []) params.append("servicios", s);
   if (filtros?.orden && filtros.orden !== "recomendados") params.set("orden", filtros.orden);
+  // Fechas y viajeros también viajan: sin esto, la segunda tanda del scroll infinito los perdería.
+  if (filtros?.desde) params.set("desde", filtros.desde);
+  if (filtros?.hasta) params.set("hasta", filtros.hasta);
+  if (filtros?.huespedes) params.set("huespedes", String(filtros.huespedes));
 
   if (items.length === 0) {
+    // Estado vacío con salidas de verdad: quitar las fechas si las hay, o rehacer la búsqueda.
+    const sinFechas = new URLSearchParams(params);
+    sinFechas.delete("desde");
+    sinFechas.delete("hasta");
+    const salidas: { texto: string; href: string }[] = [];
+    if (params.has("desde") || params.has("hasta")) {
+      const cadena = sinFechas.toString();
+      salidas.push({ texto: "Probar sin fechas concretas", href: `${basePath}${cadena ? `?${cadena}` : ""}` });
+    }
+    if (params.toString()) salidas.push({ texto: "Ver todo el catálogo", href: basePath });
     return (
       <>
         <p className="galeria-cuenta">0 alojamientos</p>
         <Vacio
-          titulo="No hay resultados con ese criterio"
-          explicacion="Prueba con otra ciudad o provincia, amplía el rango de precio o quita algún servicio."
-          accion={{ texto: "Quitar todos los filtros", href: basePath }}
+          titulo="No encontramos alojamientos con esa búsqueda"
+          explicacion="Prueba con otra ciudad, provincia o zona. Si has puesto fechas, puede que esos días estén ocupados; también puedes ampliar el rango de precio o quitar algún servicio."
+          accion={{ texto: "Quitar todos los criterios", href: basePath }}
+          enlaces={salidas}
         />
       </>
     );

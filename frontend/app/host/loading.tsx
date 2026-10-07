@@ -9,7 +9,7 @@ import { Cargando } from "@/components/estados";
  */
 export default function CargandoPanel() {
   return (
-    <div style={{ padding: "22px 18px", maxWidth: 1360, margin: "0 auto" }}>
+    <div style={{ padding: "22px 18px", maxWidth: "var(--contenedor)", margin: "0 auto" }}>
       <Cargando lineas={6} />
     </div>
   );

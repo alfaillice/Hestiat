@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { pool } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth.server";
 import { alojamientoReservable, calcularResumen, nochesEntre } from "@/lib/reservas.server";
 
 export const dynamic = "force-dynamic";
+
+/** Título propio: antes heredaba el de la portada. No se indexa, es un formulario. */
+export const metadata: Metadata = {
+  title: "Solicitar reserva — Hestiat",
+  robots: { index: false, follow: true },
+};
 
 /**
  * Solicitar reserva.
@@ -75,13 +82,18 @@ export default async function Reservar({
   const resumen = noches > 0 ? calcularResumen(aloj.precio, aloj.moneda, desde, hasta, aloj.precioEsOrientativo) : null;
 
   return (
-    <main className="wrap" style={{ maxWidth: 720, paddingTop: 36 }}>
+    <main className="wrap" style={{ paddingTop: 36 }}>
       <h1 style={{ fontSize: 28, marginBottom: 4 }}>Solicitar reserva</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 18 }}>
         <Link href={`/alojamiento/${slug}`} style={{ textDecoration: "underline" }}>{aloj.titulo}</Link>
         {" · "}{[aloj.ciudad, aloj.provincia].filter(Boolean).join(", ")}
         {aloj.capacidad > 0 ? ` · hasta ${aloj.capacidad} huéspedes` : ""}
       </p>
+
+      {/* Dos columnas dentro del contenedor global: a la izquierda las fechas, a la derecha el
+          desglose y los datos de contacto. Antes era una columna de 720 px flotando en el centro. */}
+      <div className="pagina-cols">
+        <div>
 
       {sp.error && (
         <p className="aviso" style={{ borderColor: "var(--destructive)", color: "var(--destructive)", marginBottom: 16 }}>{sp.error}</p>
@@ -108,6 +120,8 @@ export default async function Reservar({
         </div>
       </form>
 
+        </div>
+        <div>
       {resumen && resumen.noches > 0 && (
         <section className="aud-bloque" style={{ marginBottom: 18 }}>
           <div className="aud-cab"><h2>Desglose</h2><span className="aud-num">{resumen.total.toLocaleString("es-ES")} {resumen.moneda}</span></div>
@@ -149,6 +163,8 @@ export default async function Reservar({
           </div>
         </form>
       )}
+        </div>
+      </div>
     </main>
   );
 }

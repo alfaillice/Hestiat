@@ -160,6 +160,13 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .fila-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .login{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:20px;display:grid;gap:14px}
 /* ---------- pantalla de acceso (entrar y crear cuenta) ---------- */
+/* Marco de página con dos columnas, dentro del contenedor global. Se usa en el panel de usuario y
+   en el proceso de reserva: antes eran columnas estrechas flotando en el centro, con los raíles
+   desalineados respecto a la cabecera. */
+.pagina-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(320px,440px);gap:30px;align-items:start}
+.pagina-cols-inv{grid-template-columns:minmax(340px,520px) minmax(0,1fr)}
+@media(max-width:900px){.pagina-cols{grid-template-columns:1fr}}
+/* medio acceso */
 .acceso{display:flex;justify-content:center;padding:56px 18px 70px}
 .acceso-tarjeta{width:100%;max-width:440px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:30px 28px;box-shadow:0 10px 34px rgba(20,40,50,.07);display:grid;gap:14px}
 .acceso-marca{font-family:var(--fuente-titulo);font-weight:700;color:var(--primary);font-size:16.5px;text-align:center;letter-spacing:-.01em}

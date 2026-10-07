@@ -35,7 +35,7 @@ export default async function Perfil({
   const esAnfitrion = perfil.rol === "anfitrion" || perfil.rol === "admin";
 
   return (
-    <main className="wrap" style={{ maxWidth: 820, paddingTop: 32 }}>
+    <main className="wrap" style={{ paddingTop: 32 }}>
       <header className="admin-cab">
         <h1>Mi perfil</h1>
         <p className="m" style={{ color: "var(--muted-fg)" }}>
@@ -62,6 +62,11 @@ export default async function Perfil({
         </form>
       </nav>
 
+      {/* Dos columnas dentro del contenedor global: a la izquierda los datos y la contraseña, a la
+          derecha las reservas, que necesitan anchura. Antes esto era una columna de 820 px flotando
+          en el centro, con los raíles desalineados respecto a la cabecera. */}
+      <div className="pagina-cols pagina-cols-inv">
+        <div>
       <h2 style={{ fontSize: 19, margin: "8px 0 10px" }}>Mis datos</h2>
       <form action="/api/perfil" method="post" className="form-edicion">
         <input type="hidden" name="accion" value="perfil" />
@@ -81,7 +86,9 @@ export default async function Perfil({
         <div className="f-acciones"><button className="f-aplicar" type="submit">Guardar cambios</button></div>
       </form>
 
-      <h2 style={{ fontSize: 19, margin: "26px 0 10px" }}>Mis reservas</h2>
+        </div>
+        <div>
+      <h2 style={{ fontSize: 19, margin: "8px 0 10px" }}>Mis reservas</h2>
       {reservas.length === 0 ? (
         <p className="aviso">
           Todavía no has solicitado ninguna reserva. Cuando lo hagas, aparecerá aquí con su código y su estado.
@@ -116,6 +123,8 @@ export default async function Perfil({
         </div>
         <div className="f-acciones"><button className="f-limpiar" type="submit">Cambiar contraseña</button></div>
       </form>
+        </div>
+      </div>
     </main>
   );
 }

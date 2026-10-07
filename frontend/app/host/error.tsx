@@ -21,7 +21,7 @@ export default function ErrorPanel({
   }
 
   return (
-    <div style={{ padding: "22px 18px", maxWidth: 1360, margin: "0 auto" }}>
+    <div style={{ padding: "22px 18px", maxWidth: "var(--contenedor)", margin: "0 auto" }}>
       <PanelError onReintentar={reset} />
     </div>
   );

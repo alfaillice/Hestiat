@@ -43,6 +43,7 @@ export default function BuscadorExplorar({
   huespedes,
   conservar,
   basePath = "/search",
+  compacto = false,
 }: {
   /** Texto actual del destino. */
   destino: string;
@@ -52,6 +53,8 @@ export default function BuscadorExplorar({
   /** Filtros actuales que NO deben perderse al buscar (provincia, precio, servicios, orden, vista). */
   conservar?: Record<string, string | string[] | undefined>;
   basePath?: string;
+  /** Versión de cabecera: una sola fila en píldora, etiquetas ocultas y botón redondo. */
+  compacto?: boolean;
 }) {
   const formulario = useRef<HTMLFormElement>(null);
   const caja = useRef<HTMLDivElement>(null);
@@ -142,7 +145,13 @@ export default function BuscadorExplorar({
   );
 
   return (
-    <form ref={formulario} className="buscador" method="get" action={basePath} role="search">
+    <form
+      ref={formulario}
+      className={compacto ? "buscador buscador-compacto" : "buscador"}
+      method="get"
+      action={basePath}
+      role="search"
+    >
       {conservados.flatMap(([clave, valor]) =>
         Array.isArray(valor)
           ? valor.map((v, i) => <input key={`${clave}-${i}`} type="hidden" name={clave} value={v} />)
@@ -151,7 +160,7 @@ export default function BuscadorExplorar({
 
       <div className="buscador-destino" ref={caja}>
         <label className="buscador-etq" htmlFor="destino">
-          <span aria-hidden="true">🔎</span> ¿Dónde quieres alojarte?
+          <span aria-hidden="true">🔎</span> {compacto ? "¿Dónde quieres ir?" : "¿Dónde quieres alojarte?"}
         </label>
         <input
           id="destino"
@@ -165,7 +174,7 @@ export default function BuscadorExplorar({
           }}
           onFocus={() => lista.length > 0 && setAbierto(true)}
           onKeyDown={teclas}
-          placeholder="Ciudad, provincia, zona o alojamiento"
+          placeholder={compacto ? "¿Dónde quieres ir?" : "Ciudad, provincia, zona o alojamiento"}
           autoComplete="off"
           role="combobox"
           aria-expanded={abierto}
@@ -188,13 +197,13 @@ export default function BuscadorExplorar({
       </div>
 
       <label className="buscador-campo">
-        <span className="buscador-etq">Entrada</span>
-        <input type="date" name="desde" defaultValue={desde ?? ""} />
+        <span className="buscador-etq">{compacto ? "Fechas" : "Entrada"}</span>
+        <input type="date" name="desde" defaultValue={desde ?? ""} aria-label="Fecha de entrada" />
       </label>
 
       <label className="buscador-campo">
-        <span className="buscador-etq">Salida</span>
-        <input type="date" name="hasta" defaultValue={hasta ?? ""} />
+        <span className="buscador-etq">{compacto ? "Fechas" : "Salida"}</span>
+        <input type="date" name="hasta" defaultValue={hasta ?? ""} aria-label="Fecha de salida" />
       </label>
 
       <label className="buscador-campo">
@@ -208,7 +217,10 @@ export default function BuscadorExplorar({
       </label>
 
       {/* Mismo estilo de botón que «Aplicar filtros»: una sola forma de botón en la página. */}
-      <button type="submit" className="f-aplicar buscador-boton">Buscar</button>
+      <button type="submit" className="f-aplicar buscador-boton">
+        {compacto ? <span aria-hidden="true">🔍</span> : "Buscar"}
+        {compacto ? <span className="solo-lectores">Buscar</span> : null}
+      </button>
     </form>
   );
 }

@@ -1,14 +1,41 @@
+import type { Metadata } from "next";
 import Resultados from "@/components/resultados";
-import HeroScroll from "@/components/hero-scroll";
-import { destacados, destinosDestacados, estilosDeViaje } from "@/lib/db";
+import HeroHome from "@/components/hero-home";
+import SeccionHome from "@/components/seccion-home";
+import TarjetaDestino from "@/components/tarjeta-destino";
+import TarjetaCategoria from "@/components/tarjeta-categoria";
+import TarjetaAlojamiento from "@/components/tarjeta-alojamiento";
+import { aTarjeta } from "@/lib/tarjetas";
+import { destacados } from "@/lib/db";
+import { destinosParaTi, categoriasServicio, categoriasExperiencia } from "@/lib/home.server";
+import { getCurrentUser } from "@/lib/auth.server";
+import { guardadosEntre } from "@/lib/favoritos.server";
 
 export const dynamic = "force-dynamic";
 
+export const metadata: Metadata = {
+  title: "Hestiat — Alojamientos, experiencias y servicios en toda España",
+  description:
+    "Descubre y reserva alojamientos con carácter, experiencias únicas y servicios locales en toda España. Los precios, tal cual: sin comisiones y sin sorpresas.",
+  alternates: { canonical: "/" },
+};
+
 /**
- * Portada de Hestiat 2.0, replicando la estructura que el cliente ya aprobó
- * (foto grande + buscador de tres partes, «Busca como viajas», destinos con foto
- * y contador, y alojamientos populares), pero servida desde el esquema NUEVO con
- * los 27.359 alojamientos migrados.
+ * Portada de Hestiat.
+ *
+ * Es una página para DESCUBRIR: un fondo visual con el contenido encima desde el primer momento,
+ * tres accesos claros (Alojamientos, Experiencias, Servicios) y cuatro filas que se recorren a
+ * gusto —destinos, servicios, experiencias y alojamientos reales—, cada una con «Ver todos».
+ *
+ * Dos reglas que se respetan en toda la página:
+ *
+ *  · NADA INVENTADO. Los destinos, las categorías y sus recuentos salen de la base real; los
+ *    alojamientos usan la misma consulta y la misma tarjeta que Explorar, así que el precio es
+ *    exactamente el mismo. Las fotos de destino son fotografías reales de cada monumento.
+ *  · NADA BLOQUEA. El vídeo es un fondo: no detiene la carga, ni el scroll, ni los clics.
+ *
+ * La búsqueda ya no vive aquí: está en la cabecera, disponible en todas las páginas. Esta ruta
+ * sigue atendiendo `/?q=...`, que es donde apuntan los enlaces antiguos.
  */
 export default async function Portada({
   searchParams,
@@ -18,161 +45,100 @@ export default async function Portada({
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
   const pagina = Math.max(1, Number(sp.p ?? "1") || 1);
-  const buscarActivo = q !== "" || pagina > 1;
 
-  const [destacadosLista, provincias, estilos] = await Promise.all([
+  // Enlace antiguo de resultados en la raíz: se sigue sirviendo igual.
+  if (q !== "" || pagina > 1) {
+    return (
+      <main className="inicio">
+        <div className="wrap">
+          <SeccionHome titulo={`Resultados para «${q}»`} verTodos="/search" verTodosTexto="Buscar otra cosa">
+            <p className="seccion-home-sub" style={{ padding: "4px 0" }}>
+              Puedes afinar la búsqueda desde la barra de arriba.
+            </p>
+          </SeccionHome>
+          <section className="seccion-home">
+            <Resultados q={q} pagina={pagina} basePath="/" />
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  const sesion = await getCurrentUser();
+  const [destinos, servicios, experiencias, alojamientos] = await Promise.all([
+    destinosParaTi(),
+    categoriasServicio(8),
+    categoriasExperiencia(8),
     destacados(8),
-    destinosDestacados(12),
-    estilosDeViaje(),
   ]);
+  const tarjetas = alojamientos.map((a) => aTarjeta(a as unknown as Record<string, unknown>));
+  const guardados = sesion
+    ? await guardadosEntre(Number(sesion.id), tarjetas.map((t) => t.id))
+    : new Set<number>();
 
   return (
-    <main>
-      {/* ---------------------------------------------------------- hero -- */}
-      {/*
-       * Portada cinematográfica: la película avanza con el scroll. El texto y el buscador siguen
-       * siendo los mismos y siguen en el HTML. El crédito dice la verdad: la escena es de
-       * ambientación, no la foto de un alojamiento concreto del catálogo.
-       */}
-      <HeroScroll
+    <main className="inicio">
+      <HeroHome
         poster="/hero/hero-poster.jpg"
         video="/hero/hero.mp4"
         videoMovil="/hero/hero-movil.mp4"
         credito="Escena de ambientación, no es un alojamiento concreto"
-      >
-        <p className="eyebrow">Alojamientos con carácter</p>
-        <h1>Encuentra donde quedarte, sin sorpresas y sin comisiones.</h1>
-        <p className="sub">
-          Busca por ciudad, provincia, código postal o punto de interés. Comparamos precios
-          publicados y comprobamos la disponibilidad de verdad.
+      />
+
+      <div className="wrap">
+        <SeccionHome
+          titulo="Destinos para ti"
+          sub="Ciudades del catálogo con alojamientos publicados, con su recuento real"
+          verTodos="/search"
+        >
+          {destinos.map((d) => (
+            <TarjetaDestino key={d.nombre} destino={d} />
+          ))}
+        </SeccionHome>
+
+        <SeccionHome
+          titulo="Servicios populares"
+          sub={`Categorías reales de servicios: ${servicios.reduce((s, c) => s + c.total, 0).toLocaleString("es-ES")} en total`}
+          verTodos="/servicios"
+        >
+          {servicios.map((c) => (
+            <TarjetaCategoria key={c.valor} categoria={c} pie="servicios" />
+          ))}
+        </SeccionHome>
+
+        <SeccionHome
+          titulo="Experiencias destacadas"
+          sub={`Categorías reales del catálogo de experiencias: ${experiencias.reduce((s, c) => s + c.total, 0).toLocaleString("es-ES")} en total`}
+          verTodos="/experiencias"
+        >
+          {experiencias.map((c) => (
+            <TarjetaCategoria key={c.valor} categoria={c} pie="experiencias" />
+          ))}
+        </SeccionHome>
+
+        <SeccionHome
+          titulo="Alojamientos destacados"
+          sub="Del catálogo real, con el mismo precio que verás en su ficha"
+          verTodos="/search"
+        >
+          {tarjetas.map((t) => (
+            <TarjetaAlojamiento
+              key={t.id}
+              a={t}
+              guardado={guardados.has(t.id)}
+              haySesion={Boolean(sesion)}
+              volverA="/"
+            />
+          ))}
+        </SeccionHome>
+
+        <p className="aviso pie-inicio">
+          Los alojamientos, sus precios y sus fotografías salen del catálogo real de Hestiat. Las
+          fotografías del catálogo proceden de fuentes públicas y se muestran como referencia del
+          entorno, no siempre como imágenes propias de cada propiedad. Las imágenes de las secciones
+          de servicios y experiencias son de ambientación, y así se indica en cada tarjeta.
         </p>
-        <form className="buscador" method="get" action="/search">
-          <span className="campo">
-            <span className="etq">Destino</span>
-            <input name="q" defaultValue={q} placeholder="¿A dónde vas?" aria-label="Destino" />
-          </span>
-          <span className="sep" />
-          <span className="campo" style={{ flex: "0 0 130px" }}>
-            <span className="etq">Fechas</span>
-            <input placeholder="¿Cuándo?" aria-label="Fechas" />
-          </span>
-          <span className="sep" />
-          <span className="campo" style={{ flex: "0 0 130px" }}>
-            <span className="etq">Viajeros</span>
-            <input placeholder="2 huéspedes" aria-label="Viajeros" />
-          </span>
-          <button type="submit">Buscar</button>
-        </form>
-      </HeroScroll>
-
-      {buscarActivo ? (
-        <section className="seccion wrap">
-          <Resultados q={q} pagina={pagina} basePath="/" />
-        </section>
-      ) : (
-        <>
-          {/* ------------------------------------ busca como viajas -- */}
-          <section className="seccion wrap">
-            <div className="seccion-cab">
-              <h2>Busca como viajas</h2>
-              <a className="mas" href="/search">
-                Explorar todo el catálogo
-              </a>
-            </div>
-            <p className="seccion-sub">Atajos por forma de escapada</p>
-            <div className="carrusel">
-              {estilos.map((e) => (
-                <a className="estilo" key={e.clave} href={`/search?q=${encodeURIComponent(e.etiqueta)}`}>
-                  {e.portada ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={e.portada} alt={e.etiqueta} loading="lazy" />
-                  ) : (
-                    <div style={{ height: "100%", background: "var(--surface-strong)" }} />
-                  )}
-                  <span className="velo" />
-                  <span className="txt">
-                    <b>{e.etiqueta}</b>
-                    <span>
-                      {e.descripcion} · {e.total.toLocaleString("es-ES")} alojamientos
-                    </span>
-                  </span>
-                </a>
-              ))}
-            </div>
-          </section>
-
-          {/* --------------------------------------- destinos para ti -- */}
-          <section className="seccion wrap">
-            <div className="seccion-cab">
-              <h2>Destinos para ti</h2>
-              <a className="mas" href="/search">
-                Ver todos
-              </a>
-            </div>
-            <p className="seccion-sub">Provincias con alojamientos publicados, por número de plazas</p>
-            <div className="destinos">
-              {provincias.map((p) => (
-                <a className="destino" key={p.province} href={`/search?q=${encodeURIComponent(p.province)}`}>
-                  {p.portada ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.portada} alt={p.province} loading="lazy" />
-                  ) : (
-                    <div style={{ height: 96, background: "var(--surface-strong)" }} />
-                  )}
-                  <div className="d">
-                    <b>{p.province}</b>
-                    <span>{p.total.toLocaleString("es-ES")} alojamientos</span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </section>
-
-          {/* --------------------------------- alojamientos populares -- */}
-          <section className="seccion wrap">
-            <div className="seccion-cab">
-              <h2>Alojamientos populares</h2>
-              <a className="mas" href="/search">
-                Ver todos
-              </a>
-            </div>
-            <p className="seccion-sub">Del catálogo real de Hestiat, con sus precios publicados</p>
-            <div className="rejilla">
-              {destacadosLista.map((a) => (
-                <a className="aloj" key={a.id} href={`/alojamiento/${a.slug}`}>
-                  <span className="foto">
-                    {a.portada ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={a.portada} alt={a.title} loading="lazy" />
-                    ) : null}
-                    <button className="fav" aria-label="Guardar en favoritos">
-                      ♡
-                    </button>
-                  </span>
-                  <span className="d">
-                    <span className="t">{a.title}</span>
-                    <span className="m">{[a.city, a.province].filter(Boolean).join(", ")}</span>
-                    <span className="p">
-                      {a.price_per_night
-                        ? `${Number(a.price_per_night).toLocaleString("es-ES")} € / noche`
-                        : "Consultar"}
-                      {a.price_type !== "real" && <span className="ref"> · orientativo</span>}
-                    </span>
-                  </span>
-                </a>
-              ))}
-            </div>
-          </section>
-        </>
-      )}
-
-      <section className="seccion wrap">
-        <p className="aviso">
-          Datos del esquema nuevo ya migrado: <strong>27.359 alojamientos</strong>, 17.619 fotografías y
-          12.185 servicios, procedentes de la base original. Los precios se distinguen siempre entre
-          publicados y orientativos, con su fuente.
-        </p>
-      </section>
+      </div>
     </main>
   );
 }

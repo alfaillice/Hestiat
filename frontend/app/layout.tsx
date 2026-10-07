@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth.server";
+import BuscadorExplorar from "@/components/buscador-explorar";
 import { DM_Sans, Manrope } from "next/font/google";
 
 /**
@@ -54,13 +55,7 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .cab-in{display:flex;align-items:center;gap:14px;height:60px}
 .marca{font-weight:700;letter-spacing:-.01em;font-size:20px;color:var(--primary);font-family:var(--fuente-titulo)}
 .cab-btn{margin-left:auto;border:1px solid var(--border);background:var(--card);border-radius:var(--radio-pill);padding:11px 16px;font:inherit;cursor:pointer}
-/* buscador pill */
-.buscador{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio-pill);padding:6px;box-shadow:0 10px 30px rgba(20,40,50,.10);max-width:940px}
-.buscador .campo{flex:1;display:flex;flex-direction:column;padding:6px 14px;min-width:0}
-.buscador .etq{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--muted-fg);text-transform:uppercase}
-.buscador input{border:0;background:transparent;font:inherit;outline:none;color:var(--ink);width:100%}
-.buscador .sep{width:1px;height:28px;background:var(--border)}
-.buscador button{background:var(--primary);color:var(--primary-fg);border:0;border-radius:var(--radio-pill);padding:12px 22px;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+/* (el buscador flotante de la portada se ha eliminado: la búsqueda vive en la cabecera) */
 /* hero */
 .hero{position:relative;min-height:420px;display:flex;align-items:flex-end;margin-bottom:26px;overflow:hidden}
 .hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -307,6 +302,127 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .sug-total{margin-left:auto;font-size:12.5px;color:var(--muted-fg)}
 .vacio-enlaces{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:14px}
 .vacio-enlaces a{font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:underline}
+/* === CABECERA CON BÚSQUEDA =====================================================================
+   La búsqueda pasa a la cabecera, disponible en todas las páginas. Fondo blanco limpio, texto
+   antracita y el magenta de Hestiat solo en lo activo y en lo accionable. */
+.solo-lectores{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.cab{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40}
+.cab-in{display:flex;align-items:center;gap:16px;min-height:72px;padding:8px 18px;flex-wrap:nowrap}
+.marca{font-weight:700;letter-spacing:-.02em;font-size:21px;color:var(--ink);font-family:var(--fuente-titulo);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.marca-casa{font-size:18px}
+.cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
+.cab-nav{display:flex;gap:8px;align-items:center;flex:0 0 auto}
+.cab-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radio-pill);padding:9px 15px;font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease}
+.cab-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(20,40,50,.10);border-color:var(--fucsia)}
+.cab-pill:active{transform:translateY(0) scale(.985)}
+.cab-pill-on{border-color:var(--fucsia);color:var(--fucsia);background:color-mix(in oklab, var(--fucsia) 7%, white)}
+.cab-cuenta{display:flex;align-items:center;gap:14px;flex:0 0 auto}
+.cab-menu{display:none;margin-left:auto;position:relative}
+.cab-menu summary{list-style:none;cursor:pointer;border:1px solid var(--border);border-radius:var(--radio-pill);padding:9px 14px;font-size:13.5px;font-weight:600}
+.cab-menu summary::-webkit-details-marker{display:none}
+.cab-menu-lista{position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:8px;min-width:220px;box-shadow:0 16px 40px rgba(20,40,50,.16);display:flex;flex-direction:column;gap:2px;z-index:50}
+.cab-menu-lista a,.cab-menu-lista button{padding:10px 12px;border-radius:calc(var(--radio) - 4px);font-size:14px;text-align:left}
+.cab-menu-lista a:hover{background:var(--secondary)}
+/* buscador en versión de cabecera: una sola fila en píldora, con botón redondo */
+.buscador-compacto{display:flex;align-items:center;gap:4px;grid-template-columns:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radio-pill);padding:5px;margin:0;box-shadow:none}
+.buscador-compacto .buscador-destino{flex:1 1 auto;min-width:0}
+.buscador-compacto .buscador-campo{flex:0 0 auto}
+.buscador-compacto .buscador-etq{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.buscador-compacto input[type=text],.buscador-compacto input[type=date],.buscador-compacto select{border:0;background:transparent;padding:9px 10px;border-radius:var(--radio-pill)}
+.buscador-compacto input[type=text]{border:1px solid var(--border);background:var(--card);border-radius:var(--radio-pill);padding-left:14px}
+.buscador-compacto .buscador-boton{border-radius:50%;width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+/* === PORTADA ===================================================================================
+   Contenido encima del fondo visual desde el primer momento. El vídeo es un fondo de una pantalla,
+   no una intro: no bloquea el scroll ni los clics. */
+.hero2{position:relative;min-height:min(72vh,640px);display:flex;align-items:flex-end;overflow:hidden;margin-bottom:10px}
+.hero2-fondo{position:absolute;inset:0;background-size:cover;background-position:center;background-color:#20343c}
+.hero2-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
+.hero2-video-visible{opacity:1}
+.hero2-velo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,26,32,.10) 0%,rgba(12,26,32,.28) 45%,rgba(12,26,32,.74) 100%)}
+.hero2-cont{position:relative;width:100%;max-width:var(--contenedor);margin:0 auto;padding:0 18px 26px}
+.hero2-eyebrow{color:#fff;opacity:.92;font-weight:700;letter-spacing:.16em;font-size:11px;text-transform:uppercase;margin-bottom:10px}
+.hero2 h1{color:#fff;font-size:clamp(30px,4.6vw,58px);line-height:1.05;max-width:18ch}
+.hero2-sub{display:block;font-size:clamp(15px,1.5vw,21px);font-weight:500;color:rgba(255,255,255,.92);margin-top:10px;letter-spacing:-.01em}
+.hero2-accesos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px;max-width:900px}
+.acceso{display:flex;align-items:center;gap:11px;background:rgba(255,255,255,.94);border-radius:var(--radio);padding:13px 15px;backdrop-filter:blur(6px);transition:transform .18s ease, box-shadow .18s ease}
+.acceso:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(10,25,32,.22)}
+.acceso-icono{font-size:22px}
+.acceso b{display:block;font-family:var(--fuente-titulo);font-size:15px;color:var(--ink)}
+.acceso span span{font-size:12.5px;color:var(--muted-fg)}
+.hero2-credito{position:absolute;right:16px;bottom:8px;color:rgba(255,255,255,.6);font-size:10.5px}
+.inicio{padding-bottom:40px}
+.seccion-home{margin:46px 0}
+.seccion-home-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+.seccion-home h2{font-size:clamp(20px,2.1vw,27px)}
+.seccion-home-sub{color:var(--muted-fg);font-size:13.5px;margin-top:4px}
+.ver-todos{color:var(--fucsia);font-weight:700;font-size:14px;white-space:nowrap;transition:opacity .16s ease}
+.ver-todos:hover{opacity:.78}
+.car{position:relative}
+.car-pista{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:thin}
+.car-pista>*{scroll-snap-align:start;flex:0 0 auto}
+.car-flecha{position:absolute;top:36%;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--ink);font-size:16px;cursor:pointer;z-index:5;box-shadow:0 6px 18px rgba(20,40,50,.14);transition:transform .16s ease, opacity .16s ease}
+.car-flecha:hover:not(:disabled){transform:scale(1.06)}
+.car-flecha:disabled{opacity:.28;cursor:default}
+.car-atras{left:-6px}
+.car-alante{right:-6px}
+.tdest{position:relative;width:100%;border-radius:var(--radio);overflow:hidden;background:var(--surface-strong);color:#fff;transition:transform .18s ease, box-shadow .18s ease}
+.tdest{flex:0 0 calc((100% - 112px) / 8);min-width:186px;aspect-ratio:3/4}
+.tdest:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(20,40,50,.16)}
+.tdest-media{position:absolute;inset:0}
+.tdest-media img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.tdest:hover .tdest-media img{transform:scale(1.03)}
+.tdest-velo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,20,26,0) 38%,rgba(10,20,26,.78) 100%)}
+.tdest-txt{position:absolute;left:12px;right:12px;bottom:11px;display:flex;flex-direction:column;gap:2px}
+.tdest-txt b{font-family:var(--fuente-titulo);font-size:16px;color:#fff}
+.tdest-txt span{font-size:12px;color:rgba(255,255,255,.86)}
+.tcat{display:block;border-radius:var(--radio);overflow:hidden;background:var(--card);border:1px solid var(--border);transition:transform .18s ease, box-shadow .18s ease}
+.tcat{flex:0 0 calc((100% - 112px) / 8);min-width:196px}
+.tcat:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(20,40,50,.14)}
+.tcat-media{display:block;aspect-ratio:4/3;background:var(--surface-strong);overflow:hidden}
+.tcat-media img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.tcat:hover .tcat-media img{transform:scale(1.04)}
+.tcat-sinfoto{display:block;width:100%;height:100%;background:linear-gradient(135deg,var(--surface-strong),var(--secondary))}
+.tcat-txt{display:flex;flex-direction:column;gap:2px;padding:11px 12px 13px}
+.tcat-txt b{font-family:var(--fuente-titulo);font-size:14.5px;color:var(--ink)}
+.tcat-txt span{font-size:12px;color:var(--muted-fg)}
+.pie-inicio{margin-top:30px}
+/* Rejilla del catálogo de servicios: misma tarjeta que las categorías, pero en rejilla. */
+.serv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px;margin-top:6px}
+.serv-card{border:1px solid var(--border);border-radius:var(--radio);overflow:hidden;background:var(--card);transition:transform .18s ease, box-shadow .18s ease}
+.serv-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(20,40,50,.13)}
+.serv-media{display:block;aspect-ratio:4/3;background:var(--surface-strong);overflow:hidden}
+.serv-media img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.serv-card:hover .serv-media img{transform:scale(1.04)}
+.serv-txt{display:flex;flex-direction:column;gap:3px;padding:11px 12px 13px}
+.serv-txt b{font-family:var(--fuente-titulo);font-size:14.5px;color:var(--ink);line-height:1.25}
+.serv-txt .m{font-size:12.5px;color:var(--muted-fg)}
+.serv-fuente{font-size:11px;color:var(--muted-fg);opacity:.85;margin-top:2px}
+@media(max-width:1280px){.cab-busca{max-width:460px}}
+@media(max-width:1080px){
+  .cab-nav{display:none}
+  .cab-cuenta{display:none}
+  .cab-menu{display:block}
+  .cab-busca{max-width:none}
+}
+@media(max-width:760px){
+  .cab-in{min-height:64px;gap:10px;padding:8px 14px}
+  .marca{font-size:18px}
+  .buscador-compacto{flex-wrap:wrap;border-radius:var(--radio);padding:7px}
+  .buscador-compacto .buscador-destino{flex:1 1 100%}
+  .buscador-compacto .buscador-campo{flex:1 1 auto}
+  .buscador-compacto .buscador-boton{flex:0 0 auto}
+  .hero2{min-height:min(70vh,520px)}
+  .hero2-accesos{grid-template-columns:1fr;gap:9px;margin-top:16px}
+  .acceso{padding:11px 13px}
+  .seccion-home{margin:34px 0}
+  .tdest{flex:0 0 62%;min-width:0}
+  .tcat{flex:0 0 58%;min-width:0}
+  .car-flecha{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .acceso,.cab-pill,.tdest,.tcat,.tdest-media img,.tcat-media img,.car-flecha{transition:none}
+  .tdest:hover,.tcat:hover,.acceso:hover,.cab-pill:hover{transform:none}
+}
 @media(max-width:1000px){.buscador{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:760px){
   .buscador{grid-template-columns:1fr 1fr;gap:8px;padding:10px;border-radius:var(--radio)}
@@ -543,15 +659,30 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <header className="cab">
           <div className="wrap cab-in">
             <a href="/" className="marca">
+              <span className="marca-casa" aria-hidden="true">🏠</span>
               hestiat
             </a>
-            <a href="/search" style={{ color: "var(--muted-fg)", fontSize: 14 }}>
-              Explorar
-            </a>
-            <a href="/experiencias" style={{ color: "var(--muted-fg)", fontSize: 14 }}>
-              Experiencias
-            </a>
-            <nav style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+
+            {/* LA BÚSQUEDA VIVE AQUÍ, no dentro de la portada: está en todas las páginas y no
+                empuja el contenido hacia abajo. Es el mismo buscador del explorador, en versión
+                compacta, con sus sugerencias reales. */}
+            <div className="cab-busca">
+              <BuscadorExplorar destino="" basePath="/search" compacto />
+            </div>
+
+            <nav className="cab-nav" aria-label="Secciones de Hestiat">
+              <a className="cab-pill cab-pill-on" href="/search">
+                <span aria-hidden="true">🏠</span> Alojamientos
+              </a>
+              <a className="cab-pill" href="/experiencias">
+                <span aria-hidden="true">🎈</span> Experiencias
+              </a>
+              <a className="cab-pill" href="/servicios">
+                <span aria-hidden="true">🛎</span> Servicios
+              </a>
+            </nav>
+
+            <nav className="cab-cuenta">
               {esAnfitrion && (
                 <a href="/host" style={{ color: "var(--muted-fg)", fontSize: 14 }}>
                   Mi panel
@@ -582,6 +713,32 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 </>
               )}
             </nav>
+
+            {/* En móvil, las secciones y la cuenta caben en este desplegable nativo: sin
+                JavaScript, sin tapar la pantalla y sin menús que no llevan a ningún sitio. */}
+            <details className="cab-menu">
+              <summary aria-label="Abrir menú">Menú</summary>
+              <div className="cab-menu-lista">
+                <a href="/search">🏠 Alojamientos</a>
+                <a href="/experiencias">🎈 Experiencias</a>
+                <a href="/servicios">🛎 Servicios</a>
+                {esAnfitrion && <a href="/host">Mi panel</a>}
+                {sesion ? (
+                  <>
+                    <a href="/favoritos">Favoritos</a>
+                    <a href="/perfil">Mi perfil</a>
+                    <form action="/api/auth/logout" method="post">
+                      <button className="cab-btn" type="submit">Salir</button>
+                    </form>
+                  </>
+                ) : (
+                  <>
+                    <a href="/login">Entrar</a>
+                    <a href="/registro">Publica tu espacio</a>
+                  </>
+                )}
+              </div>
+            </details>
           </div>
         </header>
         {children}

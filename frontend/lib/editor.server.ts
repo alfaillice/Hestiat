@@ -206,6 +206,21 @@ const entero = (v: FormDataEntryValue | null): number | null => {
   return n === null ? null : Math.max(0, Math.round(n));
 };
 
+/**
+ * Coordenadas: se guardan con precisión completa, no redondeadas a dos decimales.
+ *
+ * Esto era un fallo de verdad: al usar el mismo ayudante que los precios (dos decimales), un punto
+ * como 38.288099 se guardaba como 38.29 y el marcador se movía más de un kilómetro. Las columnas
+ * son `decimal(10,7)`: la precisión estaba en la base, se perdía al escribir.
+ */
+const coordenada = (v: FormDataEntryValue | null, limite: number): number | null => {
+  const s = String(v ?? "").trim();
+  if (s === "") return null;
+  const n = Number(s.replace(",", "."));
+  if (!Number.isFinite(n) || Math.abs(n) > limite) return null;
+  return Math.round(n * 1e7) / 1e7;
+};
+
 const TIPOS = ["Hotel", "Apartamento", "Casa", "Villa", "Chalet", "Habitación", "Casa rural", "Otros"];
 
 /** Información general, ubicación incluida. Escribe en los dos esquemas. */
@@ -216,8 +231,8 @@ export async function guardarGeneral(legacyId: number, f: FormData): Promise<Res
   const tipo = texto(f.get("tipo"), 40);
   if (tipo && !TIPOS.includes(tipo)) return { ok: false, error: "Tipo de alojamiento no reconocido." };
 
-  const lat = numero(f.get("lat"));
-  const lng = numero(f.get("lng"));
+  const lat = coordenada(f.get("lat"), 90);
+  const lng = coordenada(f.get("lng"), 180);
   if (lat !== null && (lat < -90 || lat > 90)) return { ok: false, error: "La latitud está fuera de rango." };
   if (lng !== null && (lng < -180 || lng > 180)) return { ok: false, error: "La longitud está fuera de rango." };
 

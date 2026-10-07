@@ -90,6 +90,7 @@ export default function EditorAlojamiento({
   servicios,
   fotos,
   canales,
+  urlExport,
   esAdmin,
   estado,
   estados,
@@ -103,6 +104,8 @@ export default function EditorAlojamiento({
   servicios: ServicioDiccionario[];
   fotos: FotoMedio[];
   canales: EstadoCanalVista[];
+  /** Dirección del calendario de Hestiat para exportar a otros canales. */
+  urlExport: string | null;
   esAdmin: boolean;
   estado: string;
   estados: EstadoInfo[];
@@ -403,6 +406,21 @@ export default function EditorAlojamiento({
             noches importadas se distinguen de las reservas de Hestiat en la pestaña de Disponibilidad.
           </p>
           <Calendarios alojamientoId={a.legacyId} canales={canales} />
+
+          {/* La dirección de exportación (Hestiat hacia los canales) estaba en una página aparte.
+              Se trae aquí para que no haya dos sitios donde tocar calendarios. */}
+          <div className="editor-export">
+            <h3>Exportar el calendario de Hestiat</h3>
+            <p className="m" style={{ fontSize: 13, color: "var(--muted-fg)", marginBottom: 8 }}>
+              Pega esta dirección en Airbnb, Booking, Vrbo o Google Calendar para que allí vean las
+              noches ocupadas de Hestiat. Es de solo lectura: no envía datos tuyos de más.
+            </p>
+            {urlExport ? (
+              <input readOnly value={urlExport} onFocus={(e) => e.currentTarget.select()} aria-label="Dirección del calendario para exportar" />
+            ) : (
+              <p className="m" style={{ fontSize: 13 }}>Todavía no hay dirección de exportación.</p>
+            )}
+          </div>
         </div>
       )}
 

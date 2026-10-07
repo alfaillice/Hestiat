@@ -228,6 +228,9 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .fila-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .editor-peligro{border-color:var(--destructive)}
 .editor-peligro h2{color:var(--destructive)}
+.editor-export{margin-top:18px;border-top:1px solid var(--border);padding-top:14px;display:grid;gap:6px}
+.editor-export h3{font-size:15px;font-family:var(--fuente-titulo)}
+.editor-export input{border:1px solid var(--border);border-radius:10px;padding:11px 12px;font:inherit;font-size:13.5px;background:var(--background);color:var(--ink);width:100%}
 /* calendario de disponibilidad del editor */
 .caldsp,.caldisp{border:1px solid var(--border);border-radius:var(--radio);padding:14px;background:var(--surface)}
 .caldisp-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}

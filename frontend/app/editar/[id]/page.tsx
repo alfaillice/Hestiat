@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth.server";
 import { cargarParaEditar, permisoEdicion } from "@/lib/editor.server";
 import { ESTADOS, estadoDe } from "@/lib/editor-estado.server";
 import { poolLegacy } from "@/lib/db";
-import { listarCanales, sincronizarSiCaduca } from "@/lib/canales.server";
+import { listarCanales, obtenerTokenExport, sincronizarSiCaduca } from "@/lib/canales.server";
 import EditorAlojamiento from "@/components/editor-alojamiento";
 import type { FotoMedio } from "@/components/medios";
 import type { EstadoCanalVista } from "@/components/calendarios";
@@ -85,6 +85,13 @@ export default async function EditarAlojamiento({
   const resultadoCanales = await listarCanales(Number(sesion!.id), legacyId);
   const canales: EstadoCanalVista[] = (resultadoCanales?.canales ?? []) as EstadoCanalVista[];
 
+  // Dirección del calendario de Hestiat para pegarla en Airbnb, Booking u otro canal. Estaba en una
+  // página aparte; se trae aquí para que el editor sea el único sitio donde se gestionan los
+  // calendarios, sin perder la función.
+  const tokenExport = await obtenerTokenExport(Number(sesion!.id), legacyId);
+  const base = process.env.APP_URL?.trim() || "https://hestiat.com";
+  const urlExport = tokenExport ? `${base}/api/ical/${tokenExport.token}` : null;
+
   const estado = estadoDe(
     auditoria[0]?.activo,
     alojamiento.estadoPublico,
@@ -141,6 +148,7 @@ export default async function EditarAlojamiento({
         servicios={servicios}
         fotos={fotosFilas as FotoMedio[]}
         canales={canales}
+        urlExport={urlExport}
         esAdmin={permiso.esAdmin}
         estado={estado}
         estados={ESTADOS.map((e) => ({ id: e.id, etiqueta: e.etiqueta, explicacion: e.explicacion, soloAdmin: e.soloAdmin }))}

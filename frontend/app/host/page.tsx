@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { poolLegacy } from "@/lib/db";
 import { requireHost } from "@/lib/auth.server";
+import { Aviso } from "@/components/estados";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +11,18 @@ export const dynamic = "force-dynamic";
  * La consulta filtra SIEMPRE por el usuario de la sesión (`alojamiento_anfitrion.usuario_id`),
  * y el usuario sale del servidor, nunca de la URL ni del navegador. Así un anfitrión no puede
  * ver lo de otro ni cambiando un identificador.
+ *
+ * Lee el aviso de la URL porque tras eliminar un alojamiento se vuelve aquí con el mensaje de lo
+ * que acaba de pasar: quedarse en la ficha borrada daría un 404 sin explicación.
  */
-export default async function HostAlojamientos() {
+export default async function HostAlojamientos({
+  searchParams,
+}: {
+  searchParams: Promise<{ aviso?: string; ok?: string }>;
+}) {
   const host = await requireHost();
   if (!host) return null;
+  const sp = await searchParams;
 
   const [filas] = await poolLegacy.query<any[]>(
     `SELECT a.id, a.titulo, a.slug, a.ciudad, a.provincia, a.precio_noche, a.activo,
@@ -38,6 +47,8 @@ export default async function HostAlojamientos() {
           <Link className="f-aplicar" href="/nuevo">Añadir alojamiento</Link>
         </p>
       </header>
+
+      <Aviso texto={sp.aviso} ok={sp.ok} />
 
       {filas.length === 0 ? (
         <div className="vacio">

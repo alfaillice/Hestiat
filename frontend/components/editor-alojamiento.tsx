@@ -549,23 +549,31 @@ export default function EditorAlojamiento({
                   <li><span>Reservas</span><span>{datos.reservas}</span></li>
                 </ul>
               </div>
-
-              <div className="editor-seccion editor-peligro" style={{ marginTop: 16 }}>
-                <h2>Eliminar el alojamiento</h2>
-                <p className="editor-nota">
-                  Esta acción no se puede deshacer: borra el alojamiento, sus fotografías, sus servicios,
-                  su disponibilidad y sus calendarios. No se elimina si tiene reservas asociadas —en ese
-                  caso lo correcto es desactivarlo—.
-                </p>
-                <FormularioSeccion accion={url} seccion="eliminar" textoBoton="Eliminar definitivamente">
-                  <label className="f-campo">
-                    <span className="etq">Escribe el nombre del alojamiento para confirmar</span>
-                    <input name="confirmacion" placeholder={a.titulo} maxLength={255} />
-                  </label>
-                </FormularioSeccion>
-              </div>
             </>
           )}
+
+          {/* Eliminar: puede un administrador sobre cualquiera, y el anfitrión sobre el suyo. El
+              permiso NO se decide aquí —esconder un botón no protege nada—: lo comprueba el servidor
+              en cada petición, y vuelve a comprobar la propiedad antes de borrar. */}
+          <div className="editor-seccion editor-peligro" style={{ marginTop: 16 }}>
+            <h2>Eliminar el alojamiento</h2>
+            <p className="editor-nota">
+              Esta acción no se puede deshacer: borra el alojamiento, sus fotografías, sus servicios,
+              su disponibilidad y sus calendarios. No se elimina si tiene reservas asociadas —en ese
+              caso lo correcto es desactivarlo—.
+            </p>
+            <p className="m" style={{ fontSize: 13, color: "var(--muted-fg)" }}>
+              {esAdmin
+                ? "Como administración puedes eliminar cualquier alojamiento."
+                : "Puedes eliminar este alojamiento porque es tuyo. Los de otros propietarios, no."}
+            </p>
+            <FormularioSeccion accion={url} seccion="eliminar" textoBoton="Eliminar definitivamente">
+              <label className="f-campo">
+                <span className="etq">Escribe el nombre del alojamiento para confirmar</span>
+                <input name="confirmacion" placeholder={a.titulo} maxLength={255} />
+              </label>
+            </FormularioSeccion>
+          </div>
         </>
       )}
     </div>

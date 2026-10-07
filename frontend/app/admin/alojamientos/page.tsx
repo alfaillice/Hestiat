@@ -8,10 +8,12 @@ export const dynamic = "force-dynamic";
  * Lee de la base ORIGINAL (datos vivos): lo que el administrador ve es lo que está publicado.
  * Nunca mezcla datos de prueba: si se crean, se marcan con el título y se borran al terminar.
  */
+import { Aviso } from "@/components/estados";
+
 export default async function AdminAlojamientos({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; p?: string; estado?: string }>;
+  searchParams: Promise<{ q?: string; p?: string; estado?: string; aviso?: string; ok?: string }>;
 }) {
   const sp = await searchParams;
   const q = (sp.q ?? "").trim();
@@ -50,8 +52,12 @@ export default async function AdminAlojamientos({
           {total.toLocaleString("es-ES")} registros · mostrando {desde}–{hasta}
         </p>
       </header>
+
+      {/* Tras eliminar un alojamiento se vuelve aquí con el mensaje: quedarse en su ficha daría 404. */}
+      <Aviso texto={sp.aviso} ok={sp.ok} />
+
       <p style={{ marginBottom: 14 }}>
-        <Link className="f-aplicar" href="/admin/alojamientos/nuevo">
+        <Link className="f-aplicar" href="/nuevo">
           Nuevo alojamiento
         </Link>
       </p>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth.server";
 import { limitar } from "@/lib/limite.server";
+import { poolLegacy } from "@/lib/db";
 import {
   guardarCaracteristicas,
   guardarGeneral,
@@ -36,11 +37,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const f = await request.formData();
   const seccion = String(f.get("seccion") ?? "");
-  // Secciones de administración: cambiar el estado de bloqueo, el propietario o eliminar el
-  // alojamiento no son cosas que decida el anfitrión. Se comprueba AQUÍ, en el servidor.
-  const SOLO_ADMIN = ["admin", "propietario", "eliminar"];
+  // Secciones que solo puede tocar la administración: el estado de bloqueo y el cambio de
+  // propietario. Eliminar NO está aquí: el anfitrión también puede borrar lo suyo, y esa regla se
+  // comprueba justo debajo, con una consulta directa a la relación de propiedad.
+  const SOLO_ADMIN = ["admin", "propietario"];
   if (SOLO_ADMIN.includes(seccion) && !permiso.esAdmin) {
     return NextResponse.json({ ok: false, error: "Solo un administrador puede hacer esto." }, { status: 403 });
+  }
+
+  // Eliminar: la administración sobre cualquiera; el anfitrión, solo sobre el suyo. No se fía de la
+  // comprobación de arriba ni de que la interfaz haya escondido el botón: se vuelve a preguntar a la
+  // base quién es el propietario. Un usuario normal no llega aquí siquiera (permiso denegado antes).
+  if (seccion === "eliminar" && !permiso.esAdmin) {
+    const [mia] = await poolLegacy.query<any[]>(
+      `SELECT COUNT(*) AS n FROM alojamiento_anfitrion WHERE alojamiento_id = ? AND usuario_id = ?`,
+      [legacyId, Number(sesion!.id)],
+    );
+    if (Number(mia[0]?.n ?? 0) === 0) {
+      return NextResponse.json({ ok: false, error: "Ese alojamiento no es tuyo." }, { status: 403 });
+    }
   }
 
   try {
@@ -61,8 +76,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                     ? await eliminarAlojamiento(legacyId, borrarImagen, String(f.get("confirmacion") ?? ""))
                     : { ok: false as const, error: "Sección desconocida." };
 
+    // Tras eliminar NO se puede volver al editor: el alojamiento ya no existe y la respuesta sería
+    // un 404. Se lleva a la persona a su listado, con el mensaje de lo que acaba de pasar.
     const destino = resultado.ok
-      ? `${volver}?seccion=${seccion}&ok=${encodeURIComponent(resultado.mensaje)}`
+      ? seccion === "eliminar"
+        ? `${permiso.esAdmin ? "/admin/alojamientos" : "/host"}?aviso=${encodeURIComponent(resultado.mensaje)}&ok=1`
+        : `${volver}?seccion=${seccion}&ok=${encodeURIComponent(resultado.mensaje)}`
       : `${volver}?seccion=${seccion}&error=${encodeURIComponent(resultado.error)}`;
 
     // Si el navegador pide JSON (guardado sin recargar), se responde JSON; si es un formulario

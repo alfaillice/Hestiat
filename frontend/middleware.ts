@@ -58,5 +58,5 @@ export const config = {
   // Toda la zona que exige sesión. Antes estas rutas respondían 200 con la página de «no
   // encontrado» o con un redirect interno; ahora responden 307 de verdad, que es lo que espera
   // cualquier cliente.
-  matcher: ["/editar/:path*", "/favoritos", "/perfil", "/host/:path*", "/admin/:path*"],
+  matcher: ["/editar/:path*", "/nuevo", "/favoritos", "/perfil", "/host/:path*", "/admin/:path*"],
 };

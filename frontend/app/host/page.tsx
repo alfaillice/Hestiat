@@ -34,13 +34,22 @@ export default async function HostAlojamientos() {
         <p className="m" style={{ color: "var(--muted-fg)" }}>
           {filas.length} {filas.length === 1 ? "alojamiento" : "alojamientos"} a tu nombre
         </p>
+        <p style={{ marginTop: 12 }}>
+          <Link className="f-aplicar" href="/nuevo">Añadir alojamiento</Link>
+        </p>
       </header>
 
       {filas.length === 0 ? (
-        <p className="aviso">
-          Todavía no tienes alojamientos asociados a esta cuenta. Si has publicado con otro correo,
-          escríbenos y lo vinculamos.
-        </p>
+        <div className="vacio">
+          <p className="vacio-titulo">Todavía no tienes alojamientos</p>
+          <p className="vacio-texto">
+            Puedes dar de alta el primero tú mismo. Se crea como borrador y no se ve en la web hasta
+            que lo publiques desde el editor, cuando esté completo.
+          </p>
+          <p style={{ marginTop: 14 }}>
+            <Link className="f-aplicar" href="/nuevo">Añadir alojamiento</Link>
+          </p>
+        </div>
       ) : (
         <div className="tabla-scroll">
           <table className="tabla">
@@ -72,7 +81,7 @@ export default async function HostAlojamientos() {
                     {a.activo ? "publicado" : "despublicado"}
                   </td>
                   <td>
-                    <Link className="enlace-accion" href={`/host/alojamientos/${a.id}`}>
+                    <Link className="enlace-accion" href={`/editar/${a.id}`}>
                       Gestionar
                     </Link>
                   </td>

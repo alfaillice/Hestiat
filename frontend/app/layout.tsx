@@ -35,13 +35,20 @@ const estilos = `
   --success:oklch(58% .115 158); --destructive:oklch(55.2% .191 25);
   --border:oklch(90% .008 232); --surface:oklch(97.2% .008 92); --surface-strong:oklch(93.5% .014 92);
   --radio:14px; --radio-pill:9999px;
+  /* Ancho del contenedor global. Un único valor para toda la web. */
+  --contenedor:1760px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{background:var(--background);color:var(--foreground)}
 body{font-family:var(--fuente-texto),ui-sans-serif,system-ui,sans-serif;font-size:15.2px;line-height:1.55;-webkit-font-smoothing:antialiased}
 h1,h2,h3{font-family:var(--fuente-titulo),ui-sans-serif,system-ui,sans-serif;font-weight:700;letter-spacing:-.02em;line-height:1.12}
 a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
-.wrap{max-width:1360px;margin:0 auto;padding:0 18px}
+/* UN SOLO contenedor para toda la web: cabecera, secciones, galería, ficha y paneles comparten
+   los mismos raíles izquierdo y derecho. Antes había tres anchos distintos (1360 la cabecera,
+   1720 la galería, 1180 la portada), así que en la misma pantalla el logo empezaba en x=98 y la
+   galería en x=18: ochenta píxeles de desalineación que se ven como contenido «tirado a la
+   izquierda». El ancho se ajusta en un solo sitio: --contenedor. */
+.wrap{max-width:var(--contenedor);margin:0 auto;padding:0 18px}
 /* cabecera */
 .cab{border-bottom:1px solid var(--border);background:var(--background);position:sticky;top:0;z-index:40}
 .cab-in{display:flex;align-items:center;gap:14px;height:60px}
@@ -126,7 +133,7 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .hx-pin{display:inline-block;transform:translate(-50%,-50%);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radio-pill);padding:4px 10px;font-weight:600;font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(20,40,50,.18);white-space:nowrap}
 .hx-pin--activo{border-color:var(--accent);box-shadow:0 4px 14px rgba(200,120,0,.30)}
 /* paneles: administracion y anfitrion */
-.admin{display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;max-width:1360px;margin:0 auto;padding:22px 18px}
+.admin{display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;max-width:var(--contenedor);margin:0 auto;padding:22px 18px}
 .admin-nav{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:16px;position:sticky;top:76px;align-self:start}
 .admin-marca{font-family:var(--fuente-titulo);font-weight:700;font-size:15px;color:var(--primary);margin-bottom:12px}
 .admin-nav nav{display:flex;flex-direction:column;gap:2px}
@@ -152,6 +159,21 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .form-edicion{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:18px;display:grid;gap:14px;max-width:620px}
 .fila-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .login{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:20px;display:grid;gap:14px}
+/* ---------- pantalla de acceso (entrar y crear cuenta) ---------- */
+.acceso{display:flex;justify-content:center;padding:56px 18px 70px}
+.acceso-tarjeta{width:100%;max-width:440px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:30px 28px;box-shadow:0 10px 34px rgba(20,40,50,.07);display:grid;gap:14px}
+.acceso-marca{font-family:var(--fuente-titulo);font-weight:700;color:var(--primary);font-size:16.5px;text-align:center;letter-spacing:-.01em}
+.acceso-tarjeta h1{font-size:25px;text-align:center}
+.acceso-sub{color:var(--muted-fg);font-size:14px;text-align:center}
+.boton-google{display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--border);border-radius:var(--radio-pill);background:var(--card);padding:13px 18px;font-weight:600;font-size:15px;color:var(--ink);transition:box-shadow .15s ease}
+.boton-google:hover{box-shadow:0 4px 14px rgba(20,40,50,.12)}
+.google-pendiente{border:1px dashed var(--border);border-radius:var(--radio);padding:12px 14px;font-size:13px;color:var(--muted-fg);display:grid;gap:3px;background:var(--secondary)}
+.google-pendiente strong{font-family:var(--fuente-titulo);color:var(--foreground);font-size:13.5px}
+.o-separador{display:flex;align-items:center;gap:12px;color:var(--muted-fg);font-size:12.5px;text-transform:lowercase}
+.o-separador::before,.o-separador::after{content:"";height:1px;background:var(--border);flex:1}
+.acceso-pie{font-size:13.5px;color:var(--muted-fg);text-align:center;line-height:1.5}
+.acceso-pie a{text-decoration:underline;color:var(--foreground)}
+.acceso .login{background:transparent;border:0;padding:0;gap:12px}
 /* medios y canales (portado del gestor antiguo) */
 .medios,.canales{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:18px}
 .medios-cab{margin-bottom:12px}
@@ -254,21 +276,20 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .reglas-lista li span{color:var(--muted-fg)}
 @media(max-width:860px){.fila-3{grid-template-columns:1fr}}
 /* ---------- explorar: gran galería de alojamientos ---------- */
-.explorar{max-width:1720px;margin:0 auto;padding:22px 18px 30px}
+.explorar{max-width:var(--contenedor);margin:0 auto;padding:22px 18px 30px}
 .explorar-cab{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:14px}
 .explorar-cab h1{font-size:30px}
 .vista{display:flex;gap:6px;margin-left:auto;background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio-pill);padding:4px}
 .vista a{padding:7px 15px;border-radius:var(--radio-pill);font-size:13.5px;font-weight:600;color:var(--muted-fg)}
 .vista a.vista-activa{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(20,40,50,.10)}
 .galeria-cuenta{color:var(--muted-fg);font-size:13.5px;margin:4px 0 14px}
-/* Columnas por anchura disponible. En pantalla grande, 7; nunca se encogen las tarjetas a la fuerza
-   para meter más: a partir de cierto punto baja el número de columnas. */
-.galeria{display:grid;gap:20px;grid-template-columns:repeat(7,minmax(0,1fr))}
-@media(max-width:1800px){.galeria{grid-template-columns:repeat(6,minmax(0,1fr))}}
-@media(max-width:1400px){.galeria{grid-template-columns:repeat(5,minmax(0,1fr))}}
-@media(max-width:1080px){.galeria{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:820px){.galeria{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
-@media(max-width:600px){.galeria{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}
+/* Columnas derivadas del ancho REAL disponible, no de tramos fijos: la cuadrícula llena siempre el
+   contenedor y no deja huecos, y las filas del scroll infinito salen con esta misma regla, así que
+   no cambia de aspecto a mitad de página. A 1760 → 7 columnas (tarjetas de ~231 px, el tamaño ya
+   probado); a 1520 → 6; a 1200 → 5; a 900 → 3; a 600 → 2. */
+.galeria{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));align-items:start}
+@media(max-width:820px){.galeria{gap:16px}}
+@media(max-width:600px){.galeria{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:14px}}
 @media(max-width:430px){.galeria{grid-template-columns:1fr}}
 /* tarjeta: la fotografía manda, la información es mínima */
 .tjg{position:relative;display:flex;flex-direction:column}
@@ -309,7 +330,7 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .hero-cine-contenido h1{color:#fff;font-size:38px;max-width:22ch;margin-bottom:10px;text-shadow:0 2px 20px rgba(4,14,18,.75),0 1px 3px rgba(4,14,18,.55)}
 .hero-cine-contenido .sub{color:rgba(255,255,255,.96);max-width:54ch;margin-bottom:18px;font-size:14.5px;text-shadow:0 1px 12px rgba(4,14,18,.75)}
 /* El texto se retira pronto y con él sus clics, para que no estorbe a la película. */
-.hero-cine-contenido{position:relative;width:100%;max-width:1180px;margin:0 auto;padding:28px 18px 46px;opacity:calc(1 - var(--cine-progreso,0) * 2.7);transform:translateY(calc(var(--cine-progreso,0) * -24px));pointer-events:var(--cine-clics,auto)}
+.hero-cine-contenido{position:relative;width:100%;max-width:var(--contenedor);margin:0 auto;padding:28px 18px 46px;opacity:calc(1 - var(--cine-progreso,0) * 2.7);transform:translateY(calc(var(--cine-progreso,0) * -24px));pointer-events:var(--cine-clics,auto)}
 .hero-cine-contenido .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:11.5px;text-transform:uppercase;margin-bottom:8px}
 .hero-cine-credito{position:absolute;right:14px;bottom:10px;color:rgba(255,255,255,.72);font-size:11.5px;text-shadow:0 1px 8px rgba(4,14,18,.7)}
 .hero-cine-pista{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);color:rgba(255,255,255,.75);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;opacity:calc(1 - var(--cine-progreso,0) * 4)}
@@ -330,7 +351,7 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .ficha-principal h1{font-size:27px;margin-bottom:3px}
 .ficha-seccion{margin-top:30px;border-top:1px solid var(--border);padding-top:20px}
 .ficha-seccion h2{font-size:19px;margin-bottom:9px}
-.ficha-texto{font-size:14.6px;color:var(--foreground)}
+.ficha-texto{font-size:14.6px;color:var(--foreground);max-width:76ch}
 .ficha-resumen{cursor:pointer;color:var(--primary);font-weight:600;font-size:13.5px;margin-bottom:8px}
 .ficha-hechos{list-style:none;display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 .ficha-hechos li{border:1px solid var(--border);border-radius:var(--radio-pill);padding:7px 13px;font-size:13.5px;background:var(--card)}

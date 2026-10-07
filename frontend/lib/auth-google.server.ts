@@ -30,9 +30,14 @@ function urlBase(): string {
   return (process.env.APP_URL ?? "").trim().replace(/\/$/, "") || "https://hestiat.com";
 }
 
-/** La dirección de vuelta tiene que ser la del dominio real: si no, Google la rechaza. */
+/**
+ * La dirección de vuelta tiene que ser la del dominio real Y la que el cliente de OAuth ya tiene
+ * registrada. La aplicación antigua usaba `/auth/google/callback` (está en su propio código), así
+ * que esta es la que hay que enviar: con `/api/auth/google/callback` Google responde
+ * `redirect_uri_mismatch` y no deja entrar a nadie. No es una suposición: se comprobó contra Google.
+ */
 export function urlCallback(): string {
-  return `${urlBase()}/api/auth/google/callback`;
+  return `${urlBase()}/auth/google/callback`;
 }
 
 /** Retorno seguro: solo rutas internas, nunca una URL completa (evita redirecciones abiertas). */

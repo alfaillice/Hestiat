@@ -13,3 +13,6 @@ next-env.d.ts
 *.zip
 next-standalone*/
 pkg*/
+
+# Proyecto aparte del marketplace de Higgsfield: no forma parte de Hestiat.
+hestiat-marketplace*/

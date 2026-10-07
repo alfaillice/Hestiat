@@ -56,15 +56,10 @@ export async function POST(request: Request) {
       return redirigir(`${base}?${p}`);
     }
 
-    // Correos de la reserva: al anfitrión, al huésped y copia interna a Hestiat. Se espera a que
-    // terminen para poder decir con verdad qué se ha enviado y qué no, pero un fallo de correo NO
-    // puede tumbar una reserva ya registrada: `avisarReservaCreada` no lanza nunca y aquí se
-    // protege igualmente. La reserva está confirmada en la base antes de esta línea.
-    try {
-      await avisarReservaCreada(r.reservaId);
-    } catch (error) {
-      console.error("[hestiat] /api/reservas (avisos)", error instanceof Error ? error.message.slice(0, 200) : error);
-    }
+    // Correos de la reserva: al anfitrión, al huésped y copia interna a Hestiat. NO se espera a que
+    // terminen: la reserva ya está guardada y quien reserva no debe quedarse medio minuto mirando la
+    // pantalla porque el servidor de correo no conteste. El resultado se registra igual.
+    void avisarReservaCreada(r.reservaId).catch(() => {});
     const p = new URLSearchParams({
       codigo: r.codigo,
       noches: String(r.resumen.noches),

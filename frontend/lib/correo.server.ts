@@ -99,6 +99,23 @@ function censurar(texto: string, cfg: ConfigSmtp): string {
 
 export type ResultadoCorreo = { ok: true } | { ok: false; motivo: "sin_smtp" | "error"; detalle?: string };
 
+/* Cuarentena tras un fallo de conexión.
+   Si el servidor de correo no responde (nos ha cortado, está caído, o nos ha bloqueado), no tiene
+   sentido intentarlo con cada reserva: cada intento cuesta tiempo de espera, y reiterar contra quien
+   te ha bloqueado solo empeora las cosas. Durante unos minutos se responde al momento diciendo qué
+   pasa, y el motivo queda registrado. */
+let enCuarentenaHasta = 0;
+const CUARENTENA_MS = 10 * 60 * 1000;
+
+export function smtpEnCuarentena(): boolean {
+  return Date.now() < enCuarentenaHasta;
+}
+
+/** Un fallo de conexión (no de credenciales) activa la cuarentena. */
+function esFalloDeConexion(detalle: string): boolean {
+  return /timeout|ETIMEDOUT|ECONNREFUSED|EHOSTUNREACH|ENETUNREACH|socket hang up|Greeting never received/i.test(detalle);
+}
+
 export async function enviarCorreo(entrada: {
   /** Uno o varios destinatarios visibles. */
   para: string | string[];
@@ -112,6 +129,9 @@ export async function enviarCorreo(entrada: {
 }): Promise<ResultadoCorreo> {
   const cfg = configSmtp();
   if (!cfg) return { ok: false, motivo: "sin_smtp" };
+  if (smtpEnCuarentena()) {
+    return { ok: false, motivo: "error", detalle: "en espera tras un fallo de conexión anterior" };
+  }
 
   let transporte: Transporter | null = null;
   try {
@@ -121,9 +141,10 @@ export async function enviarCorreo(entrada: {
       port: cfg.port,
       secure: cfg.secure,
       auth: { user: cfg.user, pass: cfg.pass },
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 20_000,
+      // Corto a propósito: una reserva no puede quedarse media hora esperando a un servidor mudo.
+      connectionTimeout: 6_000,
+      greetingTimeout: 6_000,
+      socketTimeout: 12_000,
     });
     await transporte.sendMail({
       from: cfg.from,
@@ -139,7 +160,15 @@ export async function enviarCorreo(entrada: {
     // Nunca se registra la contraseña ni el cuerpo del mensaje: solo el motivo, censurado.
     const bruto = error instanceof Error ? error.message : "error desconocido";
     const detalle = censurar(bruto, cfg);
-    console.error("[hestiat] correo:", detalle);
+    if (esFalloDeConexion(detalle)) {
+      enCuarentenaHasta = Date.now() + CUARENTENA_MS;
+      console.error(
+        `[hestiat] correo: no se puede conectar con ${cfg.host}:${cfg.port} (${detalle}). ` +
+          "Se dejan de intentar envíos durante 10 minutos.",
+      );
+    } else {
+      console.error("[hestiat] correo:", detalle);
+    }
     return { ok: false, motivo: "error", detalle };
   } finally {
     transporte?.close?.();

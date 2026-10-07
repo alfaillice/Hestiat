@@ -62,7 +62,10 @@ function FormularioSeccion({
       method="post"
       className="editor-seccion"
       onChange={() => setSucio(true)}
-      onSubmit={() => setEnviando(true)}
+      onSubmit={() => {
+        setSucio(false);
+        setEnviando(true);
+      }}
     >
       <input type="hidden" name="seccion" value={seccion} />
       {children}
@@ -111,21 +114,18 @@ export default function EditorAlojamiento({
 }) {
   const [pestana, setPestana] = useState<Pestana>(pestanaInicial);
   const [aviso, setAviso] = useState(mensaje);
-  const [sucio, setSucio] = useState(false);
 
   useEffect(() => setAviso(mensaje), [mensaje]);
-  useEffect(() => setSucio(false), [pestana]);
 
-  // No perder cambios si se navega sin querer. Solo mientras haya algo sin guardar.
-  useEffect(() => {
-    if (!sucio) return;
-    const guardia = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-    window.addEventListener("beforeunload", guardia);
-    return () => window.removeEventListener("beforeunload", guardia);
-  }, [sucio]);
+  /*
+   * Aquí había un aviso del navegador («¿quieres abandonar la página?») cuando quedaba algo sin
+   * guardar. Se quita: saltaba también al guardar y al eliminar, porque el formulario ya estaba
+   * marcado como modificado mientras el servidor respondía con la redirección. Molestaba más de lo
+   * que ayudaba, y las acciones destructivas ya tienen su propia confirmación.
+   *
+   * Lo que se conserva es el aviso EN LA PÁGINA («Tienes cambios sin guardar»), que informa sin
+   * interrumpir.
+   */
 
   // Vista previa del precio: la calcula el SERVIDOR con la misma función que la reserva.
   const [noches, setNoches] = useState(3);
@@ -202,7 +202,7 @@ export default function EditorAlojamiento({
 
       {/* ------------------------------------------------------------- general -- */}
       {pestana === "general" && (
-        <FormularioSeccion accion={url} seccion="general" textoBoton="Guardar información general" onSucio={setSucio}>
+        <FormularioSeccion accion={url} seccion="general" textoBoton="Guardar información general">
           <h2>Información general</h2>
 
           <label className="f-campo">
@@ -297,7 +297,7 @@ export default function EditorAlojamiento({
 
       {/* -------------------------------------------------------------- precios -- */}
       {pestana === "precios" && (
-        <FormularioSeccion accion={url} seccion="precios" textoBoton="Guardar precios" onSucio={setSucio}>
+        <FormularioSeccion accion={url} seccion="precios" textoBoton="Guardar precios">
           <h2>Precio</h2>
           <p className="editor-nota">
             Hestiat no cobra comisión. Lo que sumes aquí (limpieza, tasas, impuestos) es del anfitrión y
@@ -362,7 +362,7 @@ export default function EditorAlojamiento({
 
       {/* ------------------------------------------------------- caracteristicas -- */}
       {pestana === "caracteristicas" && (
-        <FormularioSeccion accion={url} seccion="caracteristicas" textoBoton="Guardar características" onSucio={setSucio}>
+        <FormularioSeccion accion={url} seccion="caracteristicas" textoBoton="Guardar características">
           <h2>Características</h2>
           <p className="editor-nota">
             Estas casillas son exactamente lo que muestra la ficha pública. El catálogo es ampliable:
@@ -408,7 +408,7 @@ export default function EditorAlojamiento({
 
       {/* --------------------------------------------------------------- reglas -- */}
       {pestana === "reglas" && (
-        <FormularioSeccion accion={url} seccion="reglas" textoBoton="Guardar reglas" onSucio={setSucio}>
+        <FormularioSeccion accion={url} seccion="reglas" textoBoton="Guardar reglas">
           <h2>Reglas del alojamiento</h2>
           <p className="editor-nota">
             Lo que se deja en blanco no se muestra en la ficha: no se inventa ninguna norma.
@@ -464,7 +464,7 @@ export default function EditorAlojamiento({
       {/* ----------------------------------------------------------- publicacion -- */}
       {pestana === "publicacion" && (
         <>
-          <FormularioSeccion accion={url} seccion="publicacion" textoBoton="Guardar estado" onSucio={setSucio}>
+          <FormularioSeccion accion={url} seccion="publicacion" textoBoton="Guardar estado">
             <h2>Publicación</h2>
             <p className="editor-nota">
               Estado actual: <strong>{estados.find((e) => e.id === estado)?.etiqueta ?? estado}</strong>.{" "}
@@ -496,7 +496,7 @@ export default function EditorAlojamiento({
               </li>
             </ul>
             {esAdmin ? (
-              <FormularioSeccion accion={url} seccion="propietario" textoBoton="Cambiar propietario" onSucio={setSucio}>
+              <FormularioSeccion accion={url} seccion="propietario" textoBoton="Cambiar propietario">
                 <p className="editor-nota">
                   Solo la administración puede cambiar el propietario de un alojamiento. La relación es la
                   real de la base de datos: no se copian datos del anfitrión dentro del alojamiento.
@@ -539,7 +539,7 @@ export default function EditorAlojamiento({
                   su disponibilidad y sus calendarios. No se elimina si tiene reservas asociadas —en ese
                   caso lo correcto es desactivarlo—.
                 </p>
-                <FormularioSeccion accion={url} seccion="eliminar" textoBoton="Eliminar definitivamente" onSucio={setSucio}>
+                <FormularioSeccion accion={url} seccion="eliminar" textoBoton="Eliminar definitivamente">
                   <label className="f-campo">
                     <span className="etq">Escribe el nombre del alojamiento para confirmar</span>
                     <input name="confirmacion" placeholder={a.titulo} maxLength={255} />

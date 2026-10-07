@@ -86,7 +86,7 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .destino img{height:110px;width:100%;object-fit:cover;background:var(--surface-strong)}
 .destino .d{padding:10px 12px 12px}
 .destino b{font-family:var(--fuente-titulo);font-size:15px;display:block}
-.destino span{color:var(--muted-fg);font-size:12.5px;font-variant-numeric:tabular-nums}
+.destino span{color:var(--foreground);font-size:12.5px;font-variant-numeric:tabular-nums}
 /* tarjetas de alojamiento */
 .rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:22px}
 .aloj{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);overflow:hidden;transition:box-shadow .18s ease,transform .18s ease}
@@ -97,6 +97,9 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .aloj .foto img{width:100%;height:100%;object-fit:cover}
 .aloj .fav{position:absolute;top:10px;right:10px;width:32px;height:32px;border-radius:var(--radio-pill);border:0;background:rgba(255,255,255,.9);cursor:pointer}
 .aloj .d{padding:11px 13px 14px}
+/* Los textos de la tarjeta son <span> y nunca se les puso display: nombre, lugar y precio se
+   pintaban en la misma línea y se pisaban entre sí. Se pintan en bloque. */
+.aloj .d,.aloj .d .t,.aloj .d .m,.aloj .d .p{display:block}
 .aloj .t{font-family:var(--fuente-titulo);font-weight:700;font-size:15.5px;line-height:1.25;margin-bottom:2px}
 .aloj .m{color:var(--muted-fg);font-size:12.5px}
 .aloj .p{margin-top:8px;font-weight:700;font-variant-numeric:tabular-nums}
@@ -293,6 +296,29 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .corazon:disabled{opacity:.6;cursor:default}
 .galeria-pie{padding:26px 0 8px;text-align:center;min-height:40px}
 .cargando-mas{color:var(--muted-fg);font-size:13.5px}
+/* ---------- portada cinematográfica: el scroll manda sobre el vídeo ---------- */
+.hero-cine{position:relative;height:220vh;background:var(--ink)}
+.hero-cine-quieto{height:auto;min-height:560px}
+.hero-cine-fijo{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;align-items:flex-end}
+.hero-cine-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;opacity:0;transition:opacity .7s ease}
+.hero-cine-video-listo{opacity:1}
+/* El velo se aclara según avanza el scroll: cuando el texto ya se ha ido no tiene que tapar la
+   película, y sin esto el final del recorrido se veía como un bloque negro. */
+.hero-cine-velo{position:absolute;inset:0;opacity:calc(1 - var(--cine-progreso,0) * .78);background:linear-gradient(180deg,rgba(8,22,28,.30) 0%,rgba(8,22,28,.55) 45%,rgba(8,22,28,.88) 100%),radial-gradient(130% 95% at 18% 100%,rgba(8,22,28,.80) 0%,rgba(8,22,28,.42) 48%,rgba(8,22,28,.10) 78%)}
+/* El titular va sobre imagen en movimiento: sin sombra, un fotograma claro se lo come. */
+.hero-cine-contenido h1{color:#fff;font-size:38px;max-width:22ch;margin-bottom:10px;text-shadow:0 2px 20px rgba(4,14,18,.75),0 1px 3px rgba(4,14,18,.55)}
+.hero-cine-contenido .sub{color:rgba(255,255,255,.96);max-width:54ch;margin-bottom:18px;font-size:14.5px;text-shadow:0 1px 12px rgba(4,14,18,.75)}
+/* El texto se retira pronto y con él sus clics, para que no estorbe a la película. */
+.hero-cine-contenido{position:relative;width:100%;max-width:1180px;margin:0 auto;padding:28px 18px 46px;opacity:calc(1 - var(--cine-progreso,0) * 2.7);transform:translateY(calc(var(--cine-progreso,0) * -24px));pointer-events:var(--cine-clics,auto)}
+.hero-cine-contenido .eyebrow{color:var(--accent);font-weight:700;letter-spacing:.14em;font-size:11.5px;text-transform:uppercase;margin-bottom:8px}
+.hero-cine-credito{position:absolute;right:14px;bottom:10px;color:rgba(255,255,255,.72);font-size:11.5px;text-shadow:0 1px 8px rgba(4,14,18,.7)}
+.hero-cine-pista{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);color:rgba(255,255,255,.75);font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;opacity:calc(1 - var(--cine-progreso,0) * 4)}
+@media(max-width:760px){
+  .hero-cine{height:200vh}
+  .hero-cine-contenido h1{font-size:29px}
+  .hero-cine-credito{right:10px;bottom:auto;top:10px}
+}
+@media(prefers-reduced-motion:reduce){.hero-cine{height:auto}}
 /* ---------- ficha de alojamiento ---------- */
 .migas{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted-fg);padding:16px 0 12px;flex-wrap:wrap}
 .migas a{text-decoration:underline}

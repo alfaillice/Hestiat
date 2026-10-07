@@ -1,4 +1,5 @@
 import Resultados from "@/components/resultados";
+import HeroScroll from "@/components/hero-scroll";
 import { destacados, destinosDestacados, estilosDeViaje } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -24,44 +25,45 @@ export default async function Portada({
     destinosDestacados(12),
     estilosDeViaje(),
   ]);
-  const portada = destacadosLista.find((d) => d.portada)?.portada ?? null;
 
   return (
     <main>
       {/* ---------------------------------------------------------- hero -- */}
-      <section className="hero">
-        {portada && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={portada} alt="Alojamiento real del catálogo de Hestiat" />
-        )}
-        <div className="velo" />
-        <div className="cont">
-          <p className="eyebrow">Alojamientos con carácter</p>
-          <h1>Encuentra donde quedarte, sin sorpresas y sin comisiones.</h1>
-          <p className="sub">
-            Busca por ciudad, provincia, código postal o punto de interés. Comparamos precios
-            publicados y comprobamos la disponibilidad de verdad.
-          </p>
-          <form className="buscador" method="get" action="/search">
-            <span className="campo">
-              <span className="etq">Destino</span>
-              <input name="q" defaultValue={q} placeholder="¿A dónde vas?" aria-label="Destino" />
-            </span>
-            <span className="sep" />
-            <span className="campo" style={{ flex: "0 0 130px" }}>
-              <span className="etq">Fechas</span>
-              <input placeholder="¿Cuándo?" aria-label="Fechas" />
-            </span>
-            <span className="sep" />
-            <span className="campo" style={{ flex: "0 0 130px" }}>
-              <span className="etq">Viajeros</span>
-              <input placeholder="2 huéspedes" aria-label="Viajeros" />
-            </span>
-            <button type="submit">Buscar</button>
-          </form>
-        </div>
-        {portada && <span className="credito">Foto de un alojamiento del catálogo</span>}
-      </section>
+      {/*
+       * Portada cinematográfica: la película avanza con el scroll. El texto y el buscador siguen
+       * siendo los mismos y siguen en el HTML. El crédito dice la verdad: la escena es de
+       * ambientación, no la foto de un alojamiento concreto del catálogo.
+       */}
+      <HeroScroll
+        poster="/hero/hero-poster.jpg"
+        video="/hero/hero.mp4"
+        videoMovil="/hero/hero-movil.mp4"
+        credito="Escena de ambientación, no es un alojamiento concreto"
+      >
+        <p className="eyebrow">Alojamientos con carácter</p>
+        <h1>Encuentra donde quedarte, sin sorpresas y sin comisiones.</h1>
+        <p className="sub">
+          Busca por ciudad, provincia, código postal o punto de interés. Comparamos precios
+          publicados y comprobamos la disponibilidad de verdad.
+        </p>
+        <form className="buscador" method="get" action="/search">
+          <span className="campo">
+            <span className="etq">Destino</span>
+            <input name="q" defaultValue={q} placeholder="¿A dónde vas?" aria-label="Destino" />
+          </span>
+          <span className="sep" />
+          <span className="campo" style={{ flex: "0 0 130px" }}>
+            <span className="etq">Fechas</span>
+            <input placeholder="¿Cuándo?" aria-label="Fechas" />
+          </span>
+          <span className="sep" />
+          <span className="campo" style={{ flex: "0 0 130px" }}>
+            <span className="etq">Viajeros</span>
+            <input placeholder="2 huéspedes" aria-label="Viajeros" />
+          </span>
+          <button type="submit">Buscar</button>
+        </form>
+      </HeroScroll>
 
       {buscarActivo ? (
         <section className="seccion wrap">

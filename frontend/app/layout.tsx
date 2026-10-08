@@ -886,6 +886,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               </nav>
               <nav aria-label="Para anfitriones y proveedores">
                 <p className="pie-tit">Anfitriones y proveedores</p>
+                <p style={{ fontWeight: 700, color: "var(--hestiat-primary-texto)" }}>
+                  Publica gratis en Hestiat
+                </p>
                 <a href="/hazte-anfitrion">Hazte anfitrión</a>
                 <a href="/nuevo">Publicar alojamiento</a>
                 <a href="/publicar-experiencia">Publicar experiencia</a>

@@ -14,8 +14,12 @@ export default function HazteAnfitrion() {
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40, maxWidth: "76ch" }}>
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 8 }}>Hazte anfitrión</h1>
+      <p style={{ fontWeight: 700, fontSize: 18, color: "var(--hestiat-primary-texto)", marginBottom: 8 }}>
+        Publica gratis en Hestiat
+      </p>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 22 }}>
-        Publica tu alojamiento y gestiónalo tú, sin intermediarios en el cobro.
+        Sin comisión por reserva, sin cuota de publicación y sin cuota mensual: publicar no cuesta nada
+        y el pago lo acuerdas tú con el huésped. Gestiona tu alojamiento desde tu propio panel.
       </p>
 
       <section className="seccion-home">

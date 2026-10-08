@@ -5,6 +5,7 @@ import SeccionHome from "@/components/seccion-home";
 import TarjetaDestino from "@/components/tarjeta-destino";
 import TarjetaCategoria from "@/components/tarjeta-categoria";
 import TarjetaAlojamiento from "@/components/tarjeta-alojamiento";
+import CercaDeTi from "@/components/cerca-de-ti";
 import { aTarjeta } from "@/lib/tarjetas";
 import { destacados } from "@/lib/db";
 import { destinosParaTi, categoriasServicio, categoriasExperiencia } from "@/lib/home.server";
@@ -131,6 +132,10 @@ export default async function Portada({
             />
           ))}
         </SeccionHome>
+
+        {/* Solo aparece si el navegador da permiso de ubicación: sin permiso no hay sección ni hueco.
+            Los alojamientos llegan ordenados por distancia real desde donde esté la persona. */}
+        <CercaDeTi />
 
         <p className="aviso pie-inicio">
           Los alojamientos, sus precios y sus fotografías salen del catálogo real de Hestiat. Las

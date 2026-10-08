@@ -49,6 +49,9 @@ export default async function Resultados({
   if (filtros?.desde) params.set("desde", filtros.desde);
   if (filtros?.hasta) params.set("hasta", filtros.hasta);
   if (filtros?.huespedes) params.set("huespedes", String(filtros.huespedes));
+  // El punto de «cerca de ti» viaja también: sin esto, la segunda tanda del scroll perdería el
+  // orden por distancia y mezclaría resultados de cualquier sitio con los cercanos.
+  if (filtros?.cerca) params.set("cerca", `${filtros.cerca.lat},${filtros.cerca.lng}`);
 
   if (items.length === 0) {
     // Estado vacío con salidas de verdad: quitar las fechas si las hay, o rehacer la búsqueda.

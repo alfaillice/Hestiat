@@ -130,9 +130,20 @@ export interface FiltrosBusqueda {
   hasta?: string;
   /** Viajeros: con dos o más, se descartan los alojamientos de menor capacidad. */
   huespedes?: number;
+  /** Buscar alrededor de un punto: ordena por distancia real y dice cuánto hay hasta cada uno. */
+  cerca?: { lat: number; lng: number };
   pagina?: number;
   porPagina?: number;
 }
+
+/**
+ * Distancia real en metros entre el punto buscado y un alojamiento (haversine).
+ *
+ * Se calcula en la propia consulta, con las coordenadas que ya están en la base, y sirve para
+ * ordenar y para poder decir «a 3,2 km». No se estima ni se redondea a ojo: es la distancia
+ * geográfica entre los dos puntos. Sin coordenadas no hay distancia, así que esos quedan fuera.
+ */
+const DISTANCIA_M = `(6371000 * ACOS(LEAST(1, COS(RADIANS(?)) * COS(RADIANS(a.lat)) * COS(RADIANS(a.lng) - RADIANS(?)) + SIN(RADIANS(?)) * SIN(RADIANS(a.lat)))))`;
 
 /** ¿Es una fecha AAAA-MM-DD de verdad? Sin esto, un valor raro en la URL filtraría de más. */
 function esFecha(v: string | undefined): boolean {
@@ -204,12 +215,23 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
     );
     valores.push(opciones.desde, opciones.hasta);
   }
+  // Cerca de un punto: solo entran los que tienen coordenadas, porque sin ellas no hay distancia.
+  const cerca = opciones.cerca;
+  const hayPunto = Boolean(cerca && Number.isFinite(cerca.lat) && Number.isFinite(cerca.lng));
+  if (hayPunto) filtros.push("a.lat IS NOT NULL AND a.lng IS NOT NULL");
   const where = filtros.join(" AND ");
 
   // Ordenar por precio también es hablar de precio: se ordena por el mismo valor efectivo, para que
   // «Precio más bajo» ordene por lo que la tarjeta enseña y no por un campo medio vacío.
+  // Los tres valores del punto se repiten en el SELECT (para traer la distancia) y en el ORDER BY.
+  // Van en el mismo orden en que aparecen los `?` dentro de cada sentencia.
+  const paramsPunto = hayPunto ? [cerca!.lat, cerca!.lng, cerca!.lat] : [];
+  const porDistancia = hayPunto && opciones.orden === "recomendados";
+
   const orden =
-    opciones.orden === "precio_asc"
+    porDistancia
+      ? `ORDER BY ${DISTANCIA_M} ASC, a.id ASC`
+      : opciones.orden === "precio_asc"
       ? `ORDER BY (${PRECIO_EFECTIVO} IS NULL), ${PRECIO_EFECTIVO} ASC, a.id ASC`
       : opciones.orden === "precio_desc"
         ? `ORDER BY (${PRECIO_EFECTIVO} IS NULL), ${PRECIO_EFECTIVO} DESC, a.id ASC`
@@ -225,6 +247,7 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
     `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.country,
             a.price_per_night, a.indicative_price, a.price_type,
             a.capacity, a.bedrooms, a.beds, a.review_score, a.review_count,
+            ${hayPunto ? `${DISTANCIA_M} AS distancia_m` : "NULL AS distancia_m"},
             (SELECT COALESCE(p.origin_url, p.storage_key)
                FROM accommodation_photo p
               WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
@@ -234,7 +257,7 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
       WHERE ${where}
       ${orden}
       LIMIT ? OFFSET ?`,
-    [...valores, porPagina, offset],
+    [...paramsPunto, ...valores, ...(porDistancia ? paramsPunto : []), porPagina, offset],
   );
 
   return { total, pagina, porPagina, items: rows as unknown as AlojamientoTarjeta[] };

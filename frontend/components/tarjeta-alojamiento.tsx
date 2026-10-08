@@ -22,11 +22,14 @@ export default function TarjetaAlojamiento({
   guardado = false,
   haySesion = false,
   volverA = "/search",
+  nota,
 }: {
   a: TarjetaGaleria;
   guardado?: boolean;
   haySesion?: boolean;
   volverA?: string;
+  /** Línea extra bajo la ubicación (por ejemplo, la distancia: «a 3,2 km»). */
+  nota?: string;
 }) {
   const lugar = [a.ciudad, a.provincia].filter(Boolean).join(", ");
   const { principal, sufijo } = textoPrecio(a);
@@ -54,6 +57,7 @@ export default function TarjetaAlojamiento({
       <div className="tjg-info">
         <h3 className="tjg-nombre">{a.titulo}</h3>
         {lugar && <p className="tjg-lugar">{lugar}</p>}
+        {nota ? <p className="tjg-lugar">{nota}</p> : null}
         {a.puntuacion !== null && (
           <p className="tjg-estrella">
             <span aria-hidden="true">★</span> {a.puntuacion.toFixed(1).replace(".", ",")}

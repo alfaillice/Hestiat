@@ -29,6 +29,14 @@ export async function GET(request: Request) {
     return Number.isFinite(x) && x > 0 ? x : undefined;
   };
   const orden = uno("orden");
+  // «cerca=lat,lng»: si viene, la tanda siguiente del scroll se ordena igual, por distancia real.
+  const punto = (uno("cerca") ?? "").split(",");
+  const lat = Number(punto[0]);
+  const lng = Number(punto[1]);
+  const cerca =
+    punto.length === 2 && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+      ? { lat, lng }
+      : undefined;
   const filtros: FiltrosBusqueda = {
     q: (uno("q") ?? "").trim(),
     provincia: uno("provincia"),
@@ -36,7 +44,8 @@ export async function GET(request: Request) {
     precioMax: num("precioMax"),
     servicios: url.searchParams.getAll("servicios"),
     orden: orden === "precio_asc" || orden === "precio_desc" ? orden : "recomendados",
-    pagina: Math.max(1, Number(uno("p") ?? 1) || 1),
+    cerca,
+    pagina: Math.max(1, Number(uno("p")) || 1),
     porPagina: TANDA,
   };
 

@@ -34,6 +34,15 @@ function leerFiltros(sp: Record<string, string | string[] | undefined>): Filtros
   const desde = fecha(sp.desde);
   const hasta = fecha(sp.hasta);
   const huespedes = num(sp.huespedes);
+  // «cerca=lat,lng»: lo pone el buscador cuando la persona comparte su ubicación. Solo se acepta si
+  // son dos números con forma de coordenada; si no, se ignora en vez de ordenar por algo raro.
+  const puntoTxt = (uno(sp.cerca) ?? "").split(",");
+  const lat = Number(puntoTxt[0]);
+  const lng = Number(puntoTxt[1]);
+  const cerca =
+    puntoTxt.length === 2 && Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+      ? { lat, lng }
+      : undefined;
   return {
     q: (uno(sp.q) ?? "").trim(),
     provincia: uno(sp.provincia) || undefined,
@@ -45,6 +54,7 @@ function leerFiltros(sp: Record<string, string | string[] | undefined>): Filtros
     hasta: desde && hasta && desde < hasta ? hasta : undefined,
     // Con 1 viajero no se filtra nada: es el valor por defecto y no debe cambiar los resultados.
     huespedes: huespedes && huespedes >= 2 ? huespedes : undefined,
+    cerca,
   };
 }
 
@@ -85,6 +95,7 @@ export default async function Explorar({
     if (filtros.desde) qs.set("desde", filtros.desde);
     if (filtros.hasta) qs.set("hasta", filtros.hasta);
     if (filtros.huespedes) qs.set("huespedes", String(filtros.huespedes));
+    if (filtros.cerca) qs.set("cerca", `${filtros.cerca.lat},${filtros.cerca.lng}`);
     if (vista === "mapa") qs.set("vista", "mapa");
     const cadena = qs.toString();
     return `/search${cadena ? `?${cadena}` : ""}`;

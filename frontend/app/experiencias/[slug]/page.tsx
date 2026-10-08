@@ -6,6 +6,7 @@ import SeccionHome from "@/components/seccion-home";
 import ImagenSegura from "@/components/imagen-segura";
 import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
+import BotonEditarAdmin from "@/components/boton-editar-admin";
 import { experienciaPorSlug, experienciasSimilares, experienciasCercanasA, type ExpTarjeta } from "@/lib/experiencias.server";
 
 export const dynamic = "force-dynamic";

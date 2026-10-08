@@ -118,6 +118,14 @@ export default function BuscadorExplorar({
   const enviar = () => {
     const f = formulario.current;
     if (!f) return;
+    // Se recuerda el último destino buscado: «Cerca de ti» lo usa como alternativa cuando la
+    // persona no comparte su ubicación, y así la sección no se queda vacía.
+    try {
+      const destinoEscrito = String((f.elements.namedItem("q") as HTMLInputElement | null)?.value ?? "").trim();
+      if (destinoEscrito) localStorage.setItem("hestiat-ultimo-destino", destinoEscrito);
+    } catch {
+      // Sin almacenamiento (modo privado): no pasa nada, solo se pierde ese atajo.
+    }
     for (const elemento of Array.from(f.elements) as HTMLInputElement[]) {
       if (!elemento.name || elemento.disabled) continue;
       if (String(elemento.value).trim() === "") elemento.disabled = true;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { buscar } from "@/lib/db";
-import { aTarjeta } from "@/lib/tarjetas";
+import { alojamientosCerca, experienciasCerca, MAXIMO } from "@/lib/cerca.server";
+import type { RespuestaCerca } from "@/lib/cerca.tipos";
 import { getCurrentUser } from "@/lib/auth.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
 import { limitar } from "@/lib/limite.server";
@@ -8,56 +8,83 @@ import { limitar } from "@/lib/limite.server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** «a 3,2 km» o «a 850 m». La distancia viene calculada por la base, aquí solo se escribe. */
-function distanciaLegible(metros: unknown): string | undefined {
-  const m = Number(metros);
-  if (!Number.isFinite(m) || m < 0) return undefined;
-  if (m < 950) return `a ${Math.round(m / 10) * 10} m`;
-  return `a ${(m / 1000).toFixed(1).replace(".", ",")} km`;
-}
-
 /**
- * Alojamientos alrededor de un punto.
+ * «Cerca de ti», con tres modos posibles y ninguno inventado:
  *
- * Las coordenadas las pone el navegador cuando la persona da permiso. Aquí no se guarda ninguna
- * ubicación: se usan para esta consulta y se descartan. El orden es por distancia real, calculada en
- * la base con las coordenadas de cada alojamiento.
+ *  · `lat` y `lng` → la ubicación que la persona ha autorizado. Se ordena por distancia real y se
+ *    dice «a 3,2 km». Las coordenadas se usan para esta consulta y se descartan: no se guardan.
+ *  · `destino` → una ciudad (la elegida en la búsqueda o la última buscada). Se ordena por ese
+ *    destino y NO se muestra ninguna distancia, porque no hay ninguna que medir.
+ *  · sin nada de lo anterior → una selección del catálogo, que se enseña como «Descubre…» y nunca
+ *    como «cerca de ti».
  *
- * Devuelve además qué tiene guardado en favoritos quien pregunta, para que el corazón de la tarjeta
- * salga en su estado de verdad y no vacío.
+ * Siempre devuelve las dos listas (alojamientos y experiencias), con un máximo de 13 cada una, y
+ * solo lo que existe: si hay menos, se devuelven los que haya.
  */
 export async function GET(request: Request) {
-  const excedido = limitar(request, "/api/cerca", 30, 60);
+  const excedido = limitar(request, "/api/cerca", 60, 60);
   if (excedido) return excedido;
 
   const p = new URL(request.url).searchParams;
-  const lat = Number(p.get("lat"));
-  const lng = Number(p.get("lng"));
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) {
-    return NextResponse.json({ alojamientos: [], error: "Coordenadas no válidas." }, { status: 400 });
-  }
+  // OJO: `Number(null)` es 0, así que sin coordenadas esto pasaba la validación como si fuera el
+  // punto (0, 0) —en el golfo de Guinea— y la sección decía «a 50 m» de sitios que estaban a
+  // kilómetros. Hay que comprobar que los parámetros EXISTEN, no solo que son números.
+  const latTxt = p.get("lat");
+  const lngTxt = p.get("lng");
+  const lat = Number(latTxt);
+  const lng = Number(lngTxt);
+  const hayTexto = (v: string | null): v is string => v !== null && v.trim() !== "";
+  const coordenadasValidas =
+    hayTexto(latTxt) &&
+    hayTexto(lngTxt) &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    Math.abs(lat) <= 90 &&
+    Math.abs(lng) <= 180;
+  const destino = (p.get("destino") ?? "").trim().slice(0, 80);
+
+  const punto = coordenadasValidas ? { lat, lng } : undefined;
+  let modo: RespuestaCerca["modo"] = punto ? "punto" : destino ? "destino" : "descubre";
 
   try {
-    const r = await buscar({ cerca: { lat, lng }, orden: "recomendados", pagina: 1, porPagina: 12 });
-    const tarjetas = r.items.map((fila) => {
-      const f = fila as unknown as Record<string, unknown>;
-      return {
-        ...aTarjeta(f),
-        nota: distanciaLegible(f.distancia_m),
-      };
-    });
+    let [aloj, expe] = await Promise.all([
+      alojamientosCerca({ punto, destino: punto ? undefined : destino }, MAXIMO),
+      experienciasCerca({ punto, destino: punto ? undefined : destino }, MAXIMO),
+    ]);
+
+    /* Si el punto está lejísimos de todo el catálogo, «cerca de ti» no significa nada y enseñar
+       «a 3.900 km» sería ridículo. Pasa cuando alguien navega desde fuera de España o cuando el
+       navegador devuelve una posición falsa (0,0, en el golfo de Guinea, es el caso típico). En ese
+       caso se cambia al destino elegido o a la selección del catálogo, y NO se enseña distancia. */
+    const LEJOS_M = 500_000; // 500 km
+    if (modo === "punto" && (aloj.cercaniaMetros === null || aloj.cercaniaMetros > LEJOS_M)) {
+      modo = destino ? "destino" : "descubre";
+      [aloj, expe] = await Promise.all([
+        alojamientosCerca({ destino }, MAXIMO),
+        experienciasCerca({ destino }, MAXIMO),
+      ]);
+    }
 
     const sesion = await getCurrentUser();
     const guardados = sesion
-      ? [...(await guardadosEntre(Number(sesion.id), tarjetas.map((t) => t.id)))]
+      ? [...(await guardadosEntre(Number(sesion.id), aloj.items.map((t) => t.id)))]
       : [];
 
-    return NextResponse.json(
-      { alojamientos: tarjetas, guardados, haySesion: Boolean(sesion), total: r.total },
-      { headers: { "Cache-Control": "private, no-store" } },
-    );
+    const respuesta: RespuestaCerca = {
+      modo,
+      etiqueta: modo === "destino" ? destino : null,
+      alojamientos: aloj.items,
+      experiencias: expe,
+      guardados,
+      haySesion: Boolean(sesion),
+      totales: { alojamientos: aloj.total, experiencias: expe.length },
+    };
+    return NextResponse.json(respuesta, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("[hestiat] /api/cerca", error instanceof Error ? error.message.slice(0, 160) : error);
-    return NextResponse.json({ alojamientos: [], error: "No se han podido buscar alojamientos cercanos." }, { status: 500 });
+    return NextResponse.json(
+      { modo, etiqueta: null, alojamientos: [], experiencias: [], guardados: [], haySesion: false, totales: { alojamientos: 0, experiencias: 0 } },
+      { status: 200 },
+    );
   }
 }

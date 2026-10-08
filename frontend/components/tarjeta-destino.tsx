@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { DestinoHome } from "@/lib/home.server";
+import ImagenSegura from "@/components/imagen-segura";
 
 /**
  * Tarjeta de destino: la ciudad, su foto real y cuántos alojamientos tiene.
@@ -16,10 +17,11 @@ export default function TarjetaDestino({ destino }: { destino: DestinoHome }) {
   return (
     <Link className="tdest" href={destino.href}>
       <span className="tdest-media">
-        {destino.imagen ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={destino.imagen} alt={`${destino.nombre}: imagen de referencia`} loading="lazy" decoding="async" />
-        ) : null}
+        <ImagenSegura
+          src={destino.imagen}
+          alt={`${destino.nombre}: imagen de referencia`}
+          fondo="tdest-sinfoto"
+        />
         <span className="tdest-velo" />
       </span>
       <span className="tdest-txt">

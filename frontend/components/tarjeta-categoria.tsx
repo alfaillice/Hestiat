@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CategoriaHome } from "@/lib/home.server";
+import ImagenSegura from "@/components/imagen-segura";
 
 /**
  * Tarjeta de categoría, para Servicios y Experiencias.
@@ -20,12 +21,7 @@ export default function TarjetaCategoria({
   return (
     <Link className="tcat" href={categoria.href}>
       <span className="tcat-media">
-        {categoria.imagen ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={categoria.imagen} alt={`${categoria.nombre}: imagen de ambientación`} loading="lazy" decoding="async" />
-        ) : (
-          <span className="tcat-sinfoto" aria-hidden="true" />
-        )}
+        <ImagenSegura src={categoria.imagen} alt={`${categoria.nombre}: imagen de ambientación`} />
       </span>
       <span className="tcat-txt">
         <b>{categoria.nombre}</b>

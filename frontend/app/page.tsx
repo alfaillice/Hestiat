@@ -133,9 +133,10 @@ export default async function Portada({
           ))}
         </SeccionHome>
 
-        {/* Solo aparece si el navegador da permiso de ubicación: sin permiso no hay sección ni hueco.
-            Los alojamientos llegan ordenados por distancia real desde donde esté la persona. */}
-        <CercaDeTi />
+        {/* Sin ubicación, esta sección usa el destino de la búsqueda (o el último buscado) y lo dice
+            en su título; si no hay ninguno, pasa a ser «Descubre alojamientos». Nunca finge
+            proximidad. */}
+        <CercaDeTi destino={q || undefined} />
 
         <p className="aviso pie-inicio">
           Los alojamientos, sus precios y sus fotografías salen del catálogo real de Hestiat. Las

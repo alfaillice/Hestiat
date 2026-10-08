@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Corazon from "@/components/corazon";
+import ImagenSegura from "@/components/imagen-segura";
 import { textoPrecio } from "@/lib/tarjetas";
 import type { TarjetaGaleria } from "@/lib/tarjetas";
 
@@ -38,15 +39,7 @@ export default function TarjetaAlojamiento({
     <article className="tjg">
       <div className="tjg-foto">
         {a.portada ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={a.portada}
-            alt={a.titulo}
-            loading="lazy"
-            decoding="async"
-            width={420}
-            height={315}
-          />
+          <ImagenSegura src={a.portada} alt={a.titulo} ancho={420} alto={315} fondo="tjg-sinfoto" />
         ) : (
           <span className="tjg-sinfoto">Sin fotografía</span>
         )}

@@ -388,6 +388,7 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .tdest-media img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
 .tdest:hover .tdest-media img{transform:scale(1.03)}
 .tdest-velo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,20,26,0) 38%,rgba(10,20,26,.78) 100%)}
+.tdest-sinfoto{position:absolute;inset:0;background:linear-gradient(135deg,#33454c,#1f2f36)}
 .tdest-txt{position:absolute;left:12px;right:12px;bottom:11px;display:flex;flex-direction:column;gap:2px}
 .tdest-txt b{font-family:var(--fuente-titulo);font-size:16px;color:#fff}
 .tdest-txt span{font-size:12px;color:rgba(255,255,255,.86)}
@@ -402,6 +403,15 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .tcat-txt b{font-family:var(--fuente-titulo);font-size:14.5px;color:var(--ink)}
 .tcat-txt span{font-size:12px;color:var(--muted-fg)}
 .pie-inicio{margin-top:30px}
+/* «Cerca de ti»: la acción discreta para compartir la ubicación, y el ancho de las tarjetas de
+   alojamiento dentro de un carrusel (8 visibles en escritorio, como el resto de filas). */
+.cerca-ofrecer{margin:26px 0 0}
+.cerca-ofrecer .fechas-disparador{width:auto;display:inline-block;background:var(--hestiat-primary);color:var(--ink);border:0;font-weight:700;font-size:14px;padding:11px 18px}
+.cerca-ofrecer .fechas-disparador:hover{background:var(--hestiat-primary-hover);border:0}
+.cerca-ofrecer .fechas-disparador:disabled{opacity:.6;cursor:default}
+.car .car-pista>.tjg{flex:0 0 calc((100% - 112px) / 8);min-width:186px}
+@media(max-width:760px){.car .car-pista>.tjg{flex:0 0 62%;min-width:0}}
+@media(max-width:430px){.car .car-pista>.tjg{flex:0 0 76%}}
 /* Rejilla del catálogo de servicios: misma tarjeta que las categorías, pero en rejilla. */
 .serv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px;margin-top:6px}
 .serv-card{border:1px solid var(--border);border-radius:var(--radio);overflow:hidden;background:var(--card);transition:transform .18s ease, box-shadow .18s ease}

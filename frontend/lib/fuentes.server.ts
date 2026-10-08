@@ -213,16 +213,19 @@ function conVerificacion(
 
 async function deWikidata(ident: Identidad, consultas: string[]): Promise<Candidato[]> {
   const salida: Candidato[] = [];
-  const busqueda = await pedirJson(
-    `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(consultas[0])}&language=es&uselang=es&type=item&limit=5&format=json`,
-  );
-  const ids = ((busqueda?.search ?? []) as { id?: string }[]).map((x) => String(x.id ?? "")).filter(Boolean).slice(0, 3);
-  if (ids.length === 0) return salida;
-  const entidades = await pedirJson(
-    `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|descriptions&languages=es&format=json`,
-  );
-  const datos = (entidades?.entities ?? {}) as Record<string, Record<string, unknown>>;
-  for (const id of ids) {
+  // Se prueban DOS combinaciones (nombre + ciudad y nombre + provincia): la misma entidad no aparece
+  // igual según cómo se pregunte, y quedarse con la primera consulta era quedarse corto.
+  for (const consulta of consultas.slice(0, 2)) {
+    const busqueda = await pedirJson(
+      `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(consulta)}&language=es&uselang=es&type=item&limit=5&format=json`,
+    );
+    const ids = ((busqueda?.search ?? []) as { id?: string }[]).map((x) => String(x.id ?? "")).filter(Boolean).slice(0, 3);
+    if (ids.length === 0) continue;
+    const entidades = await pedirJson(
+      `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${ids.join("|")}&props=claims|descriptions&languages=es&format=json`,
+    );
+    const datos = (entidades?.entities ?? {}) as Record<string, Record<string, unknown>>;
+    for (const id of ids) {
     const e = datos[id];
     if (!e) continue;
     const etiqueta = String((e.descriptions as Record<string, { value?: string }> | undefined)?.es?.value ?? id);
@@ -231,8 +234,8 @@ async function deWikidata(ident: Identidad, consultas: string[]): Promise<Candid
     const coords = claims.P625?.[0]?.mainsnak?.datavalue?.value as { latitude?: number; longitude?: number } | undefined;
     const cLat = typeof coords?.latitude === "number" ? coords.latitude : null;
     const cLng = typeof coords?.longitude === "number" ? coords.longitude : null;
-    if (typeof web !== "string" || !/^https?:/i.test(web)) continue;
-    const cand = conVerificacion(
+      if (typeof web !== "string" || !/^https?:/i.test(web)) continue;
+      const cand = conVerificacion(
       {
         url: web,
         prioridad: 1,
@@ -247,22 +250,31 @@ async function deWikidata(ident: Identidad, consultas: string[]): Promise<Candid
       cLat,
       cLng,
       null,
-    );
-    salida.push(cand);
+      );
+      salida.push(cand);
+    }
+    if (salida.length > 0) break;
   }
   return salida;
 }
 
 async function deWikipedia(ident: Identidad, consultas: string[]): Promise<{ candidatos: Candidato[]; articulo: Candidato | null }> {
   const salida: Candidato[] = [];
-  const busqueda = await pedirJson(
-    `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(`"${ident.nombre}" ${ident.municipio ?? ident.provincia ?? ""}`.trim())}&srlimit=3&format=json`,
-  );
-  const titulos = ((busqueda?.query as { search?: { title?: string }[] } | undefined)?.search ?? [])
-    .map((x) => String(x.title ?? ""))
-    .filter(Boolean);
-  if (titulos.length === 0) return { candidatos: salida, articulo: null };
-  const mejor = titulos.find((t) => pareceElMismo(ident.nombre, t)) ?? null;
+  // Igual que en Wikidata: si con la ciudad no aparece, se prueba con la provincia.
+  let mejor: string | null = null;
+  for (const consulta of [
+    `"${ident.nombre}" ${ident.municipio ?? ident.provincia ?? ""}`.trim(),
+    `"${ident.nombre}" ${ident.provincia ?? ident.pais ?? ""}`.trim(),
+  ]) {
+    const busqueda = await pedirJson(
+      `https://es.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(consulta)}&srlimit=3&format=json`,
+    );
+    const titulos = ((busqueda?.query as { search?: { title?: string }[] } | undefined)?.search ?? [])
+      .map((x) => String(x.title ?? ""))
+      .filter(Boolean);
+    mejor = titulos.find((t) => pareceElMismo(ident.nombre, t)) ?? null;
+    if (mejor) break;
+  }
   if (!mejor) return { candidatos: salida, articulo: null };
   const detalle = await pedirJson(
     `https://es.wikipedia.org/w/api.php?action=query&prop=coordinates|pageimages|extracts|extlinks|info&inprop=url&exintro=1&explaintext=1&ellimit=30&titles=${encodeURIComponent(mejor)}&format=json`,
@@ -329,11 +341,15 @@ async function deWikipedia(ident: Identidad, consultas: string[]): Promise<{ can
 async function deNominatim(ident: Identidad, consultas: string[]): Promise<{ candidatos: Candidato[]; localizada: boolean }> {
   const salida: Candidato[] = [];
   let localizada = false;
-  const consulta = consultas[0];
-  const datos = await pedirJson(
-    `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(consulta)}&format=jsonv2&extratags=1&addressdetails=1&limit=3&accept-language=es`,
-  );
-  const lista = Array.isArray(datos) ? (datos as Record<string, unknown>[]) : [];
+  // Dos intentos como mucho: primero nombre + ciudad + provincia, y si no aparece, nombre + país.
+  let lista: Record<string, unknown>[] = [];
+  for (const consulta of [consultas[0], consultas[1] ?? `${ident.nombre} ${ident.pais ?? "España"}`.trim()]) {
+    const datos = await pedirJson(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(consulta)}&format=jsonv2&extratags=1&addressdetails=1&limit=3&accept-language=es`,
+    );
+    lista = Array.isArray(datos) ? (datos as Record<string, unknown>[]) : [];
+    if (lista.length > 0) break;
+  }
   for (const r of lista) {
     const etiquetas = (r.extratags ?? {}) as Record<string, string>;
     const web = etiquetas.website ?? etiquetas["contact:website"] ?? null;
@@ -380,9 +396,11 @@ export function consultasPara(ident: Identidad): string[] {
     `${ident.nombre} ${ident.municipio ?? ""} ${ident.provincia ?? ""}`.trim(),
     `${ident.nombre} ${ident.municipio ?? ""}`.trim(),
     `${ident.nombre} ${ident.provincia ?? ""}`.trim(),
+    `${ident.nombre} ${ident.pais ?? "España"}`.trim(),
     `${ident.nombre} turismo`,
     `${ident.nombre} oficial`,
     `${ident.nombre} precio`,
+    `${ident.nombre} ${ident.municipio ?? ""} precio`.trim(),
   ];
   return [...new Set(salida.filter((c) => c.length > partes[0].length))];
 }

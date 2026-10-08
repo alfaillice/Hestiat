@@ -18,9 +18,22 @@ const UA = "Hestiat/2.0 (enriquecimiento de catalogo; https://hestiat.com; hola@
 export interface PrecioHallado {
   valor: number;
   texto: string;
+  /** Moneda. Se deduce del propio símbolo o texto de la página. */
+  moneda: string;
+  /** De dónde sale el número: datos estructurados, tarifa con su palabra al lado, o un «desde». */
+  tipo: "datos_estructurados" | "tarifa" | "desde";
   url: string;
   contexto: string;
   confianza: "high" | "medium" | "low";
+}
+
+/** La moneda que declara la propia página: € o EUR son euros; si dice otra cosa, se respeta. */
+function monedaDe(texto: string, declarada?: unknown): string {
+  if (typeof declarada === "string" && /^[A-Za-z]{3}$/.test(declarada.trim())) return declarada.trim().toUpperCase();
+  if (/€|\bEUR\b|euros?/i.test(texto)) return "EUR";
+  if (/\$|USD|d[oó]lares?/i.test(texto)) return "USD";
+  if (/£|GBP|libras?/i.test(texto)) return "GBP";
+  return "EUR";
 }
 
 /** Palabras que indican que ahí hay una tarifa. */
@@ -77,7 +90,15 @@ function deDatosEstructurados(html: string, url: string): PrecioHallado[] {
           const texto = String(v);
           const num = Number(texto.replace(/[^0-9.,]/g, "").replace(",", "."));
           if (Number.isFinite(num) && num > 0 && num < 100000) {
-            salida.push({ valor: num, texto, url, contexto: "datos estructurados de la página", confianza: "high" });
+            salida.push({
+              valor: num,
+              texto,
+              moneda: monedaDe(texto, ofertas[0]?.priceCurrency ?? d?.priceCurrency),
+              tipo: "datos_estructurados",
+              url,
+              contexto: "datos estructurados de la página",
+              confianza: "high",
+            });
           }
         }
       }
@@ -109,6 +130,8 @@ function delTexto(html: string, url: string): PrecioHallado[] {
       salida.push({
         valor: num,
         texto: `${num} €`,
+        moneda: monedaDe(texto.slice(inicio, inicio + 120)),
+        tipo: /desde|from/i.test(texto.slice(inicio, (m.index ?? 0) + 20)) ? "desde" : "tarifa",
         url,
         contexto: texto.slice(inicio, Math.min(texto.length, inicio + 120)).trim(),
         confianza: "medium",

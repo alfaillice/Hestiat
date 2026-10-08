@@ -59,7 +59,7 @@ export type Motivo =
   | "error_tecnico";
 export type Confianza = "high" | "medium" | "low";
 
-export const VERSION_MOTOR = 2;
+export const VERSION_MOTOR = 3;
 
 /** Ficha normalizada: lo mismo para los tres catálogos. */
 export interface FichaCatalogo {
@@ -69,6 +69,7 @@ export interface FichaCatalogo {
   resumen: string | null;
   web: string | null;
   telefono: string | null;
+  email: string | null;
   direccion: string | null;
   municipio: string | null;
   provincia: string | null;
@@ -88,7 +89,7 @@ export interface FichaCatalogo {
 const CONSULTAS: Record<TipoCatalogo, string> = {
   experience: `
     SELECT e.id, e.name AS nombre, e.description AS descripcion, e.short_description AS resumen,
-           e.website_url AS web, e.phone AS telefono, e.address AS direccion,
+           e.website_url AS web, e.phone AS telefono, e.email AS email, e.address AS direccion,
            e.municipality AS municipio, e.province AS provincia, e.latitude AS lat, e.longitude AS lng,
            e.main_image AS imagen, e.price AS precioValor, e.price_type AS precioTipo,
            c.nombre AS categoria, s.nombre AS subcategoria, cl.confianza AS confianzaClasificacion, cl.origen AS origenClasificacion
@@ -99,7 +100,7 @@ const CONSULTAS: Record<TipoCatalogo, string> = {
      WHERE e.id = ? LIMIT 1`,
   service: `
     SELECT s.id, s.name AS nombre, s.short_description AS descripcion, s.short_description AS resumen,
-           s.website_url AS web, s.phone AS telefono, s.address AS direccion,
+           s.website_url AS web, s.phone AS telefono, s.email AS email, s.address AS direccion,
            s.municipality AS municipio, s.province AS provincia, s.latitude AS lat, s.longitude AS lng,
            s.main_image AS imagen, s.price AS precioValor, s.price_type AS precioTipo,
            c.nombre AS categoria, sub.nombre AS subcategoria, cl.confianza AS confianzaClasificacion, cl.origen AS origenClasificacion
@@ -111,7 +112,7 @@ const CONSULTAS: Record<TipoCatalogo, string> = {
   // Preparado para cuando toque: el alojamiento tiene los mismos campos con otros nombres.
   accommodation: `
     SELECT a.id, a.title AS nombre, a.description AS descripcion, a.description AS resumen,
-           NULL AS web, NULL AS telefono, a.address AS direccion,
+           NULL AS web, NULL AS telefono, NULL AS email, a.address AS direccion,
            a.city AS municipio, a.province AS provincia, a.lat AS lat, a.lng AS lng,
            (SELECT COALESCE(p.origin_url, p.storage_key) FROM accommodation_photo p WHERE p.accommodation_id = a.id
              ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1) AS imagen,
@@ -129,6 +130,7 @@ export async function leerFicha(tipo: TipoCatalogo, id: number): Promise<FichaCa
     id: Number(f.id),
     nombre: String(f.nombre ?? ""),
     descripcion: f.descripcion ?? null,
+    email: f.email ?? null,
     resumen: f.resumen ?? null,
     web: f.web ?? null,
     telefono: f.telefono ?? null,
@@ -182,18 +184,26 @@ async function guardarDato(
   enriquecido: string,
   fuente: { source: string; name: string | null; url: string | null; type: string | null; confidence: Confianza },
   lote: number | null,
-  extra: { priority?: number | null; originalSourceUrl?: string | null; verificacion?: string | null } = {},
+  extra: {
+    priority?: number | null;
+    originalSourceUrl?: string | null;
+    verificacion?: string | null;
+    moneda?: string | null;
+    tipoPrecio?: string | null;
+  } = {},
 ): Promise<void> {
   await pool.query(
-    `INSERT INTO catalogo_dato (catalog_type, item_id, campo, original_value, enriched_value, source, source_priority, source_name, source_url, original_source_url, verificacion, source_type, confidence, verified_at, lote_id)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)
+    `INSERT INTO catalogo_dato (catalog_type, item_id, campo, original_value, enriched_value, moneda, tipo_precio, source, source_priority, source_name, source_url, original_source_url, verificacion, source_type, confidence, verified_at, lote_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)
      ON DUPLICATE KEY UPDATE enriched_value = VALUES(enriched_value), original_value = VALUES(original_value),
+       moneda = VALUES(moneda), tipo_precio = VALUES(tipo_precio),
        source = VALUES(source), source_priority = VALUES(source_priority), source_name = VALUES(source_name),
        source_url = VALUES(source_url), original_source_url = VALUES(original_source_url),
        verificacion = VALUES(verificacion), source_type = VALUES(source_type),
        confidence = VALUES(confidence), verified_at = NOW(), lote_id = VALUES(lote_id)`,
     [
-      tipo, id, campo, original, enriquecido.slice(0, 700), fuente.source, extra.priority ?? null,
+      tipo, id, campo, original, enriquecido.slice(0, 700), extra.moneda ?? null, extra.tipoPrecio ?? null,
+      fuente.source, extra.priority ?? null,
       fuente.name, fuente.url, extra.originalSourceUrl ?? null, extra.verificacion ?? null,
       fuente.type, fuente.confidence, lote,
     ],
@@ -209,6 +219,8 @@ async function anotarDiagnostico(
   id: number,
   d: {
     motivo?: Motivo | null;
+    /** Las cuatro clases que se pidieron, tal cual: de dónde acabó saliendo el dato. */
+    claseFuente?: string | null;
     estadoFuenteOriginal?: "ok" | "source_failed" | "sin_url" | null;
     fuenteVerificada?: string | null;
     confianzaIdentidad?: Confianza | null;
@@ -217,11 +229,11 @@ async function anotarDiagnostico(
 ): Promise<void> {
   await pool.query(
     `UPDATE catalogo_enriquecimiento
-        SET motivo = ?, estado_fuente_original = ?, fuente_verificada_url = ?,
+        SET motivo = ?, clase_fuente = ?, estado_fuente_original = ?, fuente_verificada_url = ?,
             confianza_identidad = ?, motores = ?, actualizado_en = NOW()
       WHERE catalog_type = ? AND item_id = ?`,
     [
-      d.motivo ?? null, d.estadoFuenteOriginal ?? null, d.fuenteVerificada ?? null,
+      d.motivo ?? null, d.claseFuente ?? null, d.estadoFuenteOriginal ?? null, d.fuenteVerificada ?? null,
       d.confianzaIdentidad ?? null, d.motores ?? null, tipo, id,
     ],
   );
@@ -275,8 +287,10 @@ interface PaginaOficial {
   descripcion: string | null;
   imagen: string | null;
   telefono: string | null;
+  email: string | null;
   direccion: string | null;
   precio: string | null;
+  moneda: string | null;
 }
 
 function limpiarHtml(t: string): string {
@@ -294,11 +308,14 @@ function parsearHtml(html: string, url: string): PaginaOficial {
       null;
 
     const tel = html.match(/href=["']tel:([+0-9][0-9\s().-]{6,20})["']/i)?.[1] ?? null;
+    const correo = html.match(/href=["']mailto:([^"'?]+@[^"'?]+)["']/i)?.[1]?.trim() ?? null;
 
     // Datos estructurados: si la web los publica, son la fuente más fiable de dirección y precio.
     let direccion: string | null = null;
     let precio: string | null = null;
+    let moneda: string | null = null;
     let telefonoEstructurado: string | null = null;
+    let correoEstructurado: string | null = null;
     for (const m of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
       try {
         const datos = JSON.parse(m[1]);
@@ -309,7 +326,9 @@ function parsearHtml(html: string, url: string): PaginaOficial {
             direccion = [dir.streetAddress, dir.postalCode, dir.addressLocality].filter(Boolean).join(", ") || null;
           }
           if (!telefonoEstructurado && d?.telephone) telefonoEstructurado = String(d.telephone);
+          if (!correoEstructurado && d?.email) correoEstructurado = String(d.email);
           if (!precio && (d?.price || d?.offers?.price)) precio = String(d.price ?? d.offers.price);
+          if (!moneda && (d?.priceCurrency || d?.offers?.priceCurrency)) moneda = String(d.priceCurrency ?? d.offers.priceCurrency);
         }
       } catch {
         /* un JSON-LD roto no rompe nada */
@@ -322,8 +341,10 @@ function parsearHtml(html: string, url: string): PaginaOficial {
       descripcion: limpiarHtml(meta("og:description") ?? meta("description") ?? "") || null,
       imagen: meta("og:image") ?? null,
       telefono: telefonoEstructurado ?? (tel ? tel.trim() : null),
+      email: correoEstructurado ?? correo,
       direccion,
       precio,
+      moneda,
     };
 }
 
@@ -408,7 +429,14 @@ export async function enriquecerFicha(
 
   // Idempotencia: si ya está enriquecida con esta versión y no se fuerza, no se repite el trabajo.
   const previo = await estadoDe(tipo, id);
-  if (!opciones.forzar && previo && previo.version === VERSION_MOTOR && ["enriched", "not_found"].includes(previo.estado)) {
+  // Se dan por acabados los estados terminales, incluidos los nuevos: así reanudar no repite trabajo
+  // ya hecho, y una ficha a medias (partial) o a revisión sí se vuelve a intentar.
+  if (
+    !opciones.forzar &&
+    previo &&
+    previo.version === VERSION_MOTOR &&
+    ["enriched", "not_found", "not_found_after_search", "source_failed"].includes(previo.estado)
+  ) {
     return { id, estado: previo.estado, campos: [], fuente: null, omitida: true };
   }
 
@@ -512,6 +540,7 @@ export async function enriquecerFicha(
         // El diagnóstico se anota DESPUÉS de crear la fila de estado: si no, el UPDATE no tendría dónde.
         await anotarDiagnostico(tipo, id, {
           motivo,
+          claseFuente: huboParecidos && !entidadLocalizada ? "needs_review" : "not_found_after_secondary_search",
           estadoFuenteOriginal: webOriginal ? "source_failed" : "sin_url",
           confianzaIdentidad: huboParecidos ? "low" : null,
           motores: motores || "sin resultados",
@@ -550,6 +579,12 @@ export async function enriquecerFicha(
       campos.push("telefono");
     }
 
+    /* 6b · CORREO: la misma regla que el teléfono. Solo si falta y lo publica la propia web. */
+    if (!ficha.email && pagina.email && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(pagina.email)) {
+      await fuenteWeb("email", pagina.email.slice(0, 200), usada ? "medium" : "high");
+      campos.push("email");
+    }
+
     /* 7 · DIRECCIÓN: solo si falta y viene en los datos estructurados de la propia web. */
     if (!ficha.direccion && pagina.direccion) {
       await fuenteWeb("direccion", pagina.direccion.slice(0, 300), usada ? "medium" : "high");
@@ -583,6 +618,8 @@ export async function enriquecerFicha(
     let precioWeb = pagina.precio ? Number(String(pagina.precio).replace(",", ".")) : NaN;
     let precioDetalle = precioWeb ? "datos estructurados de la web" : "";
     let visitadas = 0;
+    let monedaPrecio = (pagina.moneda ?? "EUR").slice(0, 3).toUpperCase();
+    let tipoPrecio = "datos_estructurados";
     if (!ficha.precioValor && (!Number.isFinite(precioWeb) || precioWeb <= 0)) {
       const objetivo = usada?.url ?? pagina.url;
       const busquedaPrecio = await buscarPrecios(objetivo, { maxPaginas: 3 });
@@ -591,6 +628,8 @@ export async function enriquecerFicha(
       if (elegido) {
         precioWeb = elegido.valor;
         precioDetalle = elegido.contexto.slice(0, 120);
+        monedaPrecio = elegido.moneda;
+        tipoPrecio = elegido.tipo;
       }
     }
     if (!ficha.precioValor && Number.isFinite(precioWeb) && precioWeb > 0) {
@@ -602,10 +641,17 @@ export async function enriquecerFicha(
         `${precioWeb}`,
         { ...fuenteDe("precio_orientativo", "medium"), url: usada?.url ?? pagina.url },
         lote,
-        { ...extra, verificacion: `${extra.verificacion} · ${precioDetalle}`.slice(0, 120) },
+        {
+          ...extra,
+          moneda: monedaPrecio,
+          tipoPrecio,
+          verificacion: `${extra.verificacion} · ${precioDetalle}`.slice(0, 120),
+        },
       );
       campos.push("precio_orientativo");
-      revisar.push(["precio orientativo propuesto", `Publicado por el propio sitio: ${precioDetalle}. Hay que confirmarlo antes de mostrarlo`]);
+      // El precio se publica como ORIENTATIVO («Desde X €»), nunca como precio confirmado: la revisión
+      // es para decidir si se convierte en precio propio, no para poder mostrarlo.
+      revisar.push(["precio orientativo propuesto", `Publicado por el propio sitio: ${precioDetalle}. Se muestra como orientativo; se revisa si pasa a precio propio`]);
     } else if (!ficha.precioValor) {
       revisar.push([
         "precio no encontrado",
@@ -628,6 +674,7 @@ export async function enriquecerFicha(
     await marcarEstado(tipo, id, estado, { campos: campos.length, lote });
     await anotarDiagnostico(tipo, id, {
       motivo: motivoOriginal,
+      claseFuente: identidadConfirmada === "low" ? "needs_review" : usada ? "source_original_failed_but_secondary_found" : "source_original_ok",
       estadoFuenteOriginal: webOriginal ? (motivoOriginal === "ok" ? "ok" : "source_failed") : "sin_url",
       fuenteVerificada: usada?.url ?? (motivoOriginal === "ok" ? pagina.url : null),
       confianzaIdentidad: identidadConfirmada,

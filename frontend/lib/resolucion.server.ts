@@ -28,6 +28,7 @@
  */
 import { buscarCandidatos, distanciaKm, normalizar, palabras, pareceElMismo, type Identidad } from "@/lib/fuentes.server";
 import { buscarPrecios, type PrecioHallado } from "@/lib/precio-web.server";
+import { buscarEnTurismoOficial, type HallazgoTurismo } from "@/lib/turismo.server";
 
 export type TipoEntidad = "experience" | "service" | "accommodation";
 export type Nivel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
@@ -516,6 +517,22 @@ async function descubrirFuentes(e: EntradaResolucion): Promise<FuenteEncontrada[
 
   // Buscador web general, con las variantes pedidas. Se corta en cuanto hay dos fuentes de nivel ≤4.
   const buenas = () => salida.filter((s) => s.nivel <= 4).length;
+
+  // NIVELES 2 y 3 con extractor propio: turismo oficial de la localidad y de la provincia/región.
+  // Se usan sus buscadores internos y se aceptan solo resultados que nombren la entidad. Va ANTES
+  // del buscador general porque una ficha del portal oficial vale más que un resultado suelto.
+  const turismo = await buscarEnTurismoOficial({ nombre: e.name, ciudad: e.city, provincia: e.province }).catch(() => [] as HallazgoTurismo[]);
+  for (const t of turismo) {
+    anotar(
+      t.url,
+      `${t.portal} · buscador del portal`,
+      t.titulo,
+      { nombre: t.titulo, ciudad: null, provincia: null, pais: null, lat: null, lng: null, actividad: null, telefono: null },
+      false,
+      ["existencia", "nombre"],
+    );
+  }
+
   let vaciasSeguidas = 0;
   for (const consulta of VARIANTES(e).slice(0, 4)) {
     if (buenas() >= 2) break;
@@ -617,6 +634,16 @@ export async function resolveCatalogEntity(entrada: EntradaResolucion): Promise<
       fuenteUsada = f;
       confianza = f.confianza;
       senalesGlobales = f.senales.length > 0 ? f.senales : ["nombre en la página"];
+      // Señal medida en la propia página: si nombra la localidad (o la provincia), la coincidencia
+      // sube de LOW a MEDIUM. No se supone: se lee.
+      const mencionaLocalidad = entrada.city ? texto.includes(normalizar(entrada.city)) : false;
+      const mencionaProvincia = entrada.province ? texto.includes(normalizar(entrada.province)) : false;
+      if (mencionaLocalidad) {
+        senalesGlobales.push("localidad en la página");
+        if (confianzaBaja(confianza)) confianza = "MEDIUM";
+      } else if (mencionaProvincia) {
+        senalesGlobales.push("provincia en la página");
+      }
       break;
     }
   }

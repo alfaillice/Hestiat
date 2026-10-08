@@ -99,7 +99,7 @@ export default async function Portada({
 
         <SeccionHome
           titulo="Servicios populares"
-          sub={`Categorías reales de servicios: ${servicios.reduce((s, c) => s + c.total, 0).toLocaleString("es-ES")} en total`}
+          sub="Las categorías de Hestiat con más servicios reales"
           verTodos="/servicios"
         >
           {servicios.map((c) => (
@@ -109,7 +109,7 @@ export default async function Portada({
 
         <SeccionHome
           titulo="Experiencias destacadas"
-          sub={`Categorías reales del catálogo de experiencias: ${experiencias.reduce((s, c) => s + c.total, 0).toLocaleString("es-ES")} en total`}
+          sub="Las categorías de Hestiat con más experiencias reales"
           verTodos="/experiencias"
         >
           {experiencias.map((c) => (

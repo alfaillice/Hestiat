@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { alojamientosCerca, experienciasCerca, MAXIMO } from "@/lib/cerca.server";
+import { serviciosCerca } from "@/lib/servicios.server";
 import type { RespuestaCerca } from "@/lib/cerca.tipos";
 import { getCurrentUser } from "@/lib/auth.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
@@ -47,9 +48,10 @@ export async function GET(request: Request) {
   let modo: RespuestaCerca["modo"] = punto ? "punto" : destino ? "destino" : "descubre";
 
   try {
-    let [aloj, expe] = await Promise.all([
+    let [aloj, expe, serv] = await Promise.all([
       alojamientosCerca({ punto, destino: punto ? undefined : destino }, MAXIMO),
       experienciasCerca({ punto, destino: punto ? undefined : destino }, MAXIMO),
+      serviciosCerca(punto, punto ? undefined : destino, MAXIMO),
     ]);
 
     /* Si el punto está lejísimos de todo el catálogo, «cerca de ti» no significa nada y enseñar
@@ -63,6 +65,7 @@ export async function GET(request: Request) {
         alojamientosCerca({ destino }, MAXIMO),
         experienciasCerca({ destino }, MAXIMO),
       ]);
+      serv = await serviciosCerca(undefined, destino, MAXIMO);
     }
 
     const sesion = await getCurrentUser();
@@ -75,15 +78,16 @@ export async function GET(request: Request) {
       etiqueta: modo === "destino" ? destino : null,
       alojamientos: aloj.items,
       experiencias: expe,
+      servicios: serv.items,
       guardados,
       haySesion: Boolean(sesion),
-      totales: { alojamientos: aloj.total, experiencias: expe.length },
+      totales: { alojamientos: aloj.total, experiencias: expe.length, servicios: serv.total },
     };
     return NextResponse.json(respuesta, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("[hestiat] /api/cerca", error instanceof Error ? error.message.slice(0, 160) : error);
     return NextResponse.json(
-      { modo, etiqueta: null, alojamientos: [], experiencias: [], guardados: [], haySesion: false, totales: { alojamientos: 0, experiencias: 0 } },
+      { modo, etiqueta: null, alojamientos: [], experiencias: [], servicios: [], guardados: [], haySesion: false, totales: { alojamientos: 0, experiencias: 0, servicios: 0 } },
       { status: 200 },
     );
   }

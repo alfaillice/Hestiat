@@ -28,10 +28,13 @@ import type { RespuestaCerca } from "@/lib/cerca.tipos";
 export default function CercaDeTi({
   destino,
   soloExperiencias = false,
+  soloServicios = false,
 }: {
   destino?: string;
   /** En la página de experiencias solo interesan las experiencias (y no se ofrece ubicación). */
   soloExperiencias?: boolean;
+  /** En la página de servicios, solo los servicios. */
+  soloServicios?: boolean;
 }) {
   const [datos, setDatos] = useState<RespuestaCerca | null>(null);
   const [punto, setPunto] = useState<{ lat: number; lng: number } | null>(null);
@@ -133,7 +136,7 @@ export default function CercaDeTi({
   return (
     <>
       {/* La acción discreta: solo aparece si el navegador puede preguntar y aún no hay ubicación. */}
-      {!soloExperiencias && puedeOfrecer && datos.alojamientos.length > 0 ? (
+      {!soloExperiencias && !soloServicios && puedeOfrecer && datos.alojamientos.length > 0 ? (
         <p className="cerca-ofrecer">
           <button type="button" className="fechas-disparador" onClick={() => usarUbicacion(true)} disabled={pidiendo}>
             {pidiendo ? "Buscando tu ubicación…" : "📍 Ver alojamientos cerca de mí"}
@@ -141,7 +144,7 @@ export default function CercaDeTi({
         </p>
       ) : null}
 
-      {!soloExperiencias && datos.alojamientos.length > 0 ? (
+      {!soloExperiencias && !soloServicios && datos.alojamientos.length > 0 ? (
         <SeccionHome titulo={tituloAloj} sub={subAloj} verTodos={verTodosAloj} verTodosTexto="Ver todos">
           {datos.alojamientos.map((a) => (
             <TarjetaAlojamiento
@@ -156,7 +159,7 @@ export default function CercaDeTi({
         </SeccionHome>
       ) : null}
 
-      {datos.experiencias.length > 0 ? (
+      {!soloServicios && datos.experiencias.length > 0 ? (
         <SeccionHome titulo={tituloExpe} sub={subExpe} verTodos={verTodosExpe} verTodosTexto="Ver todas">
           {datos.experiencias.map((e) => (
             <a className="tcat" key={e.id} href={e.href}>
@@ -168,6 +171,39 @@ export default function CercaDeTi({
                 <span>
                   {[e.municipio ?? e.provincia].filter(Boolean).join("") || "Sin ubicación"}
                   {e.nota ? ` · ${e.nota}` : ""}
+                </span>
+              </span>
+            </a>
+          ))}
+        </SeccionHome>
+      ) : null}
+
+      {/* Servicios reales del catálogo, con la misma regla: distancia solo si hay un punto real. */}
+      {datos.servicios.length > 0 ? (
+        <SeccionHome
+          titulo={conPunto ? "Servicios cerca de ti" : datos.etiqueta ? `Servicios cerca de ${datos.etiqueta}` : "Servicios que puedes necesitar"}
+          sub={
+            conPunto
+              ? "Ordenados por distancia real desde donde estás"
+              : datos.etiqueta
+                ? `Servicios en ${datos.etiqueta}`
+                : "Una selección del catálogo real"
+          }
+          verTodos={datos.etiqueta ? `/servicios?provincia=${encodeURIComponent(datos.etiqueta)}` : "/servicios"}
+          verTodosTexto="Ver todos"
+        >
+          {datos.servicios.map((s) => (
+            <a className="serv-card" key={s.id} href={s.href}>
+              <span className="serv-media">
+                <ImagenSegura src={s.imagen} alt={`${s.nombre}: imagen de referencia`} />
+              </span>
+              <span className="serv-txt">
+                <b>{s.nombre}</b>
+                <span className="m">{[s.municipio ?? s.provincia].filter(Boolean).join("") || "Sin ubicación"}</span>
+                <span className="serv-fuente">
+                  {s.precio}
+                  {s.precioOrientativo ? " · orientativo" : ""}
+                  {s.nota ? ` · ${s.nota}` : ""}
                 </span>
               </span>
             </a>

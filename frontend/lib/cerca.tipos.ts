@@ -27,13 +27,30 @@ export interface ExperienciaCerca {
 /** En qué se ha basado la sección: una ubicación real, un destino, o una selección del catálogo. */
 export type ModoCerca = "punto" | "destino" | "descubre";
 
+export interface ServicioCerca {
+  id: number;
+  slug: string;
+  nombre: string;
+  categoria: string | null;
+  subcategoria: string | null;
+  municipio: string | null;
+  provincia: string | null;
+  imagen: string | null;
+  precio: string;
+  precioOrientativo: boolean;
+  /** «a 3,2 km». Solo cuando hay un punto de referencia real. */
+  nota?: string;
+  href: string;
+}
+
 export interface RespuestaCerca {
   modo: ModoCerca;
   /** El destino, cuando el modo es «destino». */
   etiqueta: string | null;
   alojamientos: AlojamientoCerca[];
   experiencias: ExperienciaCerca[];
+  servicios: ServicioCerca[];
   guardados: number[];
   haySesion: boolean;
-  totales: { alojamientos: number; experiencias: number };
+  totales: { alojamientos: number; experiencias: number; servicios: number };
 }

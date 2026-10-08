@@ -109,12 +109,18 @@ export interface CategoriaHome {
   href: string;
 }
 
-/** Categorías de SERVICIOS con más oferta real, de mayor a menor. */
+/** Categorías de SERVICIOS con más oferta real, ya con la clasificación de Hestiat. */
 export async function categoriasServicio(limite = 8): Promise<CategoriaHome[]> {
   const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT category AS valor, COUNT(*) AS total FROM servicio_turistico
-      WHERE category IS NOT NULL AND category <> '' AND is_active = 1
-      GROUP BY category ORDER BY total DESC LIMIT ?`,
+    // `servicio_turistico.category` guarda el nombre de la categoría original (OpenStreetMap). La web
+    // usa la clasificación de Hestiat, que es la que tiene sus propias categorías y subcategorías.
+    `SELECT c.slug AS valor, c.nombre AS nombre, COUNT(*) AS total
+       FROM servicio_turistico s
+       JOIN servicio_clasificacion cl ON cl.servicio_id = s.id
+       JOIN serv_categoria c ON c.id = cl.categoria_id
+      WHERE s.is_active = 1
+      GROUP BY c.id, c.slug, c.nombre, c.orden
+      ORDER BY total DESC LIMIT ?`,
     [limite],
   );
   return filas.map((f) => {

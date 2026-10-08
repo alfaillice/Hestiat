@@ -112,13 +112,23 @@ const IMAGENES_SERVICIOS: Record<string, string[]> = {
 };
 
 const IMAGENES_EXPERIENCIAS: Record<string, string[]> = {
+  // Las categorías reales llegan como «cultura-historia», «naturaleza-paisajes»... (una sola «y» de
+  // unión no aparece). Se dejan también las variantes con «y» para que cualquier forma encuentre su
+  // imagen: es mejor dos claves que una tarjeta con la imagen de otra categoría.
+  "cultura-historia": par("hf_20261008_171209_3ac8b754-0439-4615-bae9-9bdd17f712ce"),
   "cultura-e-historia": par("hf_20261008_171209_3ac8b754-0439-4615-bae9-9bdd17f712ce"),
+  "naturaleza-paisajes": par("hf_20261008_171209_4407be13-a4fe-4cff-8e87-8803a2050e83"),
   "naturaleza-y-paisajes": par("hf_20261008_171209_4407be13-a4fe-4cff-8e87-8803a2050e83"),
   arte: par("hf_20261008_171353_89d4a333-1bdd-4b8a-b17c-74d3c797bf67"),
+  "parques-atracciones": par("hf_20261008_171210_2833d82d-da7c-42f3-98a3-545c31712ba1"),
   "parques-y-atracciones": par("hf_20261008_171210_2833d82d-da7c-42f3-98a3-545c31712ba1"),
+  "museos-exposiciones": par("hf_20261008_171240_7116723a-6076-4edb-84d5-2e0cbd780092"),
   "museos-y-exposiciones": par("hf_20261008_171240_7116723a-6076-4edb-84d5-2e0cbd780092"),
+  "ocio-entretenimiento": par("hf_20261008_171241_9d81b68c-712a-42df-910f-baa9d5a74d2d"),
   "ocio-y-entretenimiento": par("hf_20261008_171241_9d81b68c-712a-42df-910f-baa9d5a74d2d"),
+  "gastronomia-bebidas": par("hf_20261008_171242_51238f6d-96e9-4a16-bab4-75c557e331d7"),
   "gastronomia-y-bebidas": par("hf_20261008_171242_51238f6d-96e9-4a16-bab4-75c557e331d7"),
+  "mar-acuaticas": par("hf_20261008_171242_9f8cb2e5-b942-4b15-9049-0376eb1aef03"),
   "mar-y-actividades-acuaticas": par("hf_20261008_171242_9f8cb2e5-b942-4b15-9049-0376eb1aef03"),
 };
 

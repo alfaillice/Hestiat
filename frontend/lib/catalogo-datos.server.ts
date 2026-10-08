@@ -21,6 +21,10 @@ export interface DatoEnriquecido {
   sourceName: string | null;
   sourceUrl: string | null;
   confidence: string;
+  /** Qué es exactamente: imagen_oficial, imagen_wikipedia, precio_desde... Se usa para etiquetar. */
+  sourceType: string | null;
+  /** Una tarifa del sistema compartida por muchos sitios NO es el precio de este sitio. */
+  tarifaCompartida: boolean;
 }
 
 export type OrigenValor = "original" | "enriquecido" | "oficial" | "ninguno";
@@ -46,10 +50,12 @@ export async function datosEnriquecidos(
   const marcas = ids.map(() => "?").join(",");
   const filtroCampos = campos && campos.length > 0 ? ` AND campo IN (${campos.map(() => "?").join(",")})` : "";
   const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT item_id, campo, enriched_value, source, source_name, source_url, confidence
+    `SELECT item_id, campo, enriched_value, source, source_name, source_url, confidence, source_type, tarifa_compartida
        FROM catalogo_dato
       WHERE catalog_type = ? AND item_id IN (${marcas})${filtroCampos}
-        AND enriched_value IS NOT NULL AND enriched_value <> ''`,
+        AND enriched_value IS NOT NULL AND enriched_value <> ''
+        AND confidence <> 'low'
+        AND tarifa_compartida = 0`,
     [tipo, ...ids, ...(campos ?? [])],
   );
   for (const f of filas) {
@@ -59,6 +65,8 @@ export async function datosEnriquecidos(
       sourceName: f.source_name ?? null,
       sourceUrl: f.source_url ?? null,
       confidence: String(f.confidence ?? "medium"),
+      sourceType: f.source_type ?? null,
+      tarifaCompartida: Number(f.tarifa_compartida ?? 0) === 1,
     });
   }
   return mapa;
@@ -89,7 +97,31 @@ export interface ImagenResuelta {
   origen: "original" | "oficial" | "ninguno";
   /** Si la que se muestra es una imagen de referencia, la ficha lo dice. */
   esReferencia: boolean;
+  /**
+   * Cómo hay que ETIQUETARLA en la web. Una imagen de Wikipedia nunca se presenta como fotografía
+   * oficial del proveedor: cada una dice lo que es.
+   */
+  etiqueta:
+    | "oficial"
+    | "proveedor"
+    | "turismo_oficial"
+    | "wikipedia"
+    | "directorio"
+    | "representativa"
+    | "sin_imagen_verificada";
   fuente?: DatoEnriquecido | null;
+}
+
+/** De `imagen_wikipedia` o `imagen_turismo_oficial` a la etiqueta que se enseña. */
+export function etiquetaDeImagen(sourceType: string | null | undefined): ImagenResuelta["etiqueta"] {
+  const t = (sourceType ?? "").toLowerCase();
+  if (t.includes("wikipedia")) return "wikipedia";
+  if (t.includes("turismo_oficial")) return "turismo_oficial";
+  if (t.includes("directorio")) return "directorio";
+  if (t.includes("proveedor")) return "proveedor";
+  if (t.includes("representativa")) return "representativa";
+  if (t.includes("oficial")) return "oficial";
+  return "oficial";
 }
 
 /**
@@ -108,12 +140,34 @@ export function resolverImagen(
 ): ImagenResuelta {
   const hayOriginal = Boolean(original && original.trim());
   const hayOficial = Boolean(enriquecida && enriquecida.valor.trim());
-  if (hayOriginal && hayOficial && esImagenDeReferencia(origenDeLaOriginal)) {
-    return { url: enriquecida!.valor, origen: "oficial", esReferencia: false, fuente: enriquecida };
+  const deReferencia = esImagenDeReferencia(origenDeLaOriginal);
+  if (hayOriginal && hayOficial && deReferencia) {
+    return {
+      url: enriquecida!.valor,
+      origen: "oficial",
+      esReferencia: false,
+      etiqueta: etiquetaDeImagen(enriquecida!.sourceType),
+      fuente: enriquecida,
+    };
   }
-  if (hayOriginal) return { url: original!, origen: "original", esReferencia: esImagenDeReferencia(origenDeLaOriginal) };
-  if (hayOficial) return { url: enriquecida!.valor, origen: "oficial", esReferencia: false, fuente: enriquecida };
-  return { url: null, origen: "ninguno", esReferencia: false };
+  if (hayOriginal) {
+    return {
+      url: original!,
+      origen: "original",
+      esReferencia: deReferencia,
+      etiqueta: deReferencia ? "representativa" : "proveedor",
+    };
+  }
+  if (hayOficial) {
+    return {
+      url: enriquecida!.valor,
+      origen: "oficial",
+      esReferencia: false,
+      etiqueta: etiquetaDeImagen(enriquecida!.sourceType),
+      fuente: enriquecida,
+    };
+  }
+  return { url: null, origen: "ninguno", esReferencia: false, etiqueta: "sin_imagen_verificada" };
 }
 
 /**

@@ -29,8 +29,7 @@
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
 
-import { buscarCandidatos, paginaHablaDe, type Candidato, type Identidad } from "@/lib/fuentes.server";
-import { buscarPrecios } from "@/lib/precio-web.server";
+import { resolveCatalogEntity, NIVELES, type FuenteEncontrada } from "@/lib/resolucion.server";
 
 export type TipoCatalogo = "experience" | "service" | "accommodation";
 export type Estado =
@@ -50,16 +49,18 @@ export type Estado =
  */
 export type Motivo =
   | "ok"
-  | "sin_url"
-  | "url_muerta"
-  | "url_incorrecta"
-  | "sin_informacion_publica"
-  | "entidad_ambigua"
-  | "entidad_no_localizada"
-  | "error_tecnico";
+  | "no_url"
+  | "dead_url"
+  | "redirect"
+  | "source_exists_no_public_data"
+  | "ambiguous_identity"
+  | "not_located"
+  | "insufficient_evidence"
+  | "no_price_found"
+  | "no_image_found";
 export type Confianza = "high" | "medium" | "low";
 
-export const VERSION_MOTOR = 3;
+export const VERSION_MOTOR = 4;
 
 /** Ficha normalizada: lo mismo para los tres catálogos. */
 export interface FichaCatalogo {
@@ -190,19 +191,20 @@ async function guardarDato(
     verificacion?: string | null;
     moneda?: string | null;
     tipoPrecio?: string | null;
+    priceUnit?: string | null;
   } = {},
 ): Promise<void> {
   await pool.query(
-    `INSERT INTO catalogo_dato (catalog_type, item_id, campo, original_value, enriched_value, moneda, tipo_precio, source, source_priority, source_name, source_url, original_source_url, verificacion, source_type, confidence, verified_at, lote_id)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)
+    `INSERT INTO catalogo_dato (catalog_type, item_id, campo, original_value, enriched_value, moneda, tipo_precio, price_unit, source, source_priority, source_name, source_url, original_source_url, verificacion, source_type, confidence, verified_at, lote_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)
      ON DUPLICATE KEY UPDATE enriched_value = VALUES(enriched_value), original_value = VALUES(original_value),
-       moneda = VALUES(moneda), tipo_precio = VALUES(tipo_precio),
+       moneda = VALUES(moneda), tipo_precio = VALUES(tipo_precio), price_unit = VALUES(price_unit),
        source = VALUES(source), source_priority = VALUES(source_priority), source_name = VALUES(source_name),
        source_url = VALUES(source_url), original_source_url = VALUES(original_source_url),
        verificacion = VALUES(verificacion), source_type = VALUES(source_type),
        confidence = VALUES(confidence), verified_at = NOW(), lote_id = VALUES(lote_id)`,
     [
-      tipo, id, campo, original, enriquecido.slice(0, 700), extra.moneda ?? null, extra.tipoPrecio ?? null,
+      tipo, id, campo, original, enriquecido.slice(0, 700), extra.moneda ?? null, extra.tipoPrecio ?? null, extra.priceUnit ?? null,
       fuente.source, extra.priority ?? null,
       fuente.name, fuente.url, extra.originalSourceUrl ?? null, extra.verificacion ?? null,
       fuente.type, fuente.confidence, lote,
@@ -225,25 +227,61 @@ async function anotarDiagnostico(
     fuenteVerificada?: string | null;
     confianzaIdentidad?: Confianza | null;
     motores?: string | null;
+    /** HIGH / MEDIUM / LOW / AMBIGUOUS / NOT_FOUND, con todas las señales que se usaron. */
+    confianzaResolucion?: string | null;
+    fuentesUsadas?: string | null;
   },
 ): Promise<void> {
   await pool.query(
     `UPDATE catalogo_enriquecimiento
         SET motivo = ?, clase_fuente = ?, estado_fuente_original = ?, fuente_verificada_url = ?,
-            confianza_identidad = ?, motores = ?, actualizado_en = NOW()
+            confianza_identidad = ?, motores = ?, confianza_resolucion = ?, fuentes_usadas = ?,
+            actualizado_en = NOW()
       WHERE catalog_type = ? AND item_id = ?`,
     [
       d.motivo ?? null, d.claseFuente ?? null, d.estadoFuenteOriginal ?? null, d.fuenteVerificada ?? null,
-      d.confianzaIdentidad ?? null, d.motores ?? null, tipo, id,
+      d.confianzaIdentidad ?? null, d.motores ?? null, d.confianzaResolucion ?? null, d.fuentesUsadas ?? null,
+      tipo, id,
     ],
   );
 }
 
-async function anotarRevision(tipo: TipoCatalogo, id: number, problema: string, detalle: string, lote: number | null): Promise<void> {
+/**
+ * Anota una propuesta para revisión. La estructura ya está lista para que un administrador pueda
+ * decidir: aprobar, rechazar, corregir o volver a buscar.
+ */
+async function anotarRevision(
+  tipo: TipoCatalogo,
+  id: number,
+  problema: string,
+  detalle: string,
+  lote: number | null,
+  extra: { confianza?: string | null; propuesta?: string | null } = {},
+): Promise<void> {
   await pool.query(
-    `INSERT INTO catalogo_revision (catalog_type, item_id, problema, detalle, lote_id) VALUES (?,?,?,?,?)
-     ON DUPLICATE KEY UPDATE detalle = VALUES(detalle), lote_id = VALUES(lote_id)`,
-    [tipo, id, problema.slice(0, 200), detalle.slice(0, 700), lote],
+    `INSERT INTO catalogo_revision (catalog_type, item_id, problema, detalle, confianza, propuesta, lote_id) VALUES (?,?,?,?,?,?,?)
+     ON DUPLICATE KEY UPDATE detalle = VALUES(detalle), confianza = VALUES(confianza),
+       propuesta = VALUES(propuesta), lote_id = VALUES(lote_id)`,
+    [tipo, id, problema.slice(0, 200), detalle.slice(0, 700), extra.confianza ?? null, extra.propuesta ?? null, lote],
+  );
+}
+
+/** Las fuentes encontradas se guardan aparte: una puede confirmar la existencia y otra el precio. */
+async function guardarFuente(
+  tipo: TipoCatalogo,
+  id: number,
+  f: FuenteEncontrada,
+  lote: number | null,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO catalogo_fuente (catalog_type, item_id, url, nivel, tipo, procedencia, nombre, confianza, aporta, lote_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?)
+     ON DUPLICATE KEY UPDATE nivel = VALUES(nivel), tipo = VALUES(tipo), procedencia = VALUES(procedencia),
+       nombre = VALUES(nombre), confianza = VALUES(confianza), aporta = VALUES(aporta), lote_id = VALUES(lote_id)`,
+    [
+      tipo, id, f.url.slice(0, 700), f.nivel, f.tipo.slice(0, 40), f.procedencia.slice(0, 120),
+      (f.nombre ?? "").slice(0, 200) || null, f.confianza, f.senales.join(", ").slice(0, 200), lote,
+    ],
   );
 }
 
@@ -363,7 +401,7 @@ interface Apertura {
  * otro sitio»: esas tres cosas se guardan distintas, porque significan cosas distintas.
  */
 async function abrirPagina(url: string, timeoutMs = 9000): Promise<Apertura> {
-  if (!url || !urlPermitida(url)) return { motivo: "sin_url", pagina: null, final: url, estado: null, texto: "" };
+  if (!url || !urlPermitida(url)) return { motivo: "no_url", pagina: null, final: url, estado: null, texto: "" };
   const control = new AbortController();
   const t = setTimeout(() => control.abort(), timeoutMs);
   try {
@@ -373,9 +411,9 @@ async function abrirPagina(url: string, timeoutMs = 9000): Promise<Apertura> {
       headers: { "user-agent": "HestiatBot/2.0 (+https://hestiat.com; hola@hestiat.com)" },
     });
     const final = r.url || url;
-    if (!r.ok) return { motivo: "url_muerta", pagina: null, final, estado: r.status, texto: "" };
+    if (!r.ok) return { motivo: "dead_url", pagina: null, final, estado: r.status, texto: "" };
     const tipo = r.headers.get("content-type") ?? "";
-    if (!tipo.includes("text/html")) return { motivo: "url_muerta", pagina: null, final, estado: r.status, texto: "" };
+    if (!tipo.includes("text/html")) return { motivo: "dead_url", pagina: null, final, estado: r.status, texto: "" };
     const html = (await r.text()).slice(0, 400_000);
     const pagina = parsearHtml(html, final);
     const texto = limpiarHtml(html).slice(0, 60_000);
@@ -388,12 +426,12 @@ async function abrirPagina(url: string, timeoutMs = 9000): Promise<Apertura> {
     } catch {
       /* una dirección rara no rompe nada */
     }
-    if (otroDominio) return { motivo: "url_incorrecta", pagina, final, estado: r.status, texto };
+    if (otroDominio) return { motivo: "redirect", pagina, final, estado: r.status, texto };
     const util = Boolean(pagina.titulo || pagina.descripcion || pagina.imagen || pagina.precio || pagina.telefono);
-    if (!util) return { motivo: "sin_informacion_publica", pagina, final, estado: r.status, texto };
+    if (!util) return { motivo: "source_exists_no_public_data", pagina, final, estado: r.status, texto };
     return { motivo: "ok", pagina, final, estado: r.status, texto };
   } catch {
-    return { motivo: "url_muerta", pagina: null, final: url, estado: null, texto: "" };
+    return { motivo: "dead_url", pagina: null, final: url, estado: null, texto: "" };
   } finally {
     clearTimeout(t);
   }
@@ -462,226 +500,163 @@ export async function enriquecerFicha(
       revisar.push(["sin clasificar", "No se ha podido asignar categoría con seguridad"]);
     }
 
-    /* 2 · LA FUENTE ORIGINAL, Y QUÉ PASA CON ELLA. Una dirección muerta NO significa que no haya
-       información: significa que falló la fuente. Se anota la diferencia —404, otro destino, página
-       vacía— y se sigue buscando por otra vía. */
+    /* 2 · RESOLUCIÓN MULTIFUENTE. Todo el trabajo —abrir la fuente original, buscar por niveles (web
+       oficial, turismo local y regional, directorios, mapas, OSM, redes del proveedor, municipal,
+       sectorial y buscador general), comprobar la identidad con varias señales y extraer cada dato con
+       su procedencia— vive en resolveCatalogEntity(). Aquí solo se GUARDA lo que devuelve. */
     const webOriginal = (ficha.web ?? "").trim();
-    const apertura = await abrirPagina(webOriginal);
-    const motivoOriginal: Motivo = webOriginal ? apertura.motivo : "sin_url";
-    let pagina = apertura.motivo === "ok" ? apertura.pagina : null;
-    let usada: { url: string; prioridad: number; tipo: string; procedencia: string } | null = null;
-    let identidadConfirmada: Confianza | null = pagina ? "high" : null;
-    let motores = "";
-    let imagenAlternativa: { url: string; procedencia: string } | null = null;
-    let entidadLocalizada = false;
+    const resuelto = await resolveCatalogEntity({
+      entity_type: tipo,
+      entity_id: id,
+      name: ficha.nombre,
+      city: ficha.municipio,
+      province: ficha.provincia,
+      country: "España",
+      original_url: webOriginal || null,
+      existing_coordinates: { lat: ficha.lat, lng: ficha.lng },
+      category: ficha.categoria,
+      phone: ficha.telefono,
+      address: ficha.direccion,
+    });
+    const motivoOriginal: Motivo = resuelto.reason;
+    const paginaUrl = resuelto.sources[0]?.url ?? null;
+    const nivelFuente = resuelto.sources[0]?.nivel ?? 1;
+    const conf: Confianza = resuelto.confidence === "HIGH" ? "high" : resuelto.confidence === "MEDIUM" ? "medium" : "low";
 
-    /* 3 · SEGUNDA ESTRATEGIA. Si la dirección original no sirve, se busca la entidad en fuentes
-       abiertas (Wikidata, Wikipedia, Nominatim) y se comprueba NOMBRE + UBICACIÓN antes de aceptar
-       nada. No vale la primera que aparezca ni una que solo comparta una palabra. */
-    if (!pagina) {
-      const ident: Identidad = {
-        nombre: ficha.nombre,
-        municipio: ficha.municipio,
-        provincia: ficha.provincia,
-        pais: "España",
-        lat: ficha.lat,
-        lng: ficha.lng,
-      };
-      const busqueda = await buscarCandidatos(ident);
-      motores = busqueda.motores.join(", ");
-      entidadLocalizada = busqueda.localizada;
-      let huboParecidos = false;
-      for (const candidato of busqueda.candidatos.slice(0, 4)) {
-        if (!candidato.nombreCoincide) {
-          huboParecidos = true;
-          continue;
-        }
-        const prueba = await abrirPagina(candidato.url);
-        if (!prueba.pagina) continue;
-        const habla = paginaHablaDe(prueba.texto, ident);
-        if (!habla.nombre) {
-          huboParecidos = true;
-          continue;
-        }
-        // Aceptada: el nombre coincide y la página habla de la entidad. La ubicación fija la confianza.
-        pagina = prueba.pagina;
-        usada = { url: prueba.final, prioridad: candidato.prioridad, tipo: candidato.tipo, procedencia: candidato.procedencia };
-        identidadConfirmada =
-          habla.lugar || candidato.ubicacionCoincide === true
-            ? "high"
-            : candidato.ubicacionCoincide === false
-              ? "low"
-              : "medium";
-        if (candidato.imagen) {
-          imagenAlternativa = { url: candidato.imagen, procedencia: `${candidato.imagenProcedencia ?? candidato.procedencia} · ${candidato.procedenciaUrl}` };
-        }
-        break;
-      }
+    // Las fuentes se guardan aparte: una puede confirmar la existencia, otra el teléfono y otra el precio.
+    for (const f of resuelto.sources) await guardarFuente(tipo, id, f, lote);
 
-      if (!pagina) {
-        // No se ha podido confirmar nada. Se distingue POR QUÉ, que es justo lo que se preguntó.
-        const motivo: Motivo =
-          motivoOriginal === "url_muerta" || motivoOriginal === "url_incorrecta" || motivoOriginal === "sin_informacion_publica"
-            ? motivoOriginal
-            : huboParecidos
-              ? "entidad_ambigua"
-              : entidadLocalizada
-                ? "sin_informacion_publica"
-                : "entidad_no_localizada";
-        const estado: Estado = webOriginal ? "source_failed" : "not_found_after_search";
-        if (huboParecidos) {
-          await anotarRevision(tipo, id, "identidad sin confirmar", "Se encontraron páginas parecidas, pero no se pudo confirmar nombre y ubicación", lote);
-        }
-        await marcarEstado(tipo, id, estado, {
-          campos: campos.length,
-          error: `Fuente original: ${motivoOriginal}. Sin alternativa confirmada (${motivo})`,
-          lote,
-        });
-        // El diagnóstico se anota DESPUÉS de crear la fila de estado: si no, el UPDATE no tendría dónde.
-        await anotarDiagnostico(tipo, id, {
-          motivo,
-          claseFuente: huboParecidos && !entidadLocalizada ? "needs_review" : "not_found_after_secondary_search",
-          estadoFuenteOriginal: webOriginal ? "source_failed" : "sin_url",
-          confianzaIdentidad: huboParecidos ? "low" : null,
-          motores: motores || "sin resultados",
-        });
-        await registrar(tipo, id, estado, campos, webOriginal || null, "Sin fuente utilizable", motivo, lote);
-        return { id, estado, campos, fuente: null };
-      }
-    }
-
-    /* 4 · CON LA FUENTE BUENA: la original si servía, o la que se ha verificado buscándola. Todo lo
-       que se guarde lleva su procedencia, su prioridad y, si la original estaba rota, la dirección
-       original al lado de la verificada. */
-    const fuenteDe = (campo: string, confidence: Confianza) =>
-      usada
-        ? { source: "external_verified", name: `${usada.procedencia} · ${usada.tipo}`, url: usada.url, type: campo, confidence }
-        : { source: "official_web", name: ficha.nombre, url: pagina.url, type: campo, confidence };
-    const extra = {
-      priority: usada?.prioridad ?? 1,
-      originalSourceUrl: webOriginal || null,
-      verificacion: usada
-        ? `nombre + ubicación: ${identidadConfirmada === "high" ? "confirmados" : identidadConfirmada === "medium" ? "el nombre sí, la ubicación no visible" : "sin confirmar"}`
-        : "fuente original del catálogo",
+    // Si la ficha YA tenía el dato original, no se toca: lo enriquecido es un extra, nunca un reemplazo.
+    const yaLoTiene: Record<string, boolean> = {
+      descripcion: Boolean(ficha.descripcion),
+      telefono: Boolean(ficha.telefono),
+      email: Boolean(ficha.email),
+      direccion: Boolean(ficha.direccion),
+      precio_orientativo: Boolean(ficha.precioValor),
     };
-    const fuenteWeb = (campo: string, valor: string, confidence: Confianza) =>
-      guardarDato(tipo, id, campo, null, valor, fuenteDe(campo, confidence), lote, extra);
+    // La FOTOGRAFÍA es la excepción a propósito: aunque la ficha tenga imagen (casi siempre una de
+    // referencia), la oficial verificada se guarda como CANDIDATA. Es la capa pública la que decide
+    // cuál enseñar, y ahora sabe distinguir una oficial de una de Wikipedia.
+    const yaTieneImagen = Boolean(ficha.imagen);
 
-    /* 5 · DESCRIPCIÓN: solo si falta. Nunca se pisa la que ya hay. */
-    if (!ficha.descripcion && pagina.descripcion) {
-      await fuenteWeb("descripcion", pagina.descripcion.slice(0, 700), usada ? identidadConfirmada ?? "medium" : "medium");
-      campos.push("descripcion");
-    }
-
-    /* 6 · TELÉFONO: solo si falta y la web lo publica. */
-    if (!ficha.telefono && pagina.telefono) {
-      await fuenteWeb("telefono", pagina.telefono, usada ? "medium" : "high");
-      campos.push("telefono");
-    }
-
-    /* 6b · CORREO: la misma regla que el teléfono. Solo si falta y lo publica la propia web. */
-    if (!ficha.email && pagina.email && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/i.test(pagina.email)) {
-      await fuenteWeb("email", pagina.email.slice(0, 200), usada ? "medium" : "high");
-      campos.push("email");
-    }
-
-    /* 7 · DIRECCIÓN: solo si falta y viene en los datos estructurados de la propia web. */
-    if (!ficha.direccion && pagina.direccion) {
-      await fuenteWeb("direccion", pagina.direccion.slice(0, 300), usada ? "medium" : "high");
-      campos.push("direccion");
-    }
-
-    /* 8 · FOTOGRAFÍA: la oficial del sitio; si no la hay, la de la entidad encontrada (con su
-       procedencia). Nunca una foto de otra empresa ni de otro lugar: va con la entidad verificada. */
-    if (pagina.imagen && urlPermitida(pagina.imagen)) {
-      await fuenteWeb("imagen_oficial", pagina.imagen.slice(0, 700), "medium");
-      campos.push("imagen_oficial");
-      revisar.push(["imagen oficial propuesta", "La imagen oficial está disponible para revisión"]);
-    } else if (imagenAlternativa && urlPermitida(imagenAlternativa.url)) {
-      await guardarDato(
-        tipo,
-        id,
-        "imagen_oficial",
-        null,
-        imagenAlternativa.url.slice(0, 700),
-        { source: "external_verified", name: imagenAlternativa.procedencia, url: usada?.url ?? pagina.url, type: "imagen_oficial", confidence: "medium" },
+    for (const campo of resuelto.fields) {
+      if (yaLoTiene[campo.campo]) continue;
+      await guardarDato(tipo, id, campo.campo, null, campo.valor, {
+        source: campo.fuenteNivel === 1 ? "official_web" : campo.fuenteNivel <= 3 ? "tourism_official" : "external_verified",
+        name: campo.fuenteNombre,
+        url: campo.fuenteUrl,
+        type: campo.fuenteTipo,
+        confidence: campo.confianza === "HIGH" ? "high" : campo.confianza === "MEDIUM" ? "medium" : "low",
+      }, lote, {
+        priority: campo.prioridad,
+        originalSourceUrl: webOriginal || null,
+        verificacion: campo.verificacion.slice(0, 120),
+      });
+      campos.push(campo.campo);
+      await anotarRevision(
+        tipo, id, `propuesta: ${campo.campo}`,
+        `${campo.valor.slice(0, 220)} · ${campo.fuenteUrl ?? ""} · ${NIVELES[campo.fuenteNivel]} · confianza ${campo.confianza}`,
         lote,
-        extra,
+        { confianza: campo.confianza, propuesta: JSON.stringify(campo) },
       );
-      campos.push("imagen_oficial");
-      revisar.push(["imagen oficial propuesta", `Imagen de la entidad verificada · ${imagenAlternativa.procedencia}`]);
     }
 
-    /* 9 · PRECIO. Se busca donde puede verificarse: en la web del propio sitio y en sus páginas de
-       tarifas, entradas o reservas. Siempre ORIENTATIVO, con la dirección exacta de donde salió. Si
-       no hay ninguna tarifa legible, no se escribe nada: la ficha sigue diciendo «Consultar». */
-    let precioWeb = pagina.precio ? Number(String(pagina.precio).replace(",", ".")) : NaN;
-    let precioDetalle = precioWeb ? "datos estructurados de la web" : "";
-    let visitadas = 0;
-    let monedaPrecio = (pagina.moneda ?? "EUR").slice(0, 3).toUpperCase();
-    let tipoPrecio = "datos_estructurados";
-    if (!ficha.precioValor && (!Number.isFinite(precioWeb) || precioWeb <= 0)) {
-      const objetivo = usada?.url ?? pagina.url;
-      const busquedaPrecio = await buscarPrecios(objetivo, { maxPaginas: 3 });
-      visitadas = busquedaPrecio.visitadas.length;
-      const elegido = busquedaPrecio.precios.find((p) => p.confianza === "high") ?? busquedaPrecio.precios.find((p) => p.confianza === "medium") ?? null;
-      if (elegido) {
-        precioWeb = elegido.valor;
-        precioDetalle = elegido.contexto.slice(0, 120);
-        monedaPrecio = elegido.moneda;
-        tipoPrecio = elegido.tipo;
-      }
-    }
-    if (!ficha.precioValor && Number.isFinite(precioWeb) && precioWeb > 0) {
-      await guardarDato(
-        tipo,
-        id,
-        "precio_orientativo",
-        null,
-        `${precioWeb}`,
-        { ...fuenteDe("precio_orientativo", "medium"), url: usada?.url ?? pagina.url },
+    /* FOTOGRAFÍA. El TIPO va guardado con cada imagen: una imagen de Wikipedia NUNCA se presenta como
+       fotografía oficial del proveedor. */
+    for (const img of resuelto.images) {
+      await guardarDato(tipo, id, "imagen_oficial", null, img.url, {
+        source: img.source_type === "oficial" ? "official_web" : img.source_type === "turismo_oficial" ? "tourism_official" : "external_verified",
+        name: img.fuente,
+        url: img.source_type === "wikipedia" ? img.url : paginaUrl,
+        type: `imagen_${img.source_type}`,
+        confidence: img.confianza === "HIGH" ? "high" : img.confianza === "MEDIUM" ? "medium" : "low",
+      }, lote, {
+        priority: nivelFuente,
+        originalSourceUrl: webOriginal || null,
+        verificacion: `imagen: ${img.source_type}`.slice(0, 120),
+      });
+      campos.push("imagen_oficial");
+      await anotarRevision(
+        tipo, id, `propuesta: imagen (${img.source_type})`,
+        `${img.url.slice(0, 200)} · ${img.fuente ?? ""} · confianza ${img.confianza}`,
         lote,
-        {
-          ...extra,
-          moneda: monedaPrecio,
-          tipoPrecio,
-          verificacion: `${extra.verificacion} · ${precioDetalle}`.slice(0, 120),
-        },
+        { confianza: img.confianza, propuesta: JSON.stringify(img) },
       );
+    }
+
+    /* PRECIO. Con valor, moneda, tipo y unidad, y la dirección exacta de donde salió. */
+    if (resuelto.price && !yaLoTiene.precio_orientativo) {
+      const p = resuelto.price;
+      await guardarDato(tipo, id, "precio_orientativo", null, String(p.value), {
+        source: nivelFuente === 1 ? "official_web" : nivelFuente <= 3 ? "tourism_official" : "external_verified",
+        name: `Precio publicado (${p.price_type})`,
+        url: p.source_url,
+        type: `precio_${p.price_type.replace(/\s/g, "_")}`,
+        confidence: p.confianza === "HIGH" ? "high" : "medium",
+      }, lote, {
+        priority: nivelFuente,
+        originalSourceUrl: webOriginal || null,
+        moneda: p.currency,
+        tipoPrecio: p.price_type,
+        priceUnit: p.price_unit,
+        verificacion: `precio ${p.price_type} · ${p.price_unit}`.slice(0, 120),
+      });
       campos.push("precio_orientativo");
-      // El precio se publica como ORIENTATIVO («Desde X €»), nunca como precio confirmado: la revisión
-      // es para decidir si se convierte en precio propio, no para poder mostrarlo.
-      revisar.push(["precio orientativo propuesto", `Publicado por el propio sitio: ${precioDetalle}. Se muestra como orientativo; se revisa si pasa a precio propio`]);
-    } else if (!ficha.precioValor) {
+      await anotarRevision(
+        tipo, id, "propuesta: precio",
+        `${p.value} ${p.currency} · ${p.price_type} (${p.price_unit}) · ${p.source_url} · confianza ${p.confianza}`,
+        lote,
+        { confianza: p.confianza, propuesta: JSON.stringify(p) },
+      );
+    }
+
+    /* Lo que sigue faltando, cada cosa con su motivo específico: no todo es «no encontrado». */
+    if (!ficha.descripcion && !resuelto.fields.some((f) => f.campo === "descripcion")) {
+      revisar.push(["sin descripción", "Ni la ficha ni las fuentes publican descripción"]);
+    }
+    if (!ficha.precioValor && !resuelto.price) {
+      revisar.push(["no_price_found", "No hay ninguna tarifa legible: se muestra «Consultar»"]);
+    }
+    if (!ficha.imagen && resuelto.images.length === 0) {
+      revisar.push(["no_image_found", "No hay imagen propia, oficial ni de la entidad"]);
+    }
+    if (resuelto.confidence === "LOW" || resuelto.confidence === "AMBIGUOUS") {
       revisar.push([
-        "precio no encontrado",
-        visitadas > 1 ? `Se miraron ${visitadas} páginas del sitio y ninguna publica tarifa legible` : "El sitio no publica tarifas legibles",
+        "confianza baja",
+        `Coincidencia ${resuelto.confidence}: no se publica como dato verificado. Señales: ${resuelto.sources[0]?.senales.join(" + ") ?? "-"}`,
       ]);
     }
-
-    /* 8 · Lo que sigue faltando, a la cola de revisión. */
-    if (!ficha.lat || !ficha.lng) revisar.push(["sin coordenadas", "No hay coordenadas para mostrar el mapa"]);
-    if (!ficha.imagen && !pagina.imagen) revisar.push(["sin fotografía", "No hay imagen propia ni oficial disponible"]);
     for (const [problema, detalle] of revisar) await anotarRevision(tipo, id, problema, detalle, lote);
 
-    /* 10 · ESTADO FINAL del elemento, con su diagnóstico. */
-    const encontrados = campos.filter((c) => !["categoria", "subcategoria"].includes(c)).length;
-    // Si la fuente se localizó y se verificó pero no publica nada que falte, la ficha NO está «sin
-    // encontrar»: está verificada y sin nada que añadir. No es lo mismo, y se dice distinto.
-    const fuenteConfirmada = Boolean(usada || motivoOriginal === "ok");
+    /* 10 · ESTADO FINAL, con su diagnóstico y su confianza. */
     const estado: Estado =
-      encontrados === 0 ? (fuenteConfirmada ? "enriched" : "not_found_after_search") : revisar.length > 0 ? "partial" : "enriched";
+      resuelto.status === "not_found"
+        ? webOriginal
+          ? "source_failed"
+          : "not_found_after_search"
+        : resuelto.status === "needs_review"
+          ? "needs_review"
+          : resuelto.status === "partial"
+            ? "partial"
+            : "enriched";
     await marcarEstado(tipo, id, estado, { campos: campos.length, lote });
     await anotarDiagnostico(tipo, id, {
       motivo: motivoOriginal,
-      claseFuente: identidadConfirmada === "low" ? "needs_review" : usada ? "source_original_failed_but_secondary_found" : "source_original_ok",
+      claseFuente:
+        resuelto.confidence === "LOW" || resuelto.confidence === "AMBIGUOUS"
+          ? "needs_review"
+          : paginaUrl && webOriginal && motivoOriginal !== "ok"
+            ? "source_original_failed_but_secondary_found"
+            : "source_original_ok",
       estadoFuenteOriginal: webOriginal ? (motivoOriginal === "ok" ? "ok" : "source_failed") : "sin_url",
-      fuenteVerificada: usada?.url ?? (motivoOriginal === "ok" ? pagina.url : null),
-      confianzaIdentidad: identidadConfirmada,
-      motores: motores || null,
+      fuenteVerificada: paginaUrl,
+      confianzaIdentidad: conf,
+      motores: resuelto.sources.map((s) => s.procedencia).join(" | ").slice(0, 255),
+      confianzaResolucion: resuelto.confidence,
+      fuentesUsadas: resuelto.sources.map((s) => `${s.nivel}:${s.tipo}`).join(" | ").slice(0, 400),
     });
-    await registrar(tipo, id, estado, campos, pagina.url, `Enriquecidos ${campos.length} campos`, null, lote);
-    return { id, estado, campos, fuente: pagina.url };
+    await registrar(tipo, id, estado, campos, paginaUrl, `Enriquecidos ${campos.length} campos · ${resuelto.confidence}`, null, lote);
+    return { id, estado, campos, fuente: paginaUrl };
   } catch (error) {
     // Un fallo en una ficha no puede tumbar el lote: se anota y se sigue.
     const motivo = error instanceof Error ? error.message.slice(0, 200) : "error desconocido";
@@ -773,6 +748,23 @@ export async function lanzarLote(
     [lote],
   );
   r.revision = Number(rev[0]?.n ?? 0);
+
+  // TARIFAS COMPARTIDAS. Si el mismo precio de la MISMA web aparece en varias fichas distintas, es
+  // una tarifa del sistema (un abono anual, una entrada general), no el precio propio de cada ficha.
+  // Se marca para que no cuente como precio independiente ni se presente como el precio del negocio.
+  await pool.query(
+    `UPDATE catalogo_dato d
+       JOIN (SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(source_url, '/', 3), '//', -1) AS host,
+                    enriched_value AS valor, COUNT(DISTINCT CONCAT(catalog_type, '-', item_id)) AS n
+               FROM catalogo_dato
+              WHERE campo = 'precio_orientativo' AND lote_id = ?
+              GROUP BY host, valor HAVING n > 1) g
+         ON SUBSTRING_INDEX(SUBSTRING_INDEX(d.source_url, '/', 3), '//', -1) = g.host
+        AND d.enriched_value = g.valor
+        SET d.tarifa_compartida = 1
+      WHERE d.campo = 'precio_orientativo' AND d.lote_id = ?`,
+    [lote, lote],
+  );
 
   await pool.query(
     `UPDATE catalogo_lote SET hasta = ?, estado = 'terminado', resumen = ?, actualizado_en = NOW() WHERE id = ?`,

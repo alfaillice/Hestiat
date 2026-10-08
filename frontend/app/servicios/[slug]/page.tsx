@@ -4,6 +4,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import SeccionHome from "@/components/seccion-home";
 import ImagenSegura from "@/components/imagen-segura";
+import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
 import { servicioPorSlug, serviciosSimilares, serviciosCercanosA, type ServTarjeta } from "@/lib/servicios.server";
 
@@ -110,12 +111,17 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
       </nav>
 
       <div className="exp-portada">
-        <ImagenSegura src={s.imagen} alt={`${s.nombre}: ${s.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`} fondo="exp-portada-vacia" />
+        <ImagenSegura src={s.imagen} alt={`${s.nombre}: ${textoDeImagen(s.imagenEtiqueta).toLowerCase()}`} fondo="exp-portada-vacia" />
         {s.imagen ? (
           <span className="exp-portada-pie">
-            {s.imagenOficial
-              ? `Imagen oficial del sitio${s.imagenOficialFuente ? ` · ${s.imagenOficialFuente}` : ""}`
-              : `Imagen de referencia${s.imagenFuente ? ` · ${s.imagenFuente}` : ""}`}
+            {textoDeImagen(s.imagenEtiqueta)}
+            {s.imagenEtiqueta === "wikipedia"
+              ? " · de un artículo, no del establecimiento"
+              : s.imagenOficialFuente
+                ? ` · ${s.imagenOficialFuente}`
+                : s.imagenFuente
+                  ? ` · ${s.imagenFuente}`
+                  : ""}
           </span>
         ) : null}
       </div>

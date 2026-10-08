@@ -34,6 +34,8 @@ export interface ServTarjeta {
   imagenOficial: boolean;
   /** De dónde salió la imagen oficial, para poder citarla. */
   imagenOficialFuente: string | null;
+  /** Qué es la imagen que se enseña. Nunca se presenta una de Wikipedia como oficial. */
+  imagenEtiqueta: string;
   precio: string;
   precioOrientativo: boolean;
   href: string;
@@ -69,6 +71,7 @@ function aTarjeta(f: mysql.RowDataPacket): ServTarjeta {
     imagenOrigen: f.imagen_origen ?? null,
     imagenOficial: false,
     imagenOficialFuente: null,
+    imagenEtiqueta: "sin_imagen_verificada",
     precio: p.texto,
     precioOrientativo: p.orientativo,
     href: `/servicios/${encodeURIComponent(String(f.slug ?? ""))}`,
@@ -88,6 +91,7 @@ async function aplicarEnriquecido(items: ServTarjeta[]): Promise<ServTarjeta[]> 
       imagen: img.url,
       imagenOficial: img.origen === "oficial",
       imagenOficialFuente: img.origen === "oficial" ? img.fuente?.sourceName ?? img.fuente?.source ?? null : null,
+      imagenEtiqueta: img.etiqueta,
       precio: pr.texto,
       precioOrientativo: pr.orientativo,
     };

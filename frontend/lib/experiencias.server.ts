@@ -36,6 +36,9 @@ export interface ExpTarjeta {
   imagenOficial: boolean;
   /** De dónde salió la imagen oficial, para poder citarla. */
   imagenOficialFuente: string | null;
+  /** Qué es la imagen que se enseña: oficial, proveedor, turismo_oficial, wikipedia, directorio,
+      representativa o sin_imagen_verificada. Nunca se presenta una de Wikipedia como oficial. */
+  imagenEtiqueta: string;
   /** Texto de precio ya resuelto: «Gratis», «Desde 12 €», «Precio variable» o «Consultar». */
   precio: string;
   /** true cuando el precio es orientativo (no garantizado). */
@@ -94,6 +97,7 @@ function aTarjeta(f: mysql.RowDataPacket): ExpTarjeta {
     imagenOrigen: f.imagen_origen ?? null,
     imagenOficial: false,
     imagenOficialFuente: null,
+    imagenEtiqueta: "sin_imagen_verificada",
     precio: p.texto,
     precioOrientativo: p.orientativo,
     rating: f.rating !== null && Number(f.rating) > 0 ? Number(f.rating) : null,
@@ -119,6 +123,7 @@ async function aplicarEnriquecido(items: ExpTarjeta[]): Promise<ExpTarjeta[]> {
       imagen: img.url,
       imagenOficial: img.origen === "oficial",
       imagenOficialFuente: img.origen === "oficial" ? img.fuente?.sourceName ?? img.fuente?.source ?? null : null,
+      imagenEtiqueta: img.etiqueta,
       precio: pr.texto,
       precioOrientativo: pr.orientativo,
     };

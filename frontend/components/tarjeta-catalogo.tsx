@@ -17,6 +17,8 @@ export interface ItemCatalogo {
   imagen: string | null;
   /** true cuando la imagen es la oficial del propio sitio (no una de referencia). */
   imagenOficial: boolean;
+  /** Qué es exactamente la imagen que se muestra, para nombrarla bien. */
+  imagenEtiqueta?: string;
   precio: string;
   precioOrientativo: boolean;
   /** «a 3,2 km», cuando hay un punto real desde el que medir. */
@@ -37,6 +39,7 @@ export function aItemCatalogo(x: ItemCatalogo): ItemCatalogo {
     provincia: x.provincia ?? null,
     imagen: x.imagen ?? null,
     imagenOficial: Boolean(x.imagenOficial),
+    imagenEtiqueta: x.imagenEtiqueta ?? "sin_imagen_verificada",
     precio: x.precio,
     precioOrientativo: Boolean(x.precioOrientativo),
     nota: x.nota,
@@ -45,11 +48,30 @@ export function aItemCatalogo(x: ItemCatalogo): ItemCatalogo {
   };
 }
 
+/**
+ * CÓMO SE NOMBRA CADA IMAGEN. Una sola tabla para toda la web: una imagen de Wikipedia nunca se
+ * presenta como fotografía oficial del proveedor, y una de referencia se dice que lo es.
+ */
+export const ETIQUETA_IMAGEN: Record<string, string> = {
+  oficial: "Imagen oficial del sitio",
+  proveedor: "Imagen del proveedor",
+  turismo_oficial: "Imagen de turismo oficial",
+  wikipedia: "Imagen de Wikipedia",
+  directorio: "Imagen de directorio",
+  representativa: "Imagen de referencia",
+  sin_imagen_verificada: "Sin imagen verificada",
+};
+
+export function textoDeImagen(tipo: string | null | undefined): string {
+  return ETIQUETA_IMAGEN[tipo ?? "sin_imagen_verificada"] ?? "Imagen de referencia";
+}
+
 export default function TarjetaCatalogo({ item }: { item: ItemCatalogo }) {
   const lugar = [item.municipio, item.provincia].filter(Boolean).join(", ");
   // La imagen se rotula por lo que es: oficial del sitio o de referencia. Nunca se hace pasar una por
   // la otra.
-  const alt = `${item.nombre}: ${item.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`;
+  const etiquetaImagen = textoDeImagen(item.imagenEtiqueta);
+  const alt = `${item.nombre}: ${etiquetaImagen.toLowerCase()}`;
   return (
     <Link className="serv-card" href={item.href}>
       <span className="serv-media">
@@ -70,7 +92,9 @@ export default function TarjetaCatalogo({ item }: { item: ItemCatalogo }) {
             : ""}
           {item.nota ? ` · ${item.nota}` : ""}
         </span>
-        {item.imagenOficial ? <span className="serv-fuente">Imagen oficial del sitio</span> : null}
+        {item.imagenEtiqueta && item.imagenEtiqueta !== "sin_imagen_verificada" ? (
+          <span className="serv-fuente">{etiquetaImagen}</span>
+        ) : null}
       </span>
     </Link>
   );

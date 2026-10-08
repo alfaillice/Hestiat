@@ -4,6 +4,7 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import SeccionHome from "@/components/seccion-home";
 import ImagenSegura from "@/components/imagen-segura";
+import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
 import { experienciaPorSlug, experienciasSimilares, experienciasCercanasA, type ExpTarjeta } from "@/lib/experiencias.server";
 
@@ -120,12 +121,17 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
 
       {/* Imagen de cabecera: de referencia, y se dice. */}
       <div className="exp-portada">
-        <ImagenSegura src={e.imagen} alt={`${e.nombre}: ${e.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`} fondo="exp-portada-vacia" />
+        <ImagenSegura src={e.imagen} alt={`${e.nombre}: ${textoDeImagen(e.imagenEtiqueta).toLowerCase()}`} fondo="exp-portada-vacia" />
         {e.imagen ? (
           <span className="exp-portada-pie">
-            {e.imagenOficial
-              ? `Imagen oficial del sitio${e.imagenOficialFuente ? ` · ${e.imagenOficialFuente}` : ""}`
-              : `Imagen de referencia${e.imagenFuente ? ` · ${e.imagenFuente}` : ""}`}
+            {textoDeImagen(e.imagenEtiqueta)}
+            {e.imagenEtiqueta === "wikipedia"
+              ? " · de un artículo, no del establecimiento"
+              : e.imagenOficialFuente
+                ? ` · ${e.imagenOficialFuente}`
+                : e.imagenFuente
+                  ? ` · ${e.imagenFuente}`
+                  : ""}
           </span>
         ) : null}
       </div>

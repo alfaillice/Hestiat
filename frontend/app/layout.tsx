@@ -121,12 +121,15 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .f-chip input{accent-color:var(--primary)}
 .f-chip em{color:var(--muted-fg);font-style:normal;font-size:12px}
 .f-acciones{grid-column:1/-1;display:flex;align-items:center;gap:14px}
-.f-aplicar{background:var(--fucsia);color:#fff;border:0;border-radius:var(--radio-pill);padding:12px 22px;font:inherit;font-weight:700;cursor:pointer;transition:background .16s ease}
-.f-aplicar:hover{background:var(--fucsia-tinta)}
-/* El fucsia es EL color de acción de Hestiat, el mismo del botón «Reservar» de la ficha: se define
-   una sola vez en :root (--fucsia) y lo usan todos los botones de acción —Buscar, Aplicar filtros,
-   Reservar, Ver todos, estados activos y favoritos—. No se toca el color de los textos ni se llena
-   la interfaz de fucsia: es acento, no fondo. */
+.f-aplicar{background:var(--hestiat-primary);color:var(--ink);border:0;border-radius:var(--radio-pill);padding:12px 22px;font:inherit;font-weight:700;cursor:pointer;transition:background .16s ease}
+.f-aplicar:hover{background:var(--hestiat-primary-hover)}
+/* EL COLOR PRIMARIO OFICIAL DE HESTIAT es --hestiat-primary, y sale de la ficha de alojamiento:
+   es exactamente el tono que se ve en su botón «Reservar». Ese botón está deshabilitado hasta que
+   se eligen fechas y el navegador lo pinta con opacidad 0,5, así que el color que se ve es el
+   fucsia de la ficha al 50 % sobre blanco (#eb7fc9). El mismo fucsia a plena intensidad (#d80094)
+   NO se usa como color de acción: resultaba demasiado fuerte. Para TEXTO (enlaces y estados
+   activos) se usa su versión oscura de la misma familia (#7b0052), porque el pastel sobre blanco
+   no tiene contraste suficiente para leerse. No se toca ninguna otra parte de la paleta. */
 .f-limpiar{color:var(--muted-fg);font-size:13.5px;text-decoration:underline}
 /* marcadores de precio del mapa */
 .hx-pin-wrapper{background:none;border:0}
@@ -302,8 +305,8 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 /* --- Selector de fechas: UN solo disparador y un solo calendario (el mismo de la ficha) --- */
 .buscador-fechas{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
 .fechas-disparador{width:100%;text-align:left;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radio);background:var(--bg);color:var(--ink);font:inherit;font-size:14.5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fechas-disparador:hover{border-color:var(--fucsia)}
-.fechas-lleno{font-weight:600;border-color:var(--fucsia);color:var(--fucsia)}
+.fechas-disparador:hover{border-color:var(--hestiat-primary)}
+.fechas-lleno{font-weight:600;border-color:var(--hestiat-primary);color:var(--hestiat-primary-texto)}
 .fechas-noches{position:absolute;right:10px;top:-20px;font-size:11.5px;color:var(--muted-fg)}
 .fechas-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:1300;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:10px;box-shadow:0 18px 44px rgba(20,40,50,.18);max-width:min(680px,calc(100vw - 28px));max-height:min(76vh,640px);overflow:auto}
 .fechas-pop .rc-calendario{margin:0;padding:0;border:0;background:none}
@@ -326,9 +329,9 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
 .cab-nav{display:flex;gap:8px;align-items:center;flex:0 0 auto}
 .cab-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);background:var(--surface);border-radius:var(--radio-pill);padding:9px 15px;font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease, background .16s ease}
-.cab-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(20,40,50,.10);border-color:var(--fucsia)}
+.cab-pill:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(20,40,50,.10);border-color:var(--hestiat-primary)}
 .cab-pill:active{transform:translateY(0) scale(.985)}
-.cab-pill-on{border-color:var(--fucsia);color:var(--fucsia);background:color-mix(in oklab, var(--fucsia) 7%, white)}
+.cab-pill-on{border-color:var(--hestiat-primary);color:var(--hestiat-primary-texto);background:color-mix(in srgb, var(--hestiat-primary) 24%, white)}
 .cab-cuenta{display:flex;align-items:center;gap:14px;flex:0 0 auto}
 .cab-menu{display:none;margin-left:auto;position:relative}
 .cab-menu summary{list-style:none;cursor:pointer;border:1px solid var(--border);border-radius:var(--radio-pill);padding:9px 14px;font-size:13.5px;font-weight:600}
@@ -368,7 +371,7 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .seccion-home-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
 .seccion-home h2{font-size:clamp(20px,2.1vw,27px)}
 .seccion-home-sub{color:var(--muted-fg);font-size:13.5px;margin-top:4px}
-.ver-todos{color:var(--fucsia);font-weight:700;font-size:14px;white-space:nowrap;transition:opacity .16s ease}
+.ver-todos{color:var(--hestiat-primary-texto);font-weight:700;font-size:14px;white-space:nowrap;transition:opacity .16s ease}
 .ver-todos:hover{opacity:.78}
 .car{position:relative}
 .car-pista{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;scrollbar-width:thin}
@@ -565,6 +568,11 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 @media(prefers-reduced-motion:reduce){.hero-cine{height:auto}}
 /* ---------- ficha divertida: iconos ilustrativos y acento fucsia ---------- */
 :root{--fucsia:oklch(58% .25 348); --fucsia-soft:oklch(95.5% .035 348); --fucsia-tinta:oklch(38% .17 348)}
+/* Color primario oficial de acción, tomado de la ficha (ver la explicación junto a .f-aplicar).
+   --hestiat-primary        relleno de los botones principales: el pastel que se ve en la ficha.
+   --hestiat-primary-hover  el mismo tono un poco más profundo, solo al pasar el ratón.
+   --hestiat-primary-texto  el mismo tono oscuro, para enlaces y estados activos (contraste). */
+:root{--hestiat-primary:#eb7fc9; --hestiat-primary-hover:#dd66b6; --hestiat-primary-texto:#7b0052}
 /* Los accesorios se ven antes de leerse: cada uno con su icono, que viene del diccionario de
    servicios (su campo de icono), no de una lista metida en el código. */
 .servicio-icono{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radio-pill);background:var(--fucsia-soft);font-size:17px;flex:0 0 auto}
@@ -576,10 +584,10 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .regla-icono{display:inline-block;width:20px;text-align:center}
 /* El botón de reservar es la acción de la ficha: va en fucsia, que es lo único de la página con
    ese color, y por eso se encuentra sin buscarlo. */
-.rc-boton,.barra-movil .f-aplicar,.accion-reservar{background:var(--fucsia)!important;color:#fff!important}
-.rc-boton:hover,.accion-reservar:hover{background:var(--fucsia-tinta)!important}
-.reserva-caja .rc-precio strong{color:var(--fucsia)}
-.corazon-ok{color:var(--fucsia)}
+.rc-boton,.barra-movil .f-aplicar,.accion-reservar{background:var(--hestiat-primary)!important;color:var(--ink)!important}
+.rc-boton:hover,.accion-reservar:hover{background:var(--hestiat-primary-hover)!important}
+.reserva-caja .rc-precio strong{color:var(--hestiat-primary-texto)}
+.corazon-ok{color:var(--hestiat-primary)}
 /* ---------- ficha de alojamiento ---------- */
 .migas{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--muted-fg);padding:16px 0 12px;flex-wrap:wrap}
 .migas a{text-decoration:underline}

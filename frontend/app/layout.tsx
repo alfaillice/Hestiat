@@ -117,6 +117,7 @@ footer nav{display:flex;flex-direction:column;gap:6px}
 footer a{color:var(--muted-fg)}
 footer a:hover{color:var(--hestiat-primary-texto)}
 .pie-legal{font-size:12.5px;line-height:1.65;border-top:1px solid var(--border);padding-top:14px}
+.pie-legal-enlaces{flex-direction:row;gap:18px;flex-wrap:wrap;font-weight:600}
 .aviso{background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio);padding:12px 15px;font-size:13px;color:var(--muted-fg)}
 /* busqueda con mapa y filtros */
 .busqueda{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,42%);gap:26px;align-items:start}
@@ -886,6 +887,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 <a href="/reclamar">Reclamar una ficha</a>
               </nav>
             </div>
+            <nav aria-label="Legal" className="pie-legal-enlaces">
+              <a href="/aviso-legal">Aviso legal</a>
+              <a href="/privacidad">Privacidad</a>
+              <a href="/cookies">Cookies</a>
+              <a href="/condiciones-uso">Condiciones de uso</a>
+            </nav>
             <p className="pie-legal">
               Los datos del catálogo proceden de fuentes públicas (OpenStreetMap y otras) y figuran con
               su autoría; las fotografías son imágenes de referencia salvo que se indique otra cosa. Si

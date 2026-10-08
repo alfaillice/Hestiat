@@ -33,6 +33,10 @@ async function generar(): Promise<string> {
     { loc: `${BASE}/como-funciona`, changefreq: "monthly", priority: "0.4" },
     { loc: `${BASE}/preguntas-frecuentes`, changefreq: "monthly", priority: "0.4" },
     { loc: `${BASE}/contacto`, changefreq: "monthly", priority: "0.3" },
+    { loc: `${BASE}/aviso-legal`, changefreq: "yearly", priority: "0.2" },
+    { loc: `${BASE}/privacidad`, changefreq: "yearly", priority: "0.2" },
+    { loc: `${BASE}/cookies`, changefreq: "yearly", priority: "0.2" },
+    { loc: `${BASE}/condiciones-uso`, changefreq: "yearly", priority: "0.2" },
   ];
 
   try {

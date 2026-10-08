@@ -867,24 +867,37 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   inventar precios.
                 </p>
               </div>
-              <nav aria-label="Catálogo">
-                <p className="pie-tit">Catálogo</p>
-                <a href="/search">Alojamientos</a>
-                <a href="/experiencias">Experiencias</a>
-                <a href="/servicios">Servicios</a>
-              </nav>
-              <nav aria-label="Información">
+              <nav aria-label="Hestiat">
+                <p className="pie-tit">Hestiat</p>
                 <p className="pie-tit">Información</p>
                 <a href="/sobre">Sobre Hestiat</a>
                 <a href="/como-funciona">Cómo funciona</a>
-                <a href="/preguntas-frecuentes">Preguntas frecuentes</a>
                 <a href="/contacto">Contacto</a>
+                <a href="/preguntas-frecuentes">Preguntas frecuentes</a>
               </nav>
-              <nav aria-label="Anfitriones">
-                <p className="pie-tit">Anfitriones</p>
-                <a href="/nuevo">Publica tu espacio</a>
-                <a href="/host">Panel del anfitrión</a>
-                <a href="/reclamar">Reclamar una ficha</a>
+              <nav aria-label="Descubre">
+                <p className="pie-tit">Descubre</p>
+                <a href="/search">Alojamientos</a>
+                <a href="/experiencias">Experiencias</a>
+                <a href="/servicios">Servicios</a>
+                <a href="/destinos">Destinos</a>
+                <a href="/favoritos">Favoritos</a>
+              </nav>
+              <nav aria-label="Para anfitriones y proveedores">
+                <p className="pie-tit">Anfitriones y proveedores</p>
+                <a href="/hazte-anfitrion">Hazte anfitrión</a>
+                <a href="/nuevo">Publicar alojamiento</a>
+                <a href="/publicar-experiencia">Publicar experiencia</a>
+                <a href="/publicar-servicio">Publicar servicio</a>
+                <a href="/condiciones-anfitrion">Ayuda para anfitriones</a>
+              </nav>
+              <nav aria-label="Ayuda">
+                <p className="pie-tit">Ayuda</p>
+                <a href="/ayuda">Centro de ayuda</a>
+                <a href="/como-reservar">Cómo reservar</a>
+                <a href="/cancelaciones">Cancelaciones</a>
+                <a href="/seguridad">Seguridad</a>
+                <a href="/contacto">Contacto</a>
               </nav>
             </div>
             <nav aria-label="Legal" className="pie-legal-enlaces">

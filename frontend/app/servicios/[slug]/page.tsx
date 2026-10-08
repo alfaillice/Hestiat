@@ -6,6 +6,7 @@ import SeccionHome from "@/components/seccion-home";
 import ImagenSegura from "@/components/imagen-segura";
 import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
+import BotonEditarAdmin from "@/components/boton-editar-admin";
 import { servicioPorSlug, serviciosSimilares, serviciosCercanosA, type ServTarjeta } from "@/lib/servicios.server";
 
 export const dynamic = "force-dynamic";
@@ -109,6 +110,8 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
           </>
         ) : null}
       </nav>
+
+      <BotonEditarAdmin tipo="servicio" id={Number(s.id)} />
 
       <div className="exp-portada">
         <ImagenSegura src={s.imagen} alt={`${s.nombre}: ${textoDeImagen(s.imagenEtiqueta).toLowerCase()}`} fondo="exp-portada-vacia" />

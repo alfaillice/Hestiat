@@ -8,6 +8,7 @@ import { getCurrentUser, ownsListing } from "@/lib/auth.server";
 import Galeria from "@/components/galeria";
 import ReservaCaja from "@/components/reserva-caja";
 import MapaFicha from "@/components/mapa-ficha";
+import BotonEditarAdmin from "@/components/boton-editar-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -223,6 +224,8 @@ export default async function Ficha({
 
       <div className="ficha-cols">
         <div className="ficha-principal">
+          {/* Solo se pinta si la sesión es de administración: el componente lee el rol en el servidor. */}
+          <BotonEditarAdmin tipo="alojamiento" id={Number(a.legacy_id ?? 0)} />
           <header>
             <h1>{a.title}</h1>
             <p className="meta">

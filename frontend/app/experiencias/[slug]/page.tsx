@@ -145,6 +145,7 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
             </p>
           ) : null}
 
+          <BotonEditarAdmin tipo="experiencia" id={Number(e.id)} />
           <h1 style={{ fontSize: "clamp(24px,3.2vw,36px)", marginBottom: 8 }}>{e.nombre}</h1>
           <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 14 }}>{lugar}</p>
 

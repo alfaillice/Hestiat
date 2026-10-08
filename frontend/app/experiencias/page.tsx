@@ -69,8 +69,11 @@ export default async function Experiencias({
   const categoria = (uno(sp.categoria) ?? "").trim() || undefined;
   const subcategoria = (uno(sp.subcategoria) ?? "").trim() || undefined;
   const provincia = (uno(sp.provincia) ?? "").trim() || undefined;
-  const familia = uno(sp.familia) === "1";
-  const accesible = uno(sp.accesible) === "1";
+  // Los campos `family_friendly`, `accessible` y `parking` están VACÍOS en las 58.539 experiencias
+  // (auditado antes de construir la página), así que NO se ofrecen como filtro: un filtro que no
+  // puede devolver nada es una promesa falsa. El día que tengan datos, se activan en una línea.
+  const familia = false;
+  const accesible = false;
   const pagina = Math.max(1, Number(uno(sp.p) ?? 1) || 1);
   const filtrando = Boolean(q || categoria || subcategoria || provincia || familia || accesible);
 
@@ -145,19 +148,6 @@ export default async function Experiencias({
             ))}
           </select>
         </label>
-        <fieldset className="f-servicios">
-          <legend className="etq">Solo mostrar</legend>
-          <div className="f-chips">
-            <label className="f-chip">
-              <input type="checkbox" name="familia" value="1" defaultChecked={familia} />
-              <span>Para familias</span>
-            </label>
-            <label className="f-chip">
-              <input type="checkbox" name="accesible" value="1" defaultChecked={accesible} />
-              <span>Accesible</span>
-            </label>
-          </div>
-        </fieldset>
         <div className="f-acciones">
           <button type="submit" className="f-aplicar">Buscar</button>
           <Link className="f-limpiar" href="/experiencias">Quitar filtros</Link>

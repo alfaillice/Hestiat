@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth.server";
 import BuscadorCabecera from "@/components/buscador-cabecera";
+import Vitales from "@/components/vitales";
 import { DM_Sans, Manrope } from "next/font/google";
 
 /**
@@ -914,6 +915,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             </p>
           </div>
         </footer>
+        {/* Mide LCP, CLS e INP en el navegador de quien visita y los envía una sola vez, sin datos
+            personales. Sirve para saber el rendimiento real, no el teórico. */}
+        <Vitales />
       </body>
     </html>
   );

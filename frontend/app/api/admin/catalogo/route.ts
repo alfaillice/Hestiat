@@ -83,7 +83,10 @@ export async function POST(request: Request) {
     const columnas = tipo === "experiencia"
       ? ["name", "description", "phone", "website_url", "address", "price", "price_type"]
       : ["name", "short_description", "phone", "website_url", "address", "price", "price_type"];
-    const valores = [nombre, descripcion, telefono, web, direccion, precio, tipoPrecio || null];
+    // `price_type` no admite nulos en el catálogo: cuando no se elige tipo, se guarda «unavailable»,
+    // que es exactamente lo que significa («Consultar», sin precio publicado). Enviar nulo hacía
+    // fallar el guardado.
+    const valores = [nombre, descripcion, telefono, web, direccion, precio, tipoPrecio || "unavailable"];
     const asignaciones = columnas.map((c) => `${c} = ?`).join(", ");
 
     const [res] = await pool.query(

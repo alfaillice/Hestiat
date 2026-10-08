@@ -18,7 +18,7 @@ export default function TarjetaDestino({ destino }: { destino: DestinoHome }) {
     <Link className="tdest" href={destino.href}>
       <span className="tdest-media">
         <ImagenSegura
-          src={destino.imagen}
+          src={destino.imagenes}
           alt={`${destino.nombre}: imagen de referencia`}
           fondo="tdest-sinfoto"
         />

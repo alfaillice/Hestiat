@@ -179,3 +179,60 @@ export function categoryImageMap(tipo: "servicio" | "experiencia", valor: string
   const cadena = [...(propias ?? []), ...antiguasDe(tipo, clave), ...respaldo];
   return [...new Set(cadena.filter(Boolean))];
 }
+
+/* ===================================================================================
+   TEXTO ALTERNATIVO DE LAS IMÁGENES DE CATEGORÍA
+
+   El alt describe DOS cosas y no engaña a nadie: qué se ve en la imagen y a qué categoría
+   representa. Nunca dice que sea la foto de un negocio concreto, porque no lo es. Además del
+   sentido para quien no ve la imagen, aporta a la página las palabras con las que se busca esa
+   categoría («peluquería», «masaje y spa», «buceo»...), que es para lo que sirve un buen alt.
+   =================================================================================== */
+const ALT_CATEGORIA: Record<string, string> = {
+  // Servicios
+  peluqueria: "Peluquería y estilismo profesional: imagen de la categoría Peluquería en Hestiat",
+  "bienestar-belleza": "Masaje y spa: imagen de la categoría Bienestar y belleza en Hestiat",
+  transporte: "Taxi y transporte urbano: imagen de la categoría Transporte en Hestiat",
+  "deporte-fitness": "Gimnasio y entrenamiento: imagen de la categoría Deporte y fitness en Hestiat",
+  mascotas: "Perro y cuidado de mascotas: imagen de la categoría Mascotas en Hestiat",
+  "hogar-asistencia": "Reparación y mantenimiento del hogar: imagen de la categoría Hogar y asistencia en Hestiat",
+  "servicios-turisticos": "Visita guiada con turistas: imagen de la categoría Servicios turísticos en Hestiat",
+  gastronomia: "Gastronomía y restaurante: imagen de la categoría Gastronomía en Hestiat",
+  // Experiencias
+  "cultura-historia": "Monumento histórico y patrimonio: imagen de la categoría Cultura e historia en Hestiat",
+  "cultura-e-historia": "Monumento histórico y patrimonio: imagen de la categoría Cultura e historia en Hestiat",
+  "naturaleza-paisajes": "Paisaje natural y montaña: imagen de la categoría Naturaleza y paisajes en Hestiat",
+  "naturaleza-y-paisajes": "Paisaje natural y montaña: imagen de la categoría Naturaleza y paisajes en Hestiat",
+  arte: "Taller de arte y pintura: imagen de la categoría Arte en Hestiat",
+  "parques-atracciones": "Parque de atracciones: imagen de la categoría Parques y atracciones en Hestiat",
+  "parques-y-atracciones": "Parque de atracciones: imagen de la categoría Parques y atracciones en Hestiat",
+  "museos-exposiciones": "Interior de museo y exposición: imagen de la categoría Museos y exposiciones en Hestiat",
+  "museos-y-exposiciones": "Interior de museo y exposición: imagen de la categoría Museos y exposiciones en Hestiat",
+  "ocio-entretenimiento": "Espectáculo y ocio: imagen de la categoría Ocio y entretenimiento en Hestiat",
+  "ocio-y-entretenimiento": "Espectáculo y ocio: imagen de la categoría Ocio y entretenimiento en Hestiat",
+  "gastronomia-bebidas": "Vino y gastronomía: imagen de la categoría Gastronomía y bebidas en Hestiat",
+  "gastronomia-y-bebidas": "Vino y gastronomía: imagen de la categoría Gastronomía y bebidas en Hestiat",
+  "mar-acuaticas": "Buceo y actividades acuáticas en el mar: imagen de la categoría Mar y actividades acuáticas en Hestiat",
+  "mar-y-actividades-acuaticas": "Buceo y actividades acuáticas en el mar: imagen de la categoría Mar y actividades acuáticas en Hestiat",
+};
+
+/** Texto alternativo de una categoría. Si no hay uno escrito, se dice lo que es, sin inventar. */
+export function altDeCategoria(valor: string): string {
+  return ALT_CATEGORIA[claveCategoria(valor)] ?? `${valor}: imagen representativa de la categoría en Hestiat`;
+}
+
+/**
+ * La MISMA fotografía en otro tamaño y su fichero original. Si el tamaño grande no respondiera, la
+ * tarjeta prueba el menor y después el original: nunca cambia de foto, solo de tamaño. Es el mismo
+ * respaldo en cadena que usan las tarjetas de categoría, aplicado a las de destino.
+ */
+export function variantesDeCommons(url: string): string[] {
+  if (!url) return [];
+  const m = url.match(/^(https:\/\/thumb\.wikimedia\.org\/wikipedia\/commons\/thumb\/.+\/[^/]+?)\/\d+px-/);
+  if (!m) return [url];
+  const base = m[1];
+  const fichero = base.split("/").pop() ?? "";
+  if (!fichero) return [url];
+  const original = `${base.replace("thumb.wikimedia.org", "upload.wikimedia.org").replace("/thumb", "")}`;
+  return [url, `${base}/640px-${fichero}`, original];
+}

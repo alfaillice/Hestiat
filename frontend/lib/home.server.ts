@@ -18,7 +18,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
-import { IMAGEN_DESTINO, categoryImageMap } from "@/lib/imagenes-home";
+import { IMAGEN_DESTINO, categoryImageMap, variantesDeCommons } from "@/lib/imagenes-home";
 
 /* ------------------------------------------------------------- destinos -- */
 
@@ -27,7 +27,8 @@ export interface DestinoHome {
   /** Enlace a Explorar ya filtrado. */
   href: string;
   total: number;
-  imagen: string | null;
+  /** Cadena de la MISMA fotografía (mismo tamaño grande, tamaño menor y fichero original). */
+  imagenes: string[];
   /** Qué es realmente cada destino: se dice, no se disimula. */
   ambito: "ciudad" | "provincia";
   /** El valor exacto que hay en la base. */
@@ -92,7 +93,7 @@ export async function destinosParaTi(): Promise<DestinoHome[]> {
         d.campo === "city"
           ? `/search?q=${encodeURIComponent(d.valor)}`
           : `/search?provincia=${encodeURIComponent(d.valor)}`,
-      imagen: IMAGEN_DESTINO[d.nombre]?.url ?? null,
+      imagenes: variantesDeCommons(IMAGEN_DESTINO[d.nombre]?.url ?? ""),
     };
   }).filter((d) => d.total > 0);
 }

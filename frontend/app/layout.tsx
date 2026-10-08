@@ -403,6 +403,18 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .tcat-txt b{font-family:var(--fuente-titulo);font-size:14.5px;color:var(--ink)}
 .tcat-txt span{font-size:12px;color:var(--muted-fg)}
 .pie-inicio{margin-top:30px}
+/* Ficha de experiencia: mismo lenguaje visual que la de alojamiento, con piezas propias. */
+.exp-portada{position:relative;border-radius:var(--radio);overflow:hidden;background:var(--surface-strong);aspect-ratio:21/9;margin-bottom:18px}
+.exp-portada img{width:100%;height:100%;object-fit:cover}
+.exp-portada-vacia{display:block;width:100%;height:100%;background:linear-gradient(135deg,var(--surface-strong),var(--secondary))}
+.exp-portada-pie{position:absolute;right:10px;bottom:8px;background:rgba(10,20,26,.62);color:#fff;font-size:11px;padding:3px 9px;border-radius:var(--radio-pill)}
+.exp-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,360px);gap:28px;align-items:start}
+.exp-etiquetas{font-size:13px;font-weight:700;color:var(--hestiat-primary-texto);margin-bottom:8px}
+.exp-resumen{font-size:16.5px;line-height:1.6;color:var(--ink)}
+.exp-caja{position:sticky;top:88px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:16px}
+.exp-precio{font-size:15px;margin-bottom:6px}
+.exp-precio strong{font-family:var(--fuente-titulo);font-size:22px;color:var(--hestiat-primary-texto)}
+@media(max-width:900px){.exp-cols{grid-template-columns:1fr}.exp-caja{position:static}.exp-portada{aspect-ratio:16/9}}
 /* «Cerca de ti»: la acción discreta para compartir la ubicación, y el ancho de las tarjetas de
    alojamiento dentro de un carrusel (8 visibles en escritorio, como el resto de filas). */
 .cerca-ofrecer{margin:26px 0 0}
@@ -410,8 +422,10 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .cerca-ofrecer .fechas-disparador:hover{background:var(--hestiat-primary-hover);border:0}
 .cerca-ofrecer .fechas-disparador:disabled{opacity:.6;cursor:default}
 .car .car-pista>.tjg{flex:0 0 calc((100% - 112px) / 8);min-width:186px}
-@media(max-width:760px){.car .car-pista>.tjg{flex:0 0 62%;min-width:0}}
-@media(max-width:430px){.car .car-pista>.tjg{flex:0 0 76%}}
+/* Las tarjetas de experiencia usan la misma pieza en rejilla y en carrusel. */
+.car .car-pista>.serv-card{flex:0 0 calc((100% - 112px) / 8);min-width:200px}
+@media(max-width:760px){.car .car-pista>.tjg{flex:0 0 62%;min-width:0}.car .car-pista>.serv-card{flex:0 0 62%;min-width:0}}
+@media(max-width:430px){.car .car-pista>.tjg{flex:0 0 76%}.car .car-pista>.serv-card{flex:0 0 76%}}
 /* Rejilla del catálogo de servicios: misma tarjeta que las categorías, pero en rejilla. */
 .serv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px;margin-top:6px}
 .serv-card{border:1px solid var(--border);border-radius:var(--radio);overflow:hidden;background:var(--card);transition:transform .18s ease, box-shadow .18s ease}

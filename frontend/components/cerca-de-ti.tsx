@@ -25,7 +25,14 @@ import type { RespuestaCerca } from "@/lib/cerca.tipos";
  * Nunca se muestran coordenadas, nunca se inventa una distancia y no se bloquea nada por no dar
  * permiso: la home, Explorar, la búsqueda y las reservas funcionan igual.
  */
-export default function CercaDeTi({ destino }: { destino?: string }) {
+export default function CercaDeTi({
+  destino,
+  soloExperiencias = false,
+}: {
+  destino?: string;
+  /** En la página de experiencias solo interesan las experiencias (y no se ofrece ubicación). */
+  soloExperiencias?: boolean;
+}) {
   const [datos, setDatos] = useState<RespuestaCerca | null>(null);
   const [punto, setPunto] = useState<{ lat: number; lng: number } | null>(null);
   /** El navegador puede preguntar (no está denegado) y aún no tenemos ubicación. */
@@ -126,7 +133,7 @@ export default function CercaDeTi({ destino }: { destino?: string }) {
   return (
     <>
       {/* La acción discreta: solo aparece si el navegador puede preguntar y aún no hay ubicación. */}
-      {puedeOfrecer && datos.alojamientos.length > 0 ? (
+      {!soloExperiencias && puedeOfrecer && datos.alojamientos.length > 0 ? (
         <p className="cerca-ofrecer">
           <button type="button" className="fechas-disparador" onClick={() => usarUbicacion(true)} disabled={pidiendo}>
             {pidiendo ? "Buscando tu ubicación…" : "📍 Ver alojamientos cerca de mí"}
@@ -134,7 +141,7 @@ export default function CercaDeTi({ destino }: { destino?: string }) {
         </p>
       ) : null}
 
-      {datos.alojamientos.length > 0 ? (
+      {!soloExperiencias && datos.alojamientos.length > 0 ? (
         <SeccionHome titulo={tituloAloj} sub={subAloj} verTodos={verTodosAloj} verTodosTexto="Ver todos">
           {datos.alojamientos.map((a) => (
             <TarjetaAlojamiento

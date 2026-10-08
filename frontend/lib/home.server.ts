@@ -132,14 +132,16 @@ export async function categoriasServicio(limite = 8): Promise<CategoriaHome[]> {
 /** Categorías de EXPERIENCIAS con más oferta real, con su nombre propio. */
 export async function categoriasExperiencia(limite = 8): Promise<CategoriaHome[]> {
   const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    // El nombre legible vive en el diccionario `experiencia_categoria` (su columna es `name`); la
-    // experiencia guarda el identificador. Sin esta unión se enseñarían identificadores como
-    // «lugares-de-interes».
-    `SELECT e.category AS valor, COALESCE(ec.name, e.category) AS nombre, COUNT(*) AS total
+    // `experiencia.category` guarda el NOMBRE de la categoría (por ejemplo «Naturaleza»), no un
+    // identificador: la unión por `slug` que había antes no encontraba nada y se enseñaba el valor
+    // en crudo. Ahora se usa la clasificación nueva de Hestiat, que es la que manda en toda la web.
+    `SELECT c.slug AS valor, c.nombre AS nombre, COUNT(*) AS total
        FROM experiencia e
-       LEFT JOIN experiencia_categoria ec ON ec.slug = e.category
-      WHERE e.category IS NOT NULL AND e.category <> '' AND e.is_active = 1
-      GROUP BY e.category, nombre ORDER BY total DESC LIMIT ?`,
+       JOIN experiencia_clasificacion cl ON cl.experiencia_id = e.id
+       JOIN exp_categoria c ON c.id = cl.categoria_id
+      WHERE e.is_active = 1
+      GROUP BY c.id, c.slug, c.nombre
+      ORDER BY total DESC LIMIT ?`,
     [limite],
   );
   return filas.map((f) => {

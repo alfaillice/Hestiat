@@ -38,9 +38,11 @@ const nextConfig = {
       { source: "/alojamientos", destination: "/search", permanent: true },
       { source: "/cerca", destination: "/search", permanent: true },
       { source: "/buscar", destination: "/search", permanent: true },
-      { source: "/servicios", destination: "/search", permanent: true },
-      { source: "/servicios/:ciudad", destination: "/search", permanent: true },
-      { source: "/servicio/:slug", destination: "/search", permanent: true },
+      // OJO: aquí había tres reglas que mandaban /servicios y /servicio/:slug a /search. Se pusieron
+      // cuando el apartado de servicios todavía no existía; ahora SÍ existe, y un 308 permanente las
+      // convertía en un portero que impedía ver la página real. Se quedan solo las que siguen
+      // teniendo sentido: la forma antigua en singular lleva al apartado nuevo.
+      { source: "/servicio/:slug", destination: "/servicios", permanent: true },
       { source: "/experiencia/:slug", destination: "/experiencias", permanent: true },
       { source: "/accesibilidad", destination: "/", permanent: true },
     ];

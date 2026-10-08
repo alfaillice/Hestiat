@@ -53,10 +53,10 @@ export default function PublicarExperiencia() {
         </ul>
       </section>
 
-      <NotalLegal>
+      <NotaLegal>
         El alta de experiencias por parte de sus organizadores está pendiente de desarrollo. Si quieres
         que sea la siguiente función que construya, dímelo y la preparo.
-      </NotalLegal>
+      </NotaLegal>
     </main>
   );
 }

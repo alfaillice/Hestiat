@@ -54,13 +54,13 @@ export default function Cancelaciones() {
         </p>
       </section>
 
-      <NotalLegal>
+      <NotaLegal>
         Una política de cancelación con plazos y condiciones concretas es una decisión tuya, no un dato
         que yo pueda inventar. Dime los plazos que quieres (por ejemplo, cancelación gratuita hasta X
         días antes) y los dejo escritos aquí, en las{" "}
         <Link href="/condiciones-anfitrion">condiciones para anfitriones</Link> y en las{" "}
         <Link href="/condiciones-uso">condiciones de uso</Link>.
-      </NotalLegal>
+      </NotaLegal>
     </main>
   );
 }

@@ -71,11 +71,11 @@ export default function CondicionesAnfitrion() {
         </ul>
       </section>
 
-      <NotalLegal>
+      <NotaLegal>
         Faltan dos cosas que dependen de ti, no de mí: la <b>política de cancelación</b> concreta (plazos
         y condiciones) y, si quieres que se apliquen, las <b>normas de la casa</b> que el huésped acepta
         al reservar. Dime los valores y los escribo.
-      </NotalLegal>
+      </NotaLegal>
     </main>
   );
 }

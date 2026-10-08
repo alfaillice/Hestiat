@@ -48,10 +48,10 @@ export default function PublicarServicio() {
         </ul>
       </section>
 
-      <NotalLegal>
+      <NotaLegal>
         El alta de servicios por parte de sus proveedores está pendiente de desarrollo. Dime si quieres
         que sea lo siguiente y lo preparo.
-      </NotalLegal>
+      </NotaLegal>
     </main>
   );
 }

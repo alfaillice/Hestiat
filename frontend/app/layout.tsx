@@ -868,22 +868,22 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               </div>
               <nav aria-label="Catálogo">
                 <p className="pie-tit">Catálogo</p>
-                <Link href="/search">Alojamientos</Link>
-                <Link href="/experiencias">Experiencias</Link>
-                <Link href="/servicios">Servicios</Link>
+                <a href="/search">Alojamientos</a>
+                <a href="/experiencias">Experiencias</a>
+                <a href="/servicios">Servicios</a>
               </nav>
               <nav aria-label="Información">
                 <p className="pie-tit">Información</p>
-                <Link href="/sobre">Sobre Hestiat</Link>
-                <Link href="/como-funciona">Cómo funciona</Link>
-                <Link href="/preguntas-frecuentes">Preguntas frecuentes</Link>
-                <Link href="/contacto">Contacto</Link>
+                <a href="/sobre">Sobre Hestiat</a>
+                <a href="/como-funciona">Cómo funciona</a>
+                <a href="/preguntas-frecuentes">Preguntas frecuentes</a>
+                <a href="/contacto">Contacto</a>
               </nav>
               <nav aria-label="Anfitriones">
                 <p className="pie-tit">Anfitriones</p>
-                <Link href="/nuevo">Publica tu espacio</Link>
-                <Link href="/host">Panel del anfitrión</Link>
-                <Link href="/reclamar">Reclamar una ficha</Link>
+                <a href="/nuevo">Publica tu espacio</a>
+                <a href="/host">Panel del anfitrión</a>
+                <a href="/reclamar">Reclamar una ficha</a>
               </nav>
             </div>
             <p className="pie-legal">

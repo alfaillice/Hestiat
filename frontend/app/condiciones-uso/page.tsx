@@ -37,6 +37,10 @@ export default function CondicionesUso() {
           <Link href="/privacidad">política de privacidad</Link> y la{" "}
           <Link href="/cookies">política de cookies</Link>.
         </p>
+        <p className="m" style={{ color: "var(--muted-fg)", fontSize: 13.5 }}>
+          Titular: <b>JM TRIVINO</b> · NIF 22009686C · Partida Carrus P1-137, Alicante ·{" "}
+          <a href="mailto:hola@hestiat.com">hola@hestiat.com</a>
+        </p>
       </section>
 
       <section className="seccion-home">

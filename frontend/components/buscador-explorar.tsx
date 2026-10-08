@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { KeyboardEvent as TeclaReact } from "react";
+import SelectorFechas, { fechaCorta, nochesEntre } from "@/components/selector-fechas";
 
 interface Sugerencia {
   tipo: string;
@@ -58,18 +59,33 @@ export default function BuscadorExplorar({
 }) {
   const formulario = useRef<HTMLFormElement>(null);
   const caja = useRef<HTMLDivElement>(null);
+  const cajaFechas = useRef<HTMLDivElement>(null);
   const [texto, setTexto] = useState(destino);
+  // El rango vive aquí y viaja al formulario en dos campos ocultos: el formulario sigue siendo un GET
+  // normal (funciona sin JavaScript) y las fechas llegan igual que llegaban.
+  const [rango, setRango] = useState({ desde: desde ?? "", hasta: hasta ?? "" });
+  const [calendario, setCalendario] = useState(false);
+  // En pantallas estrechas, un mes por vez: dos meses no caben sin apretar.
+  const [meses, setMeses] = useState(2);
   const [lista, setLista] = useState<Sugerencia[]>([]);
   const [abierto, setAbierto] = useState(false);
   const [resaltado, setResaltado] = useState(-1);
 
-  // Cierra la lista al pulsar fuera de la caja del destino.
+  // Cierra las ventanas al pulsar fuera (la lista de destinos y el calendario, cada una con su caja).
   useEffect(() => {
     const fuera = (e: MouseEvent) => {
       if (caja.current && !caja.current.contains(e.target as Node)) setAbierto(false);
+      if (cajaFechas.current && !cajaFechas.current.contains(e.target as Node)) setCalendario(false);
     };
     document.addEventListener("mousedown", fuera);
     return () => document.removeEventListener("mousedown", fuera);
+  }, []);
+
+  useEffect(() => {
+    const ajustar = () => setMeses(window.matchMedia("(max-width: 820px)").matches ? 1 : 2);
+    ajustar();
+    window.addEventListener("resize", ajustar);
+    return () => window.removeEventListener("resize", ajustar);
   }, []);
 
   // Sugerencias reales, con una espera corta para no preguntar en cada tecla.
@@ -196,15 +212,44 @@ export default function BuscadorExplorar({
         )}
       </div>
 
-      <label className="buscador-campo">
-        <span className="buscador-etq">{compacto ? "Fechas" : "Entrada"}</span>
-        <input type="date" name="desde" defaultValue={desde ?? ""} aria-label="Fecha de entrada" />
-      </label>
-
-      <label className="buscador-campo">
-        <span className="buscador-etq">{compacto ? "Fechas" : "Salida"}</span>
-        <input type="date" name="hasta" defaultValue={hasta ?? ""} aria-label="Fecha de salida" />
-      </label>
+      {/* UN ÚNICO selector de rango, con el mismo calendario que la ficha: primer clic entrada,
+          segundo clic salida, y todo el intervalo a la vista. */}
+      <div className="buscador-fechas" ref={cajaFechas}>
+        <span className="buscador-etq">Fechas</span>
+        <button
+          type="button"
+          className={"fechas-disparador" + (rango.desde && rango.hasta ? " fechas-lleno" : "")}
+          onClick={() => setCalendario((v) => !v)}
+          aria-expanded={calendario}
+          aria-label="Elegir fechas de entrada y salida"
+        >
+          {rango.desde && rango.hasta
+            ? `${fechaCorta(rango.desde)} → ${fechaCorta(rango.hasta)}`
+            : rango.desde
+              ? `${fechaCorta(rango.desde)} → salida`
+              : "Elegir"}
+        </button>
+        {rango.desde && rango.hasta ? (
+          <span className="fechas-noches">
+            {nochesEntre(rango.desde, rango.hasta)} {nochesEntre(rango.desde, rango.hasta) === 1 ? "noche" : "noches"}
+          </span>
+        ) : null}
+        {calendario ? (
+          <div className="fechas-pop">
+            <SelectorFechas
+              desde={rango.desde}
+              hasta={rango.hasta}
+              meses={meses}
+              onCambio={(d, h) => {
+                setRango({ desde: d, hasta: h });
+                if (d && h) setCalendario(false); // con las dos fechas ya elegidas, se cierra solo
+              }}
+            />
+          </div>
+        ) : null}
+        <input type="hidden" name="desde" value={rango.desde} />
+        <input type="hidden" name="hasta" value={rango.hasta} />
+      </div>
 
       <label className="buscador-campo">
         <span className="buscador-etq">Viajeros</span>

@@ -121,7 +121,12 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .f-chip input{accent-color:var(--primary)}
 .f-chip em{color:var(--muted-fg);font-style:normal;font-size:12px}
 .f-acciones{grid-column:1/-1;display:flex;align-items:center;gap:14px}
-.f-aplicar{background:var(--primary);color:var(--primary-fg);border:0;border-radius:var(--radio-pill);padding:12px 22px;font:inherit;font-weight:700;cursor:pointer}
+.f-aplicar{background:var(--fucsia);color:#fff;border:0;border-radius:var(--radio-pill);padding:12px 22px;font:inherit;font-weight:700;cursor:pointer;transition:background .16s ease}
+.f-aplicar:hover{background:var(--fucsia-tinta)}
+/* El fucsia es EL color de acción de Hestiat, el mismo del botón «Reservar» de la ficha: se define
+   una sola vez en :root (--fucsia) y lo usan todos los botones de acción —Buscar, Aplicar filtros,
+   Reservar, Ver todos, estados activos y favoritos—. No se toca el color de los textos ni se llena
+   la interfaz de fucsia: es acento, no fondo. */
 .f-limpiar{color:var(--muted-fg);font-size:13.5px;text-decoration:underline}
 /* marcadores de precio del mapa */
 .hx-pin-wrapper{background:none;border:0}
@@ -287,13 +292,21 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 /* --- Barra de búsqueda de Explorar -------------------------------------------------------------
    Primero lo que la persona viene a hacer: buscar. Va en una sola fila en pantalla grande y se
    apila en móvil sin comerse la pantalla. Reutiliza los tokens y el botón que ya existen. */
-.buscador{display:grid;grid-template-columns:minmax(230px,1.7fr) repeat(2,minmax(126px,.72fr)) minmax(104px,.5fr) auto;gap:10px;align-items:end;background:var(--card);border:1px solid var(--border);border-radius:calc(var(--radio) + 6px);padding:12px;margin-bottom:16px;box-shadow:0 6px 22px rgba(20,40,50,.07)}
+.buscador{display:grid;grid-template-columns:minmax(230px,1.7fr) minmax(158px,.8fr) minmax(104px,.5fr) auto;gap:10px;align-items:end;background:var(--card);border:1px solid var(--border);border-radius:calc(var(--radio) + 6px);padding:12px;margin-bottom:16px;box-shadow:0 6px 22px rgba(20,40,50,.07)}
 .buscador-destino{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
 .buscador-campo{display:flex;flex-direction:column;gap:4px;min-width:0}
 .buscador-etq{font-size:12px;font-weight:600;color:var(--muted-fg);letter-spacing:.02em;white-space:nowrap}
 .buscador input[type=text],.buscador input[type=date],.buscador select{width:100%;min-width:0;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radio);background:var(--bg);color:var(--ink);font:inherit;font-size:14.5px}
 .buscador input[type=text]{font-weight:600}
 .buscador-boton{padding:12px 22px;white-space:nowrap}
+/* --- Selector de fechas: UN solo disparador y un solo calendario (el mismo de la ficha) --- */
+.buscador-fechas{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0}
+.fechas-disparador{width:100%;text-align:left;padding:11px 12px;border:1px solid var(--border);border-radius:var(--radio);background:var(--bg);color:var(--ink);font:inherit;font-size:14.5px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fechas-disparador:hover{border-color:var(--fucsia)}
+.fechas-lleno{font-weight:600;border-color:var(--fucsia);color:var(--fucsia)}
+.fechas-noches{position:absolute;right:10px;top:-20px;font-size:11.5px;color:var(--muted-fg)}
+.fechas-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:1300;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:10px;box-shadow:0 18px 44px rgba(20,40,50,.18);max-width:min(680px,calc(100vw - 28px));max-height:min(76vh,640px);overflow:auto}
+.fechas-pop .rc-calendario{margin:0;padding:0;border:0;background:none}
 .sugerencias{position:absolute;top:100%;left:0;right:0;z-index:1200;margin:6px 0 0;padding:6px;list-style:none;background:var(--card);border:1px solid var(--border);border-radius:var(--radio);box-shadow:0 14px 34px rgba(20,40,50,.16);max-height:330px;overflow:auto}
 .sugerencias button{display:flex;align-items:baseline;gap:8px;width:100%;padding:9px 10px;border:0;background:none;border-radius:calc(var(--radio) - 4px);cursor:pointer;text-align:left;font:inherit}
 .sugerencias button:hover,.sugerencias li[aria-selected=true] button{background:var(--secondary)}
@@ -448,10 +461,13 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
   .cab-busca .buscador-compacto{flex-wrap:nowrap;padding:5px}
   .cab-busca .buscador-compacto .buscador-destino{flex:1 1 auto;min-width:0}
   .buscador-compacto input[type=text]{padding:9px 12px;font-size:14px}
-  /* Fechas y viajeros no caben con holgura en 320-414 sin dejar la cabecera enorme: se eligen en
-     la barra completa de Explorar, que ya está ahí. Se ocultan, no se cortan. */
-  .buscador-compacto .buscador-campo{display:none}
-  .buscador-compacto .buscador-boton{flex:0 0 42px}
+  /* Fechas y viajeros no caben con holgura en 320-414 sin dejar la cabecera enorme: en la cabecera
+     se dejan fuera (el campo y el botón, en una sola línea) y se eligen en la barra completa de
+     Explorar, donde el calendario se abre a gusto. Se ocultan, no se cortan; sus dos campos ocultos
+     siguen viajando, así que una búsqueda con fechas no se pierde. */
+  .cab-busca .buscador-compacto .buscador-campo{display:none}
+  .cab-busca .buscador-compacto .buscador-fechas{display:none}
+  .cab-busca .buscador-compacto .buscador-boton{flex:0 0 38px;width:38px;height:38px;padding:0;box-shadow:none;font-size:15px}
   .hero2{min-height:min(64vh,460px)}
   .hero2-cont{padding:0 14px 20px}
   .hero2 h1{font-size:clamp(26px,7.4vw,34px)}

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import SelectorFechas, { iso, nochesEntre } from "@/components/selector-fechas";
 
 /**
  * Caja de reserva de la ficha.
@@ -17,23 +18,6 @@ import Link from "next/link";
  *    el botón se bloquea mientras se envía para no duplicar solicitudes.
  *  · En móvil, una barra inferior fija con el precio y el botón, respetando las «safe areas».
  */
-const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-const DIAS = ["L", "M", "X", "J", "V", "S", "D"];
-
-function iso(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-function sumarMes(anio: number, mes: number, salto: number): [number, number] {
-  const d = new Date(Date.UTC(anio, mes + salto, 1));
-  return [d.getUTCFullYear(), d.getUTCMonth()];
-}
-function nochesEntre(a: string, b: string): number {
-  const x = Date.parse(`${a}T00:00:00Z`);
-  const y = Date.parse(`${b}T00:00:00Z`);
-  if (Number.isNaN(x) || Number.isNaN(y)) return 0;
-  return Math.round((y - x) / 86_400_000);
-}
-
 export default function ReservaCaja({
   slug,
   precioNoche,
@@ -51,16 +35,12 @@ export default function ReservaCaja({
   nochesBloqueadas: string[];
   tieneFechas: boolean;
 }) {
-  const hoy = iso(new Date());
-  const [hoyAnio, hoyMes] = [Number(hoy.slice(0, 4)), Number(hoy.slice(5, 7)) - 1];
-
   // El rango vive en un solo estado y se actualiza de forma funcional: así dos clics seguidos no
   // leen un valor antiguo y el orden entrada/salida se decide siempre sobre el estado real.
   const [rango, setRango] = useState<{ desde: string; hasta: string }>({ desde: "", hasta: "" });
   const desde = rango.desde;
   const hasta = rango.hasta;
   const [huespedes, setHuespedes] = useState(2);
-  const [vista, setVista] = useState<[number, number]>([hoyAnio, hoyMes]);
   const [calendario, setCalendario] = useState(false);
 
   const bloqueadas = useMemo(() => new Set(nochesBloqueadas), [nochesBloqueadas]);
@@ -76,59 +56,6 @@ export default function ReservaCaja({
     return false;
   }, [desde, hasta, bloqueadas]);
 
-  const elegirDia = (fecha: string) => {
-    if (bloqueadas.has(fecha) || fecha < hoy) return;
-    setRango((r) => {
-      // Sin entrada, o con el rango ya completo: este clic marca la entrada.
-      if (!r.desde || r.hasta) return { desde: fecha, hasta: "" };
-      // Clic anterior a la entrada: se reinicia con la fecha nueva.
-      if (fecha <= r.desde) return { desde: fecha, hasta: "" };
-      return { desde: r.desde, hasta: fecha };
-    });
-    setCalendario(true);
-  };
-
-  function mesJSX(anio: number, mes: number) {
-    const primero = new Date(Date.UTC(anio, mes, 1));
-    const desplazamiento = (primero.getUTCDay() + 6) % 7; // la semana empieza en lunes
-    const dias = new Date(Date.UTC(anio, mes + 1, 0)).getUTCDate();
-    const celdas: (string | null)[] = Array(desplazamiento).fill(null);
-    for (let d = 1; d <= dias; d += 1) celdas.push(iso(new Date(Date.UTC(anio, mes, d))));
-
-    return (
-      <div className="mes" key={`${anio}-${mes}`}>
-        <p className="mes-titulo">{MESES[mes]} {anio}</p>
-        <div className="mes-grid">
-          {DIAS.map((d) => <span key={d} className="mes-dia-semana">{d}</span>)}
-          {celdas.map((f, i) =>
-            f === null ? (
-              <span key={`v${i}`} />
-            ) : (
-              <button
-                key={f}
-                type="button"
-                className={
-                  "mes-dia" +
-                  (bloqueadas.has(f) ? " mes-ocupado" : "") +
-                  (f === desde || f === hasta ? " mes-elegido" : "") +
-                  (desde && hasta && f > desde && f < hasta ? " mes-en-rango" : "") +
-                  (f < hoy ? " mes-pasado" : "")
-                }
-                disabled={bloqueadas.has(f) || f < hoy}
-                onClick={() => elegirDia(f)}
-                title={bloqueadas.has(f) ? "No disponible" : undefined}
-                aria-label={`${f}${bloqueadas.has(f) ? " (no disponible)" : ""}`}
-              >
-                {Number(f.slice(8, 10))}
-              </button>
-            ),
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  const [anio2, mes2] = sumarMes(vista[0], vista[1], 1);
 
   // El botón no envía nada: lleva al formulario real de solicitud con las fechas ya puestas. La API
   // exige también nombre y correo, así que enviar desde aquí daría un error de validación. La
@@ -224,21 +151,16 @@ export default function ReservaCaja({
           </p>
 
           {/* El calendario va DEBAJO del botón, no encima: con dos meses abiertos empujaba la acción
-              principal fuera de la vista. Se abre al pulsar las fechas. */}
+              principal fuera de la vista. Se abre al pulsar las fechas.
+              Es el MISMO componente que usa el buscador (`SelectorFechas`): una sola lógica de
+              entrada, salida, rango, noches y días bloqueados para toda la plataforma. */}
           {tieneFechas && calendario && (
-            <div className="rc-calendario">
-              <div className="mes-nav">
-                <button type="button" className="f-limpiar" onClick={() => setVista(sumarMes(vista[0], vista[1], -1))}>← mes anterior</button>
-                <button type="button" className="f-limpiar" onClick={() => setVista(sumarMes(vista[0], vista[1], 1))}>mes siguiente →</button>
-              </div>
-              <div className="meses">
-                {mesJSX(vista[0], vista[1])}
-                <div className="mes-segundo">{mesJSX(anio2, mes2)}</div>
-              </div>
-              <p className="m" style={{ color: "var(--muted-fg)", fontSize: 12, marginTop: 6 }}>
-                Los días tachados ya están ocupados o bloqueados.
-              </p>
-            </div>
+            <SelectorFechas
+              desde={desde}
+              hasta={hasta}
+              bloqueadas={nochesBloqueadas}
+              onCambio={(d, h) => setRango({ desde: d, hasta: h })}
+            />
           )}
         </div>
       </aside>

@@ -1,14 +1,14 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { metadatosInformativos } from "@/lib/paginas-info";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Preguntas frecuentes — Hestiat",
-  description:
+export const metadata = metadatosInformativos({
+  titulo: "Preguntas frecuentes — Hestiat",
+  descripcion:
     "Por qué algunos precios dicen Consultar, de dónde salen los datos y las fotos, cómo reservar y cómo corregir una ficha: las dudas más habituales, respondidas sin rodeos.",
-  alternates: { canonical: "/preguntas-frecuentes" },
-};
+  ruta: "/preguntas-frecuentes",
+});
 
 interface Pregunta {
   q: string;

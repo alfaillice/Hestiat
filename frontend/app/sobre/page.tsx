@@ -1,16 +1,16 @@
 import Link from "next/link";
-import type { Metadata } from "next";
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { metadatosInformativos } from "@/lib/paginas-info";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Sobre Hestiat — qué es y de dónde salen los datos",
-  description:
+export const metadata = metadatosInformativos({
+  titulo: "Sobre Hestiat — qué es y de dónde salen los datos",
+  descripcion:
     "Hestiat reúne alojamientos, experiencias y servicios de toda España. Aquí se explica de dónde salen los datos, qué significan las fotos y los precios, y qué no hacemos nunca.",
-  alternates: { canonical: "/sobre" },
-};
+  ruta: "/sobre",
+});
 
 /**
  * Sobre Hestiat: qué es, de dónde sale cada cosa y qué reglas seguimos.

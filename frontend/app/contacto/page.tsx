@@ -1,14 +1,14 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { metadatosInformativos } from "@/lib/paginas-info";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Contacto — Hestiat",
-  description:
+export const metadata = metadatosInformativos({
+  titulo: "Contacto — Hestiat",
+  descripcion:
     "Escríbenos para corregir una ficha, resolver dudas sobre una reserva o publicar tu alojamiento. Contacto directo con el equipo de Hestiat.",
-  alternates: { canonical: "/contacto" },
-};
+  ruta: "/contacto",
+});
 
 export default function Contacto() {
   return (

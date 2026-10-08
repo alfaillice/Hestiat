@@ -1,14 +1,14 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { metadatosInformativos } from "@/lib/paginas-info";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Cómo funciona Hestiat — para quien busca y para quien ofrece",
-  description:
+export const metadata = metadatosInformativos({
+  titulo: "Cómo funciona Hestiat — para quien busca y para quien ofrece",
+  descripcion:
     "Buscar dónde alojarse, reservar, guardar favoritos y publicar tu propio espacio: así funciona Hestiat, paso a paso, sin letra pequeña.",
-  alternates: { canonical: "/como-funciona" },
-};
+  ruta: "/como-funciona",
+});
 
 export default function ComoFunciona() {
   return (

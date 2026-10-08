@@ -216,9 +216,15 @@ const ALT_CATEGORIA: Record<string, string> = {
   "mar-y-actividades-acuaticas": "Buceo y actividades acuáticas en el mar: imagen de la categoría Mar y actividades acuáticas en Hestiat",
 };
 
-/** Texto alternativo de una categoría. Si no hay uno escrito, se dice lo que es, sin inventar. */
+/**
+ * Texto alternativo de una categoría. Si no hay uno escrito, se dice lo que es, sin inventar.
+ *
+ * Estas imágenes son PROPIAS de Hestiat: se generaron para el proyecto y son las oficiales de cada
+ * categoría en la web. No se presentan como la foto de un negocio concreto, porque no lo son, y por
+ * eso el alt dice de qué categoría son y no de qué establecimiento.
+ */
 export function altDeCategoria(valor: string): string {
-  return ALT_CATEGORIA[claveCategoria(valor)] ?? `${valor}: imagen representativa de la categoría en Hestiat`;
+  return ALT_CATEGORIA[claveCategoria(valor)] ?? `${valor}: imagen oficial de la categoría en Hestiat`;
 }
 
 /**

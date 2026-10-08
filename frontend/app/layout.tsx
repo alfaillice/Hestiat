@@ -108,6 +108,15 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .aloj .p .ref{color:var(--muted-fg);font-weight:400;font-size:12px}
 .precio{font-variant-numeric:tabular-nums}
 footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:var(--muted-fg);font-size:13px}
+.pie{display:flex;flex-direction:column;gap:18px}
+.pie-cols{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:22px}
+.pie-marca{font-family:var(--fuente-titulo);font-size:17px;font-weight:700;color:var(--ink);margin-bottom:6px}
+.pie-nota{font-size:13px;line-height:1.6;max-width:36ch}
+.pie-tit{font-weight:700;color:var(--ink);font-size:13px;margin-bottom:8px}
+footer nav{display:flex;flex-direction:column;gap:6px}
+footer a{color:var(--muted-fg)}
+footer a:hover{color:var(--hestiat-primary-texto)}
+.pie-legal{font-size:12.5px;line-height:1.65;border-top:1px solid var(--border);padding-top:14px}
 .aviso{background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio);padding:12px 15px;font-size:13px;color:var(--muted-fg)}
 /* busqueda con mapa y filtros */
 .busqueda{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,42%);gap:26px;align-items:start}
@@ -848,8 +857,41 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         </header>
         {children}
         <footer>
-          <div className="wrap">
-            Hestiat · datos del esquema nuevo migrado desde la base original · sin cargos ocultos
+          <div className="wrap pie">
+            <div className="pie-cols">
+              <div>
+                <p className="pie-marca">hestiat</p>
+                <p className="pie-nota">
+                  Alojamientos, experiencias y servicios de toda España, con datos reales y sin
+                  inventar precios.
+                </p>
+              </div>
+              <nav aria-label="Catálogo">
+                <p className="pie-tit">Catálogo</p>
+                <Link href="/search">Alojamientos</Link>
+                <Link href="/experiencias">Experiencias</Link>
+                <Link href="/servicios">Servicios</Link>
+              </nav>
+              <nav aria-label="Información">
+                <p className="pie-tit">Información</p>
+                <Link href="/sobre">Sobre Hestiat</Link>
+                <Link href="/como-funciona">Cómo funciona</Link>
+                <Link href="/preguntas-frecuentes">Preguntas frecuentes</Link>
+                <Link href="/contacto">Contacto</Link>
+              </nav>
+              <nav aria-label="Anfitriones">
+                <p className="pie-tit">Anfitriones</p>
+                <Link href="/nuevo">Publica tu espacio</Link>
+                <Link href="/host">Panel del anfitrión</Link>
+                <Link href="/reclamar">Reclamar una ficha</Link>
+              </nav>
+            </div>
+            <p className="pie-legal">
+              Los datos del catálogo proceden de fuentes públicas (OpenStreetMap y otras) y figuran con
+              su autoría; las fotografías son imágenes de referencia salvo que se indique otra cosa. Si
+              encuentras algo que no cuadra, escríbenos a{" "}
+              <a href="mailto:hola@hestiat.com">hola@hestiat.com</a>.
+            </p>
           </div>
         </footer>
       </body>

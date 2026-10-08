@@ -223,8 +223,12 @@ export function altDeCategoria(valor: string): string {
 
 /**
  * La MISMA fotografía en otro tamaño y su fichero original. Si el tamaño grande no respondiera, la
- * tarjeta prueba el menor y después el original: nunca cambia de foto, solo de tamaño. Es el mismo
+ * tarjeta prueba después el fichero original: nunca cambia de foto, solo de tamaño. Es el mismo
  * respaldo en cadena que usan las tarjetas de categoría, aplicado a las de destino.
+ *
+ * Se comprobaron los dos escalones contra Commons y responden 200. Se probó también un tamaño
+ * intermedio de 640 px derivado de la dirección, pero Commons lo rechazaba (400): se descartó para no
+ * dejar un eslabón roto en medio de la cadena.
  */
 export function variantesDeCommons(url: string): string[] {
   if (!url) return [];
@@ -234,5 +238,5 @@ export function variantesDeCommons(url: string): string[] {
   const fichero = base.split("/").pop() ?? "";
   if (!fichero) return [url];
   const original = `${base.replace("thumb.wikimedia.org", "upload.wikimedia.org").replace("/thumb", "")}`;
-  return [url, `${base}/640px-${fichero}`, original];
+  return [url, original];
 }

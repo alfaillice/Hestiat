@@ -226,7 +226,9 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
   // Los tres valores del punto se repiten en el SELECT (para traer la distancia) y en el ORDER BY.
   // Van en el mismo orden en que aparecen los `?` dentro de cada sentencia.
   const paramsPunto = hayPunto ? [cerca!.lat, cerca!.lng, cerca!.lat] : [];
-  const porDistancia = hayPunto && opciones.orden === "recomendados";
+  // Si hay punto, el orden por defecto es la distancia: se mire como se mire, sin punto no cambia
+  // nada y con punto no depende de que quien llame se acuerde de pasar "recomendados".
+  const porDistancia = hayPunto && (!opciones.orden || opciones.orden === "recomendados");
 
   const orden =
     porDistancia

@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const r = await buscar({ cerca: { lat, lng }, pagina: 1, porPagina: 12 });
+    const r = await buscar({ cerca: { lat, lng }, orden: "recomendados", pagina: 1, porPagina: 12 });
     const tarjetas = r.items.map((fila) => {
       const f = fila as unknown as Record<string, unknown>;
       return {

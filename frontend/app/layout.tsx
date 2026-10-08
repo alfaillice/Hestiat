@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth.server";
-import BuscadorExplorar from "@/components/buscador-explorar";
+import BuscadorCabecera from "@/components/buscador-cabecera";
 import { DM_Sans, Manrope } from "next/font/google";
 
 /**
@@ -339,14 +339,17 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .cab-menu-lista{position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:8px;min-width:220px;box-shadow:0 16px 40px rgba(20,40,50,.16);display:flex;flex-direction:column;gap:2px;z-index:50}
 .cab-menu-lista a,.cab-menu-lista button{padding:10px 12px;border-radius:calc(var(--radio) - 4px);font-size:14px;text-align:left}
 .cab-menu-lista a:hover{background:var(--secondary)}
-/* buscador en versión de cabecera: una sola fila en píldora, con botón redondo */
-.buscador-compacto{display:flex;align-items:center;gap:4px;grid-template-columns:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radio-pill);padding:5px;margin:0;box-shadow:none}
-.buscador-compacto .buscador-destino{flex:1 1 auto;min-width:0}
-.buscador-compacto .buscador-campo{flex:0 0 auto}
-.buscador-compacto .buscador-etq{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.buscador-compacto input[type=text],.buscador-compacto input[type=date],.buscador-compacto select{border:0;background:transparent;padding:9px 10px;border-radius:var(--radio-pill)}
-.buscador-compacto input[type=text]{border:1px solid var(--border);background:var(--card);border-radius:var(--radio-pill);padding-left:14px}
-.buscador-compacto .buscador-boton{border-radius:50%;width:42px;height:42px;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:16px}
+/* BUSCADOR DE LA CABECERA: una sola píldora con el destino y la lupa DENTRO del mismo bloque.
+   No hay fechas ni viajeros aquí: es una búsqueda de descubrimiento, no un formulario de reserva.
+   El rosa pastel de Hestiat es el color de la acción, el mismo de los botones de la ficha. */
+.bcab{display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--border);border-radius:var(--radio-pill);padding:4px 4px 4px 16px;margin:0;box-shadow:none}
+.bcab-caja{position:relative;flex:1 1 auto;min-width:0}
+.bcab input{width:100%;min-width:0;border:0;background:transparent;padding:10px 2px;font:inherit;font-size:14.5px;font-weight:600;color:var(--ink)}
+.bcab input:focus{outline:none}
+.bcab input::placeholder{color:var(--muted-fg);font-weight:500}
+.bcab input::-webkit-search-cancel-button{display:none}
+.bcab-btn{flex:0 0 auto;width:38px;height:38px;border:0;border-radius:50%;background:var(--hestiat-primary);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:15px;transition:background .16s ease}
+.bcab-btn:hover{background:var(--hestiat-primary-hover)}
 /* === PORTADA ===================================================================================
    Contenido encima del fondo visual desde el primer momento. El vídeo es un fondo de una pantalla,
    no una intro: no bloquea el scroll ni los clics. */
@@ -449,10 +452,9 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 @media(max-width:760px){
   .cab-in{min-height:64px;gap:10px;padding:8px 14px}
   .marca{font-size:18px}
-  .buscador-compacto{flex-wrap:wrap;border-radius:var(--radio);padding:7px}
-  .buscador-compacto .buscador-destino{flex:1 1 100%}
-  .buscador-compacto .buscador-campo{flex:1 1 auto}
-  .buscador-compacto .buscador-boton{flex:0 0 auto}
+  .bcab{padding:3px 3px 3px 13px}
+  .bcab input{font-size:14px;padding:9px 2px}
+  .bcab-btn{width:34px;height:34px;font-size:14px}
   .hero2{min-height:min(70vh,520px)}
   .hero2-accesos{grid-template-columns:1fr;gap:9px;margin-top:16px}
   .acceso{padding:11px 13px}
@@ -478,23 +480,19 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 @media(max-width:430px){
   /* Selectores con un poco más de peso que los de 760 px, a propósito: así estas medidas mandan sin
      tener que reordenar la hoja entera (que es donde se rompen las cosas sin que se note). */
-  .cab .cab-in{min-height:0;flex-wrap:wrap;row-gap:8px;gap:8px;padding:8px 12px}
-  .cab .marca{font-size:17px}
-  .marca-casa{font-size:16px}
+  /* UNA SOLA LÍNEA: logo + buscador compacto + menú. Nada de segunda fila. */
+  .cab .cab-in{min-height:56px;flex-wrap:nowrap;gap:8px;padding:6px 10px}
+  .cab .marca{font-size:16px}
+  .marca-casa{font-size:15px}
   .cab-menu{margin-left:auto}
   .cab-menu summary{padding:8px 12px;font-size:13px}
-  /* El buscador, en su propia fila y ocupando todo el ancho: destino + botón. */
-  .cab-busca{flex:1 1 100%;order:3}
-  .cab-busca .buscador-compacto{flex-wrap:nowrap;padding:5px}
-  .cab-busca .buscador-compacto .buscador-destino{flex:1 1 auto;min-width:0}
-  .buscador-compacto input[type=text]{padding:9px 12px;font-size:14px}
-  /* Fechas y viajeros no caben con holgura en 320-414 sin dejar la cabecera enorme: en la cabecera
-     se dejan fuera (el campo y el botón, en una sola línea) y se eligen en la barra completa de
-     Explorar, donde el calendario se abre a gusto. Se ocultan, no se cortan; sus dos campos ocultos
-     siguen viajando, así que una búsqueda con fechas no se pierde. */
-  .cab-busca .buscador-compacto .buscador-campo{display:none}
-  .cab-busca .buscador-compacto .buscador-fechas{display:none}
-  .cab-busca .buscador-compacto .buscador-boton{flex:0 0 38px;width:38px;height:38px;padding:0;box-shadow:none;font-size:15px}
+  /* El buscador comparte la línea con el logo y el menú: píldora compacta, lupa dentro y nada más.
+     Las fechas y los viajeros viven donde tienen sentido (Explorar alojamientos y la ficha), y ahí
+     siguen igual. Aquí no hay ni calendario ni contador. */
+  .cab-busca{flex:1 1 auto;min-width:0;order:0;max-width:none}
+  .bcab{padding:2px 2px 2px 12px}
+  .bcab input{font-size:13.5px;padding:8px 2px}
+  .bcab-btn{width:32px;height:32px;font-size:13px}
   .hero2{min-height:min(64vh,460px)}
   .hero2-cont{padding:0 14px 20px}
   .hero2 h1{font-size:clamp(26px,7.4vw,34px)}
@@ -517,8 +515,8 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 }
 @media(max-width:360px){
   .cab .marca{font-size:16px}
-  .buscador-compacto input[type=text]{font-size:13.5px;padding:8px 10px}
-  .buscador-compacto .buscador-boton{width:38px;height:38px}
+  .bcab input{font-size:13px;padding:7px 2px}
+  .bcab-btn{width:30px;height:30px}
   .hero2 h1{font-size:25px}
   .car .car-pista>.tdest{flex:0 0 82%}
   .car .car-pista>.tcat{flex:0 0 78%}
@@ -769,11 +767,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               hestiat
             </a>
 
-            {/* LA BÚSQUEDA VIVE AQUÍ, no dentro de la portada: está en todas las páginas y no
-                empuja el contenido hacia abajo. Es el mismo buscador del explorador, en versión
-                compacta, con sus sugerencias reales. */}
+            {/* LA BÚSQUEDA GENERAL VIVE AQUÍ: un destino y la lupa, en el mismo bloque. Está en todas
+                las páginas, no empuja el contenido hacia abajo y NO es un formulario de reserva: sin
+                fechas y sin viajeros. Lo escrito se manda a /buscar, que decide qué es (ciudad,
+                provincia, zona, alojamiento, experiencia o servicio) y lleva a la página que toca. */}
             <div className="cab-busca">
-              <BuscadorExplorar destino="" basePath="/search" compacto />
+              <BuscadorCabecera />
             </div>
 
             <nav className="cab-nav" aria-label="Secciones de Hestiat">

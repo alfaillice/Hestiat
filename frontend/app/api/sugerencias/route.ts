@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sugerenciasDestino } from "@/lib/db";
+import { sugerenciasGenerales } from "@/lib/sugerencias.server";
 import { limitar } from "@/lib/limite.server";
 
 export const runtime = "nodejs";
@@ -17,11 +18,15 @@ export async function GET(request: Request) {
   const excedido = limitar(request, "/api/sugerencias", 60, 60);
   if (excedido) return excedido;
 
-  const q = new URL(request.url).searchParams.get("q") ?? "";
+  const parametros = new URL(request.url).searchParams;
+  const q = parametros.get("q") ?? "";
+  // La cabecera busca en toda la web, así que pide el ámbito general (destinos, alojamientos,
+  // experiencias y servicios). El buscador de alojamientos sigue con el suyo, solo de alojamientos.
+  const ambito = parametros.get("ambito") === "general" ? "general" : "alojamientos";
   try {
-    const sugerencias = await sugerenciasDestino(q, 8);
+    const sugerencias = ambito === "general" ? await sugerenciasGenerales(q, 8) : await sugerenciasDestino(q, 8);
     return NextResponse.json(
-      { sugerencias },
+      { sugerencias, ambito },
       { headers: { "Cache-Control": "private, max-age=30" } },
     );
   } catch (error) {

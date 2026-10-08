@@ -44,7 +44,6 @@ export default function BuscadorExplorar({
   huespedes,
   conservar,
   basePath = "/search",
-  compacto = false,
 }: {
   /** Texto actual del destino. */
   destino: string;
@@ -54,8 +53,6 @@ export default function BuscadorExplorar({
   /** Filtros actuales que NO deben perderse al buscar (provincia, precio, servicios, orden, vista). */
   conservar?: Record<string, string | string[] | undefined>;
   basePath?: string;
-  /** Versión de cabecera: una sola fila en píldora, etiquetas ocultas y botón redondo. */
-  compacto?: boolean;
 }) {
   const formulario = useRef<HTMLFormElement>(null);
   const caja = useRef<HTMLDivElement>(null);
@@ -171,7 +168,7 @@ export default function BuscadorExplorar({
   return (
     <form
       ref={formulario}
-      className={compacto ? "buscador buscador-compacto" : "buscador"}
+      className="buscador"
       method="get"
       action={basePath}
       role="search"
@@ -184,7 +181,7 @@ export default function BuscadorExplorar({
 
       <div className="buscador-destino" ref={caja}>
         <label className="buscador-etq" htmlFor="destino">
-          <span aria-hidden="true">🔎</span> {compacto ? "¿Dónde quieres ir?" : "¿Dónde quieres alojarte?"}
+          <span aria-hidden="true">🔎</span> ¿Dónde quieres alojarte?
         </label>
         <input
           id="destino"
@@ -198,7 +195,7 @@ export default function BuscadorExplorar({
           }}
           onFocus={() => lista.length > 0 && setAbierto(true)}
           onKeyDown={teclas}
-          placeholder={compacto ? "¿Dónde quieres ir?" : "Ciudad, provincia, zona o alojamiento"}
+          placeholder="Ciudad, provincia, zona o alojamiento"
           autoComplete="off"
           role="combobox"
           aria-expanded={abierto}
@@ -271,8 +268,7 @@ export default function BuscadorExplorar({
 
       {/* Mismo estilo de botón que «Aplicar filtros»: una sola forma de botón en la página. */}
       <button type="submit" className="f-aplicar buscador-boton">
-        {compacto ? <span aria-hidden="true">🔍</span> : "Buscar"}
-        {compacto ? <span className="solo-lectores">Buscar</span> : null}
+        Buscar
       </button>
     </form>
   );

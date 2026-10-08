@@ -117,7 +117,9 @@ export async function POST(request: Request) {
     const destino = new URL("/admin/revision", request.url);
     destino.searchParams.set("aviso", `Propuesta ${estadoRevision.replace("_", " ")}`);
     destino.searchParams.set("ok", "1");
-    return NextResponse.redirect(destino, 303);
+    // Dirección RELATIVA a propósito: detrás de un proxy, la absoluta apunta al host interno
+    // (localhost) y el navegador acabaría en un sitio que no existe para él.
+    return new NextResponse(null, { status: 303, headers: { Location: `${destino.pathname}${destino.search}` } });
   } catch (error) {
     const motivo = error instanceof Error ? error.message.slice(0, 200) : "error desconocido";
     console.error("[hestiat] /api/revision", motivo);

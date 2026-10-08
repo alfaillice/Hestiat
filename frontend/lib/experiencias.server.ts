@@ -16,6 +16,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { datosEnriquecidos, datoDe, resolver, resolverImagen, resolverPrecio } from "@/lib/catalogo-datos.server";
 
 export interface ExpTarjeta {
   id: number;
@@ -29,6 +30,12 @@ export interface ExpTarjeta {
   municipio: string | null;
   provincia: string | null;
   imagen: string | null;
+  /** De dónde viene la imagen original (para saber si es propia o de referencia). */
+  imagenOrigen: string | null;
+  /** true cuando la imagen que se enseña es la oficial del sitio, no una de referencia. */
+  imagenOficial: boolean;
+  /** De dónde salió la imagen oficial, para poder citarla. */
+  imagenOficialFuente: string | null;
   /** Texto de precio ya resuelto: «Gratis», «Desde 12 €», «Precio variable» o «Consultar». */
   precio: string;
   /** true cuando el precio es orientativo (no garantizado). */
@@ -36,6 +43,8 @@ export interface ExpTarjeta {
   rating: number | null;
   ratingCount: number;
   href: string;
+  /** Lo que traía la base, antes de resolver con lo enriquecido. */
+  precioOriginal: { texto: string; orientativo: boolean; hayValor: boolean };
 }
 
 /** La regla de precio, en un solo sitio: nunca se inventa y nunca se calla que es orientativo. */
@@ -58,6 +67,7 @@ export function precioDe(f: Record<string, unknown>): { texto: string; orientati
 
 const CAMPOS = `e.id, e.slug, e.name AS nombre, e.municipality AS municipio, e.province AS provincia,
                 e.main_image AS imagen, e.price, e.currency, e.price_type, e.price_unit, e.price_text,
+                e.image_source AS imagen_origen,
                 e.rating, e.rating_count,
                 c.nombre AS categoria, s.nombre AS subcategoria,
                 c.slug AS categoria_slug, s.slug AS subcategoria_slug`;
@@ -69,6 +79,7 @@ const DESDE = `FROM experiencia e
 
 function aTarjeta(f: mysql.RowDataPacket): ExpTarjeta {
   const p = precioDe(f as unknown as Record<string, unknown>);
+  const hayValor = p.texto !== "Consultar";
   return {
     id: Number(f.id),
     slug: String(f.slug ?? ""),
@@ -80,12 +91,38 @@ function aTarjeta(f: mysql.RowDataPacket): ExpTarjeta {
     municipio: f.municipio ?? null,
     provincia: f.provincia ?? null,
     imagen: f.imagen ?? null,
+    imagenOrigen: f.imagen_origen ?? null,
+    imagenOficial: false,
+    imagenOficialFuente: null,
     precio: p.texto,
     precioOrientativo: p.orientativo,
     rating: f.rating !== null && Number(f.rating) > 0 ? Number(f.rating) : null,
     ratingCount: Number(f.rating_count ?? 0),
     href: `/experiencias/${encodeURIComponent(String(f.slug ?? ""))}`,
+    precioOriginal: { texto: p.texto, orientativo: p.orientativo, hayValor },
   };
+}
+
+/**
+ * Aplica la resolución de datos a un conjunto de tarjetas: UNA consulta para todas y las mismas
+ * reglas que en la ficha. Se llama desde todas las funciones que devuelven tarjetas, así que la
+ * imagen y el precio son los mismos se mire donde se mire.
+ */
+async function aplicarEnriquecido(items: ExpTarjeta[]): Promise<ExpTarjeta[]> {
+  if (items.length === 0) return items;
+  const mapa = await datosEnriquecidos("experience", items.map((i) => i.id), ["imagen_oficial", "precio_orientativo"]);
+  return items.map((i) => {
+    const img = resolverImagen(i.imagen, i.imagenOrigen, datoDe(mapa, i.id, "imagen_oficial"));
+    const pr = resolverPrecio(i.precioOriginal, datoDe(mapa, i.id, "precio_orientativo"));
+    return {
+      ...i,
+      imagen: img.url,
+      imagenOficial: img.origen === "oficial",
+      imagenOficialFuente: img.origen === "oficial" ? img.fuente?.sourceName ?? img.fuente?.source ?? null : null,
+      precio: pr.texto,
+      precioOrientativo: pr.orientativo,
+    };
+  });
 }
 
 /* ------------------------------------------------------------ categorías -- */
@@ -132,6 +169,8 @@ export interface FiltrosExp {
   provincia?: string;
   familia?: boolean;
   accesible?: boolean;
+  /** Cursor: solo las fichas con id mayor que este. Sustituye a la paginación por saltos. */
+  desde?: number;
   pagina?: number;
   porPagina?: number;
 }
@@ -158,6 +197,7 @@ export async function buscarExperiencias(f: FiltrosExp = {}): Promise<{ total: n
   if (f.provincia) { where.push("e.province = ?"); valores.push(f.provincia); }
   if (f.familia) where.push("e.family_friendly = 1");
   if (f.accesible) where.push("e.accessible = 1");
+  if (f.desde) { where.push("e.id > ?"); valores.push(f.desde); }
   const q = (f.q ?? "").trim();
   if (q.length >= 2) {
     where.push("(e.name LIKE ? OR e.municipality LIKE ? OR e.province LIKE ? OR e.subcategory LIKE ?)");
@@ -174,7 +214,7 @@ export async function buscarExperiencias(f: FiltrosExp = {}): Promise<{ total: n
     `SELECT ${CAMPOS} ${DESDE} WHERE ${condicion} ORDER BY e.id ASC LIMIT ? OFFSET ?`,
     [...valores, porPagina, (pagina - 1) * porPagina],
   );
-  return { total: Number(tot[0]?.n ?? 0), items: filas.map(aTarjeta), porPagina };
+  return { total: Number(tot[0]?.n ?? 0), items: await aplicarEnriquecido(filas.map(aTarjeta)), porPagina };
 }
 
 /** Destacadas: las que tienen mejor valoración real y foto. Nunca se inventa una valoración. */
@@ -185,7 +225,7 @@ export async function destacadasExperiencias(limite = 13): Promise<ExpTarjeta[]>
       ORDER BY e.rating DESC, e.rating_count DESC, e.id ASC LIMIT ?`,
     [limite],
   );
-  return filas.map(aTarjeta);
+  return aplicarEnriquecido(filas.map(aTarjeta));
 }
 
 /** Provincias con experiencias, con su recuento real (para «por destino»). */
@@ -205,6 +245,10 @@ export interface ExpFicha extends ExpTarjeta {
   descripcion: string | null;
   resumen: string | null;
   direccion: string | null;
+  /** true cuando algún dato de la ficha se ha completado desde la web oficial del sitio. */
+  completadoDesdeWeb: boolean;
+  /** Qué se completó y de dónde, para poder decirlo en la ficha sin adornos. */
+  procedenciaWeb: { campo: string; valor: string; fuente: string | null; url: string | null }[];
   lat: number | null;
   lng: number | null;
   web: string | null;
@@ -238,15 +282,32 @@ export async function experienciaPorSlug(slug: string): Promise<ExpFicha | null>
   );
   const f = filas[0];
   if (!f) return null;
+  const id = Number(f.id);
+  const tarjeta = (await aplicarEnriquecido([aTarjeta(f)]))[0];
+  const mapa = await datosEnriquecidos("experience", [id], ["descripcion", "telefono", "direccion"]);
+  const resolverDato = (original: unknown, campo: string) => {
+    const dato = datoDe(mapa, id, campo);
+    const r = resolver(original === null || original === undefined ? null : String(original), dato?.valor ?? null);
+    return { valor: r.valor, deLaWeb: r.origen === "enriquecido", dato };
+  };
+  const descripcion = resolverDato(f.descripcion, "descripcion");
+  const telefono = resolverDato(f.telefono, "telefono");
+  const direccion = resolverDato(f.direccion, "direccion");
   return {
-    ...aTarjeta(f),
-    descripcion: f.descripcion ?? null,
+    ...tarjeta,
+    descripcion: descripcion.valor,
     resumen: f.resumen ?? null,
-    direccion: f.direccion ?? null,
+    direccion: direccion.valor,
+    completadoDesdeWeb: descripcion.deLaWeb || telefono.deLaWeb || direccion.deLaWeb,
+    procedenciaWeb: [
+      { campo: "Descripción", ...descripcion },
+      { campo: "Teléfono", ...telefono },
+      { campo: "Dirección", ...direccion },
+    ].filter((x) => x.deLaWeb).map((x) => ({ campo: x.campo, valor: String(x.valor ?? ""), fuente: x.dato?.sourceName ?? x.dato?.source ?? null, url: x.dato?.sourceUrl ?? null })),
     lat: f.lat !== null ? Number(f.lat) : null,
     lng: f.lng !== null ? Number(f.lng) : null,
     web: f.web ?? null,
-    telefono: f.telefono ?? null,
+    telefono: telefono.valor,
     horario: f.horario ?? null,
     duracionMin: f.duracionMin !== null ? Number(f.duracionMin) : null,
     duracionMax: f.duracionMax !== null ? Number(f.duracionMax) : null,
@@ -272,7 +333,7 @@ export async function experienciasSimilares(exp: { id: number; categoria: string
       ORDER BY (c.nombre = ?) DESC, e.id ASC LIMIT ?`,
     [exp.id, exp.categoria, exp.categoria, exp.provincia, exp.provincia, exp.categoria, limite],
   );
-  return filas.map(aTarjeta);
+  return aplicarEnriquecido(filas.map(aTarjeta));
 }
 
 /** Cercanas: por distancia real a las coordenadas de esta experiencia. */
@@ -285,5 +346,5 @@ export async function experienciasCercanasA(exp: { id: number; lat: number | nul
       ORDER BY ${D} ASC, e.id ASC LIMIT ?`,
     [exp.id, exp.lat, exp.lng, exp.lat, limite],
   );
-  return filas.map(aTarjeta);
+  return aplicarEnriquecido(filas.map(aTarjeta));
 }

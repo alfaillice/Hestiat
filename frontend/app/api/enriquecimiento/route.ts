@@ -6,61 +6,104 @@ import { limitar } from "@/lib/limite.server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const TIPOS: TipoCatalogo[] = ["experience", "service", "accommodation"];
+/* Solo se exportan los métodos HTTP: cualquier otro export en un route puede confundir al enrutador
+   (era la causa de que el POST se quedara sin respuesta). La lógica vive en `ejecutar`. */
+const TIPOS = ["experience", "service", "accommodation"];
+const MAX_LOTE = 200;
+const ACCIONES = ["lote", "reanudar", "situacion"];
+
+interface Peticion {
+  tipo?: string;
+  limite?: string | number;
+  desde?: string | number;
+  forzar?: string | boolean;
+  accion?: string;
+}
 
 /**
- * Lanzador del motor de enriquecimiento. SOLO administración.
+ * Lanzador del motor de enriquecimiento. POST es la vía definitiva; GET se mantiene solo para
+ * consultar el estado (`accion=situacion`), que no modifica nada.
  *
- * Por qué una ruta y no un botón: los lotes se lanzan desde el servidor (o, más adelante, desde el
- * panel) y aquí queda todo el control: quién lo lanzó, cuántas fichas, desde dónde y con qué
- * resultado. No toca ningún dato original: escribe en las tablas del motor.
- *
- *   POST /api/enriquecimiento  { tipo, limite, desde, forzar, accion }
- *   GET  /api/enriquecimiento?tipo=experience&limite=50&accion=situacion
- *
- * `accion`: lote (por defecto) · reanudar · situacion.
+ * Valida, en este orden: permisos (solo administración), catalog_type, acción, tamaño de lote
+ * (1–200) y punto de partida. Devuelve siempre batch_id, status, cantidad solicitada y procesada.
  */
-async function procesar(request: Request, params: URLSearchParams, cuerpo?: FormData) {
+async function ejecutar(datos: Peticion) {
   const usuario = await getCurrentUser();
   if (!usuario || usuario.rol !== "admin") {
-    return NextResponse.json({ ok: false, error: "Solo un administrador puede lanzar lotes de enriquecimiento." }, { status: 403 });
+    return NextResponse.json({ ok: false, status: "denegado", error: "Solo un administrador puede lanzar lotes de enriquecimiento." }, { status: 403 });
   }
-  const valor = (clave: string) => String(cuerpo?.get(clave) ?? params.get(clave) ?? "");
-  const tipo = (valor("tipo") || "experience") as TipoCatalogo;
+
+  const tipo = String(datos.tipo ?? "");
   if (!TIPOS.includes(tipo)) {
-    return NextResponse.json({ ok: false, error: "Tipo de catálogo no válido." }, { status: 400 });
+    return NextResponse.json({ ok: false, status: "invalido", error: "catalog_type no válido.", permitidos: TIPOS }, { status: 400 });
   }
-  const accion = valor("accion") || "lote";
-  const limite = Number(valor("limite") || 50);
-  const desde = Number(valor("desde") || 0);
-  const forzar = valor("forzar") === "1";
+  const accion = String(datos.accion ?? "lote");
+  if (!ACCIONES.includes(accion)) {
+    return NextResponse.json({ ok: false, status: "invalido", error: "Acción no válida.", permitidas: ACCIONES }, { status: 400 });
+  }
+  const limite = datos.limite === undefined ? 25 : Number(datos.limite);
+  if (!Number.isFinite(limite) || limite < 1 || limite > MAX_LOTE) {
+    return NextResponse.json({ ok: false, status: "invalido", error: `El tamaño del lote debe estar entre 1 y ${MAX_LOTE}.` }, { status: 400 });
+  }
+  const desde = Math.max(0, Number(datos.desde ?? 0) || 0);
+  const forzar = datos.forzar === true || datos.forzar === "1";
 
   try {
     if (accion === "situacion") {
-      return NextResponse.json({ ok: true, tipo, situacion: await situacion(tipo) });
+      return NextResponse.json({ ok: true, status: "consulta", catalog_type: tipo, situacion: await situacion(tipo as TipoCatalogo) });
     }
-    if (accion === "reanudar") {
-      const resumen = await reanudarUltimoLote(tipo, { limite });
-      return NextResponse.json({ ok: true, reanudado: Boolean(resumen), resumen });
+    const resumen = accion === "reanudar"
+      ? await reanudarUltimoLote(tipo as TipoCatalogo, { limite })
+      : await lanzarLote(tipo as TipoCatalogo, { desde, limite, forzar, usuarioId: Number(usuario.id) });
+    if (!resumen) {
+      return NextResponse.json({ ok: true, status: "nada_que_reanudar", batch_id: null, cantidad_solicitada: 0, cantidad_procesada: 0 });
     }
-    const resumen = await lanzarLote(tipo, { desde, limite, forzar, usuarioId: Number(usuario.id) });
-    return NextResponse.json({ ok: true, resumen });
+    return NextResponse.json({
+      ok: true,
+      status: resumen.estado_final ?? "terminado",
+      batch_id: resumen.lote,
+      catalog_type: resumen.tipo,
+      cantidad_solicitada: resumen.procesadas,
+      cantidad_procesada: resumen.procesadas,
+      desde: resumen.desde,
+      hasta: resumen.hasta,
+      resumen,
+    });
   } catch (error) {
     const motivo = error instanceof Error ? error.message.slice(0, 300) : "error desconocido";
     console.error("[hestiat] enriquecimiento:", motivo);
-    return NextResponse.json({ ok: false, error: "El lote no ha podido completarse.", detalle: motivo }, { status: 500 });
+    return NextResponse.json({ ok: false, status: "error", error: "El lote no ha podido completarse.", detalle: motivo }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   const excedido = limitar(request, "/api/enriquecimiento", 20, 60);
   if (excedido) return excedido;
-  const cuerpo = await request.formData().catch(() => undefined);
-  return procesar(request, new URL(request.url).searchParams, cuerpo);
+  const tipoContenido = request.headers.get("content-type") ?? "";
+  const datos: Peticion = {};
+  try {
+    if (tipoContenido.includes("application/json")) {
+      Object.assign(datos, (await request.json()) as Peticion);
+    } else {
+      const formulario = await request.formData();
+      for (const [clave, valor] of formulario.entries()) {
+        (datos as Record<string, string>)[clave] = String(valor);
+      }
+    }
+  } catch {
+    return NextResponse.json({ ok: false, status: "invalido", error: "El cuerpo de la petición no se entiende." }, { status: 400 });
+  }
+  return ejecutar(datos);
 }
 
 export async function GET(request: Request) {
   const excedido = limitar(request, "/api/enriquecimiento", 20, 60);
   if (excedido) return excedido;
-  return procesar(request, new URL(request.url).searchParams);
+  const p = new URL(request.url).searchParams;
+  const accion = p.get("accion") ?? "situacion";
+  // Por GET solo se consulta. Lanzar o reanudar un lote modifica datos: eso va por POST.
+  if (accion !== "situacion") {
+    return NextResponse.json({ ok: false, status: "metodo_no_permitido", error: "Para lanzar o reanudar un lote usa POST." }, { status: 405 });
+  }
+  return ejecutar({ tipo: p.get("tipo") ?? undefined, accion });
 }

@@ -426,6 +426,8 @@ export async function enriquecerFicha(
 export interface ResumenLote {
   lote: number;
   tipo: TipoCatalogo;
+  /** Cómo acabó el lote: terminado, o en_curso si se cortó a mitad. */
+  estado_final: "terminado" | "en_curso";
   desde: number;
   hasta: number;
   procesadas: number;
@@ -471,6 +473,7 @@ export async function lanzarLote(
 
   const r: ResumenLote = {
     lote, tipo, desde, hasta: 0, procesadas: 0, completas: 0, parciales: 0, revision: 0,
+    estado_final: "terminado",
     noEncontradas: 0, errores: 0, omitidas: 0, fotografias: 0, precios: 0, ubicaciones: 0, estados: {},
   };
 

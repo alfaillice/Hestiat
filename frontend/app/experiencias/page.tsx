@@ -2,15 +2,15 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import Carrusel from "@/components/carrusel";
 import SeccionHome from "@/components/seccion-home";
-import ImagenSegura from "@/components/imagen-segura";
 import CercaDeTi from "@/components/cerca-de-ti";
+import ListaCatalogo from "@/components/lista-catalogo";
+import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
 import {
   buscarExperiencias,
   categoriasConDatos,
   destacadasExperiencias,
   provinciasConExperiencias,
   subcategoriasDe,
-  type ExpTarjeta,
 } from "@/lib/experiencias.server";
 
 export const dynamic = "force-dynamic";
@@ -23,28 +23,6 @@ export const metadata: Metadata = {
 };
 
 const POR_PAGINA = 24;
-
-/** Una tarjeta de experiencia. La MISMA forma en las filas y en la rejilla: una sola pieza. */
-function TarjetaExp({ e }: { e: ExpTarjeta }) {
-  const lugar = [e.municipio, e.provincia].filter(Boolean).join(", ");
-  return (
-    <Link className="serv-card" href={e.href}>
-      <span className="serv-media">
-        <ImagenSegura src={e.imagen} alt={`${e.nombre}: imagen de referencia`} />
-      </span>
-      <span className="serv-txt">
-        <b>{e.nombre}</b>
-        {lugar ? <span className="m">{lugar}</span> : null}
-        <span className="m">{e.categoria ?? "Sin categoría"}{e.subcategoria ? ` · ${e.subcategoria}` : ""}</span>
-        <span className="serv-fuente">
-          {e.precio}
-          {e.precioOrientativo ? " · orientativo" : ""}
-          {e.rating ? ` · ${e.rating.toFixed(1).replace(".", ",")} (${e.ratingCount})` : ""}
-        </span>
-      </span>
-    </Link>
-  );
-}
 
 /**
  * Catálogo público de EXPERIENCIAS.
@@ -74,27 +52,28 @@ export default async function Experiencias({
   // puede devolver nada es una promesa falsa. El día que tengan datos, se activan en una línea.
   const familia = false;
   const accesible = false;
-  const pagina = Math.max(1, Number(uno(sp.p) ?? 1) || 1);
+  // Cursor: si se llega con ?desde= (enlace sin JavaScript) la lista empieza por esa ficha.
+  const desde = Math.max(0, Number(uno(sp.desde) ?? 0) || 0) || undefined;
   const filtrando = Boolean(q || categoria || subcategoria || provincia || familia || accesible);
 
   const [categorias, provincias, subcats, listado] = await Promise.all([
     categoriasConDatos(),
     provinciasConExperiencias(14),
     categoria ? subcategoriasDe(categoria) : Promise.resolve([]),
-    buscarExperiencias({ q, categoria, subcategoria, provincia, familia, accesible, pagina, porPagina: POR_PAGINA }),
+    buscarExperiencias({ q, categoria, subcategoria, provincia, familia, accesible, desde, porPagina: POR_PAGINA }),
   ]);
   const destacadas = filtrando ? [] : await destacadasExperiencias(13);
 
-  const enlaces = (extra: Record<string, string | undefined>) => {
+  /* Los filtros actuales, sin el cursor: es la consulta que viaja en cada tanda del scroll infinito. */
+  const consulta = (() => {
     const u = new URLSearchParams();
-    const base = { q: q || undefined, categoria, subcategoria, provincia, familia: familia ? "1" : undefined, accesible: accesible ? "1" : undefined, ...extra };
+    const base = { q: q || undefined, categoria, subcategoria, provincia, familia: familia ? "1" : undefined, accesible: accesible ? "1" : undefined };
     for (const [k, v] of Object.entries(base)) if (v) u.set(k, v);
-    const s = u.toString();
-    return `/experiencias${s ? `?${s}` : ""}`;
-  };
+    return u.toString();
+  })();
   const categoriasConDatosYFiltro = categorias;
   const catActual = categorias.find((c) => c.slug === categoria);
-  const paginas = Math.max(1, Math.ceil(listado.total / listado.porPagina));
+  const ultima = listado.items.length > 0 ? listado.items[listado.items.length - 1].id : null;
 
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
@@ -172,7 +151,7 @@ export default async function Experiencias({
       {destacadas.length > 0 ? (
         <SeccionHome titulo="Experiencias destacadas" sub="Las mejor valoradas del catálogo, con valoración real" verTodos="/experiencias">
           {destacadas.map((e) => (
-            <TarjetaExp key={e.id} e={e} />
+            <TarjetaCatalogo key={e.id} item={aItemCatalogo(e)} />
           ))}
         </SeccionHome>
       ) : null}
@@ -213,23 +192,17 @@ export default async function Experiencias({
             No hay experiencias con esos criterios. Prueba con otra categoría, otro destino o menos palabras.
           </p>
         ) : (
-          <>
-            <div className="serv-grid">
-              {listado.items.map((e) => (
-                <TarjetaExp key={e.id} e={e} />
-              ))}
-            </div>
-            {pagina < paginas ? (
-              <p style={{ marginTop: 22, textAlign: "center" }}>
-                <Link className="f-aplicar" href={enlaces({ p: String(pagina + 1) })}>
-                  Cargar más experiencias
-                </Link>
-                <span className="m" style={{ display: "block", marginTop: 8, color: "var(--muted-fg)", fontSize: 13 }}>
-                  Página {pagina.toLocaleString("es-ES")} de {paginas.toLocaleString("es-ES")}
-                </span>
-              </p>
-            ) : null}
-          </>
+          <ListaCatalogo
+            key={consulta}
+            iniciales={listado.items.map(aItemCatalogo)}
+            total={listado.total}
+            consulta={consulta}
+            cursor={listado.items.length === POR_PAGINA ? ultima : null}
+            basePath="/experiencias"
+            tipo="experience"
+            etiqueta="experiencias"
+            limite={POR_PAGINA}
+          />
         )}
       </section>
 
@@ -237,7 +210,9 @@ export default async function Experiencias({
         Las {listado.total.toLocaleString("es-ES")} experiencias proceden de fuentes públicas (OpenStreetMap
         y otras) y figuran con su autoría. Las fotografías son imágenes de referencia de esas mismas
         fuentes, no fotos propias de cada actividad. Solo 48 experiencias del catálogo tienen precio
-        publicado; el resto dice «Consultar» a propósito: no se inventa ninguno.
+        publicado; el resto dice «Consultar» a propósito: no se inventa ninguno. Cuando el motor de
+        enriquecimiento ha encontrado la imagen oficial del propio sitio, se muestra esa —rotulada
+        como oficial— en lugar de la de referencia.
       </p>
     </main>
   );

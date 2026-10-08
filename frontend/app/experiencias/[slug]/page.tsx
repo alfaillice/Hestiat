@@ -48,7 +48,7 @@ function TarjetaExp({ e }: { e: ExpTarjeta }) {
   return (
     <Link className="serv-card" href={e.href}>
       <span className="serv-media">
-        <ImagenSegura src={e.imagen} alt={`${e.nombre}: imagen de referencia`} />
+        <ImagenSegura src={e.imagen} alt={`${e.nombre}: ${e.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`} />
       </span>
       <span className="serv-txt">
         <b>{e.nombre}</b>
@@ -84,6 +84,11 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
   if (e.parking) datos.push(["Aparcamiento", "Tiene aparcamiento"]);
   if (e.transporte) datos.push(["Transporte público", "Se puede llegar en transporte público"]);
   if (e.telefono) datos.push(["Teléfono", e.telefono]);
+  // Cuando el motor de enriquecimiento completó algo, se dice: qué dato y de dónde salió.
+  if (e.completadoDesdeWeb) {
+    const deDonde = e.procedenciaWeb.map((p) => p.fuente ?? "web oficial").filter(Boolean);
+    datos.push(["Datos completados desde", `${e.procedenciaWeb.map((p) => p.campo).join(", ")} · ${[...new Set(deDonde)].join(", ")}`]);
+  }
   if (e.servicios) datos.push(["Servicios", e.servicios.slice(0, 300)]);
 
   const jsonLd = {
@@ -115,10 +120,12 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
 
       {/* Imagen de cabecera: de referencia, y se dice. */}
       <div className="exp-portada">
-        <ImagenSegura src={e.imagen} alt={`${e.nombre}: imagen de referencia`} fondo="exp-portada-vacia" />
+        <ImagenSegura src={e.imagen} alt={`${e.nombre}: ${e.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`} fondo="exp-portada-vacia" />
         {e.imagen ? (
           <span className="exp-portada-pie">
-            Imagen de referencia{e.imagenFuente ? ` · ${e.imagenFuente}` : ""}
+            {e.imagenOficial
+              ? `Imagen oficial del sitio${e.imagenOficialFuente ? ` · ${e.imagenOficialFuente}` : ""}`
+              : `Imagen de referencia${e.imagenFuente ? ` · ${e.imagenFuente}` : ""}`}
           </span>
         ) : null}
       </div>

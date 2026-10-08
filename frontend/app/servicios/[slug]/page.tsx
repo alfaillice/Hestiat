@@ -46,7 +46,7 @@ function TarjetaServ({ s }: { s: ServTarjeta }) {
   return (
     <Link className="serv-card" href={s.href}>
       <span className="serv-media">
-        <ImagenSegura src={s.imagen} alt={`${s.nombre}: imagen de referencia`} />
+        <ImagenSegura src={s.imagen} alt={`${s.nombre}: ${s.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`} />
       </span>
       <span className="serv-txt">
         <b>{s.nombre}</b>
@@ -73,6 +73,11 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
   if (lugar) datos.push(["Dónde está", lugar]);
   if (s.horario) datos.push(["Horario", s.horario]);
   if (s.telefono) datos.push(["Teléfono", s.telefono]);
+  // Cuando el motor de enriquecimiento completó algo, se dice: qué dato y de dónde salió.
+  if (s.completadoDesdeWeb) {
+    const deDonde = s.procedenciaWeb.map((p) => p.fuente ?? "web oficial").filter(Boolean);
+    datos.push(["Datos completados desde", `${s.procedenciaWeb.map((p) => p.campo).join(", ")} · ${[...new Set(deDonde)].join(", ")}`]);
+  }
   if (s.email) datos.push(["Correo", s.email]);
   if (s.verificado) datos.push(["Datos verificados", "Sí, comprobados en su fuente"]);
 
@@ -105,8 +110,14 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
       </nav>
 
       <div className="exp-portada">
-        <ImagenSegura src={s.imagen} alt={`${s.nombre}: imagen de referencia`} fondo="exp-portada-vacia" />
-        {s.imagen ? <span className="exp-portada-pie">Imagen de referencia{s.imagenFuente ? ` · ${s.imagenFuente}` : ""}</span> : null}
+        <ImagenSegura src={s.imagen} alt={`${s.nombre}: ${s.imagenOficial ? "imagen oficial del sitio" : "imagen de referencia"}`} fondo="exp-portada-vacia" />
+        {s.imagen ? (
+          <span className="exp-portada-pie">
+            {s.imagenOficial
+              ? `Imagen oficial del sitio${s.imagenOficialFuente ? ` · ${s.imagenOficialFuente}` : ""}`
+              : `Imagen de referencia${s.imagenFuente ? ` · ${s.imagenFuente}` : ""}`}
+          </span>
+        ) : null}
       </div>
 
       <div className="exp-cols">

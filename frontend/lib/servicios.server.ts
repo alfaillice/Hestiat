@@ -14,6 +14,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { datosEnriquecidos, datoDe, resolver, resolverImagen, resolverPrecio } from "@/lib/catalogo-datos.server";
 import { precioDe } from "@/lib/experiencias.server";
 
 export interface ServTarjeta {
@@ -27,13 +28,22 @@ export interface ServTarjeta {
   municipio: string | null;
   provincia: string | null;
   imagen: string | null;
+  /** De dónde viene la imagen original. */
+  imagenOrigen: string | null;
+  /** true cuando la imagen que se enseña es la oficial del sitio. */
+  imagenOficial: boolean;
+  /** De dónde salió la imagen oficial, para poder citarla. */
+  imagenOficialFuente: string | null;
   precio: string;
   precioOrientativo: boolean;
   href: string;
+  /** Lo que traía la base, antes de resolver con lo enriquecido. */
+  precioOriginal: { texto: string; orientativo: boolean; hayValor: boolean };
 }
 
 const CAMPOS = `s.id, s.slug, s.name AS nombre, s.municipality AS municipio, s.province AS provincia,
                 s.main_image AS imagen, s.price, s.currency, s.price_type, s.price_unit, s.price_text,
+                s.image_source AS imagen_origen,
                 c.nombre AS categoria, sub.nombre AS subcategoria,
                 c.slug AS categoria_slug, sub.slug AS subcategoria_slug`;
 
@@ -44,6 +54,7 @@ const DESDE = `FROM servicio_turistico s
 
 function aTarjeta(f: mysql.RowDataPacket): ServTarjeta {
   const p = precioDe(f as unknown as Record<string, unknown>);
+  const hayValor = p.texto !== "Consultar";
   return {
     id: Number(f.id),
     slug: String(f.slug ?? ""),
@@ -55,10 +66,32 @@ function aTarjeta(f: mysql.RowDataPacket): ServTarjeta {
     municipio: f.municipio ?? null,
     provincia: f.provincia ?? null,
     imagen: f.imagen ?? null,
+    imagenOrigen: f.imagen_origen ?? null,
+    imagenOficial: false,
+    imagenOficialFuente: null,
     precio: p.texto,
     precioOrientativo: p.orientativo,
     href: `/servicios/${encodeURIComponent(String(f.slug ?? ""))}`,
+    precioOriginal: { texto: p.texto, orientativo: p.orientativo, hayValor },
   };
+}
+
+/** Misma resolución que en experiencias: una consulta para todas y las reglas de un solo sitio. */
+async function aplicarEnriquecido(items: ServTarjeta[]): Promise<ServTarjeta[]> {
+  if (items.length === 0) return items;
+  const mapa = await datosEnriquecidos("service", items.map((i) => i.id), ["imagen_oficial", "precio_orientativo"]);
+  return items.map((i) => {
+    const img = resolverImagen(i.imagen, i.imagenOrigen, datoDe(mapa, i.id, "imagen_oficial"));
+    const pr = resolverPrecio(i.precioOriginal, datoDe(mapa, i.id, "precio_orientativo"));
+    return {
+      ...i,
+      imagen: img.url,
+      imagenOficial: img.origen === "oficial",
+      imagenOficialFuente: img.origen === "oficial" ? img.fuente?.sourceName ?? img.fuente?.source ?? null : null,
+      precio: pr.texto,
+      precioOrientativo: pr.orientativo,
+    };
+  });
 }
 
 export interface CategoriaServ {
@@ -97,6 +130,8 @@ export interface FiltrosServ {
   categoria?: string;
   subcategoria?: string;
   provincia?: string;
+  /** Cursor: solo las fichas con id mayor que este. */
+  desde?: number;
   pagina?: number;
   porPagina?: number;
 }
@@ -122,6 +157,7 @@ export async function buscarServicios(f: FiltrosServ = {}): Promise<{ total: num
     where.push("s.province = ?");
     valores.push(f.provincia);
   }
+  if (f.desde) { where.push("s.id > ?"); valores.push(f.desde); }
   const q = (f.q ?? "").trim();
   if (q.length >= 2) {
     where.push("(s.name LIKE ? OR s.municipality LIKE ? OR s.province LIKE ? OR s.subcategory LIKE ? OR s.category LIKE ?)");
@@ -135,7 +171,7 @@ export async function buscarServicios(f: FiltrosServ = {}): Promise<{ total: num
     `SELECT ${CAMPOS} ${DESDE} WHERE ${condicion} ORDER BY s.id ASC LIMIT ? OFFSET ?`,
     [...valores, porPagina, (pagina - 1) * porPagina],
   );
-  return { total: Number(tot[0]?.n ?? 0), items: filas.map(aTarjeta), porPagina };
+  return { total: Number(tot[0]?.n ?? 0), items: await aplicarEnriquecido(filas.map(aTarjeta)), porPagina };
 }
 
 /**
@@ -151,7 +187,7 @@ export async function destacadosServicios(limite = 13): Promise<ServTarjeta[]> {
       LIMIT ?`,
     [limite],
   );
-  return filas.map(aTarjeta);
+  return aplicarEnriquecido(filas.map(aTarjeta));
 }
 
 export async function provinciasConServicios(limite = 14): Promise<{ provincia: string; total: number }[]> {
@@ -168,6 +204,9 @@ export interface ServFicha extends ServTarjeta {
   descripcion: string | null;
   resumen: string | null;
   direccion: string | null;
+  /** true cuando algún dato se ha completado desde la web oficial del sitio. */
+  completadoDesdeWeb: boolean;
+  procedenciaWeb: { campo: string; valor: string; fuente: string | null; url: string | null }[];
   lat: number | null;
   lng: number | null;
   web: string | null;
@@ -197,15 +236,32 @@ export async function servicioPorSlug(slug: string): Promise<ServFicha | null> {
   );
   const f = filas[0];
   if (!f) return null;
+  const id = Number(f.id);
+  const tarjeta = (await aplicarEnriquecido([aTarjeta(f)]))[0];
+  const mapa = await datosEnriquecidos("service", [id], ["descripcion", "telefono", "direccion"]);
+  const resolverDato = (original: unknown, campo: string) => {
+    const dato = datoDe(mapa, id, campo);
+    const r = resolver(original === null || original === undefined ? null : String(original), dato?.valor ?? null);
+    return { valor: r.valor, deLaWeb: r.origen === "enriquecido", dato };
+  };
+  const descripcion = resolverDato(f.descripcion, "descripcion");
+  const telefono = resolverDato(f.telefono, "telefono");
+  const direccion = resolverDato(f.direccion, "direccion");
   return {
-    ...aTarjeta(f),
-    descripcion: f.descripcion ?? null,
+    ...tarjeta,
+    descripcion: descripcion.valor,
     resumen: f.resumen ?? null,
-    direccion: f.direccion ?? null,
+    direccion: direccion.valor,
+    completadoDesdeWeb: descripcion.deLaWeb || telefono.deLaWeb || direccion.deLaWeb,
+    procedenciaWeb: [
+      { campo: "Descripción", ...descripcion },
+      { campo: "Teléfono", ...telefono },
+      { campo: "Dirección", ...direccion },
+    ].filter((x) => x.deLaWeb).map((x) => ({ campo: x.campo, valor: String(x.valor ?? ""), fuente: x.dato?.sourceName ?? x.dato?.source ?? null, url: x.dato?.sourceUrl ?? null })),
     lat: f.lat !== null ? Number(f.lat) : null,
     lng: f.lng !== null ? Number(f.lng) : null,
     web: f.web ?? null,
-    telefono: f.telefono ?? null,
+    telefono: telefono.valor,
     email: f.email ?? null,
     horario: f.horario ?? null,
     servicios: f.servicios ?? null,
@@ -226,7 +282,7 @@ export async function serviciosSimilares(s: { id: number; categoriaSlug: string 
       ORDER BY (c.slug = ?) DESC, s.id ASC LIMIT ?`,
     [s.id, s.categoriaSlug, s.categoriaSlug, s.provincia, s.provincia, s.categoriaSlug, limite],
   );
-  return filas.map(aTarjeta);
+  return aplicarEnriquecido(filas.map(aTarjeta));
 }
 
 /** Cercanos: por distancia real a las coordenadas de este servicio. */
@@ -239,7 +295,7 @@ export async function serviciosCercanosA(s: { id: number; lat: number | null; ln
       ORDER BY ${D} ASC, s.id ASC LIMIT ?`,
     [s.id, s.lat, s.lng, s.lat, limite],
   );
-  return filas.map(aTarjeta);
+  return aplicarEnriquecido(filas.map(aTarjeta));
 }
 
 /** Servicios alrededor de un punto (para «cerca de ti» y para el buscador por cercanía). */
@@ -267,7 +323,7 @@ export async function serviciosCerca(punto: { lat: number; lng: number } | undef
   return {
     total: filas.length,
     cercaniaMetros: distancias.length > 0 ? Math.min(...distancias) : null,
-    items: filas.map((f) => {
+    items: await aplicarEnriquecido(filas.map((f) => {
       const t = aTarjeta(f) as ServTarjeta & { nota?: string };
       // La distancia solo se dice cuando hay un punto real desde el que medirla.
       if (punto) {
@@ -275,7 +331,7 @@ export async function serviciosCerca(punto: { lat: number; lng: number } | undef
         if (Number.isFinite(m)) t.nota = distanciaLegible(m);
       }
       return t;
-    }),
+    })),
   };
 }
 

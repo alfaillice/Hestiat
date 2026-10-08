@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import SeccionHome from "@/components/seccion-home";
-import ImagenSegura from "@/components/imagen-segura";
 import CercaDeTi from "@/components/cerca-de-ti";
+import ListaCatalogo from "@/components/lista-catalogo";
+import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
 import {
   buscarServicios,
   categoriasServicioConDatos,
   destacadosServicios,
   provinciasConServicios,
-  type ServTarjeta,
 } from "@/lib/servicios.server";
 
 export const dynamic = "force-dynamic";
@@ -21,27 +21,6 @@ export const metadata: Metadata = {
 };
 
 const POR_PAGINA = 24;
-
-/** Una tarjeta de servicio. La misma pieza para las filas y para la rejilla. */
-function TarjetaServ({ s }: { s: ServTarjeta }) {
-  const lugar = [s.municipio, s.provincia].filter(Boolean).join(", ");
-  return (
-    <Link className="serv-card" href={s.href}>
-      <span className="serv-media">
-        <ImagenSegura src={s.imagen} alt={`${s.nombre}: imagen de referencia`} />
-      </span>
-      <span className="serv-txt">
-        <b>{s.nombre}</b>
-        {lugar ? <span className="m">{lugar}</span> : null}
-        <span className="m">{s.categoria ?? "Sin categoría"}{s.subcategoria ? ` · ${s.subcategoria}` : ""}</span>
-        <span className="serv-fuente">
-          {s.precio}
-          {s.precioOrientativo ? " · orientativo" : ""}
-        </span>
-      </span>
-    </Link>
-  );
-}
 
 /**
  * Catálogo público de SERVICIOS (35.585, todos los del catálogo).
@@ -65,25 +44,26 @@ export default async function Servicios({
   const q = (uno(sp.q) ?? "").trim();
   const categoria = (uno(sp.categoria) ?? "").trim() || undefined;
   const provincia = (uno(sp.provincia) ?? "").trim() || undefined;
-  const pagina = Math.max(1, Number(uno(sp.p) ?? 1) || 1);
+  // Cursor: si se llega con ?desde= (enlace sin JavaScript) la lista empieza por esa ficha.
+  const desde = Math.max(0, Number(uno(sp.desde) ?? 0) || 0) || undefined;
   const filtrando = Boolean(q || categoria || provincia);
 
   const [categorias, provincias, listado] = await Promise.all([
     categoriasServicioConDatos(),
     provinciasConServicios(14),
-    buscarServicios({ q, categoria, provincia, pagina, porPagina: POR_PAGINA }),
+    buscarServicios({ q, categoria, provincia, desde, porPagina: POR_PAGINA }),
   ]);
   const destacados = filtrando ? [] : await destacadosServicios(13);
-  const paginas = Math.max(1, Math.ceil(listado.total / listado.porPagina));
   const elegida = categorias.find((c) => c.slug === categoria) ?? categorias.find((c) => c.hijas.some((h) => h.slug === categoria));
 
-  const enlaces = (extra: Record<string, string | undefined>) => {
+  /* Los filtros actuales, sin el cursor: la consulta que viaja en cada tanda del scroll infinito. */
+  const consulta = (() => {
     const u = new URLSearchParams();
-    const base = { q: q || undefined, categoria, provincia, ...extra };
+    const base = { q: q || undefined, categoria, provincia };
     for (const [k, v] of Object.entries(base)) if (v) u.set(k, v);
-    const s = u.toString();
-    return `/servicios${s ? `?${s}` : ""}`;
-  };
+    return u.toString();
+  })();
+  const ultimo = listado.items.length > 0 ? listado.items[listado.items.length - 1].id : null;
 
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
@@ -150,7 +130,7 @@ export default async function Servicios({
       {destacados.length > 0 ? (
         <SeccionHome titulo="Servicios destacados" sub="Los que tienen más información publicada: web, teléfono y horario reales" verTodos="/servicios">
           {destacados.map((s) => (
-            <TarjetaServ key={s.id} s={s} />
+            <TarjetaCatalogo key={s.id} item={aItemCatalogo(s)} />
           ))}
         </SeccionHome>
       ) : null}
@@ -186,21 +166,17 @@ export default async function Servicios({
         {listado.items.length === 0 ? (
           <p className="aviso">No hay servicios con esos criterios. Prueba con otra categoría, otro destino o menos palabras.</p>
         ) : (
-          <>
-            <div className="serv-grid">
-              {listado.items.map((s) => (
-                <TarjetaServ key={s.id} s={s} />
-              ))}
-            </div>
-            {pagina < paginas ? (
-              <p style={{ marginTop: 22, textAlign: "center" }}>
-                <Link className="f-aplicar" href={enlaces({ p: String(pagina + 1) })}>Cargar más servicios</Link>
-                <span className="m" style={{ display: "block", marginTop: 8, color: "var(--muted-fg)", fontSize: 13 }}>
-                  Página {pagina.toLocaleString("es-ES")} de {paginas.toLocaleString("es-ES")}
-                </span>
-              </p>
-            ) : null}
-          </>
+          <ListaCatalogo
+            key={consulta}
+            iniciales={listado.items.map(aItemCatalogo)}
+            total={listado.total}
+            consulta={consulta}
+            cursor={listado.items.length === POR_PAGINA ? ultimo : null}
+            basePath="/servicios"
+            tipo="service"
+            etiqueta="servicios"
+            limite={POR_PAGINA}
+          />
         )}
       </section>
 
@@ -208,7 +184,9 @@ export default async function Servicios({
         Los {listado.total.toLocaleString("es-ES")} servicios proceden de fuentes públicas (OpenStreetMap y
         otras) y figuran con su autoría. Las fotografías son imágenes de referencia de esas mismas fuentes,
         no fotos propias de cada negocio. Solo 89 servicios tienen importe publicado; el resto dice
-        «Consultar» a propósito: no se inventa ninguno.
+        «Consultar» a propósito: no se inventa ninguno. Cuando el motor de enriquecimiento ha
+        encontrado la imagen oficial del propio negocio, se muestra esa —rotulada como oficial— en
+        lugar de la de referencia.
       </p>
     </main>
   );

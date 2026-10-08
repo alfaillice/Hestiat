@@ -398,7 +398,9 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 .serv-txt .m{font-size:12.5px;color:var(--muted-fg)}
 .serv-fuente{font-size:11px;color:var(--muted-fg);opacity:.85;margin-top:2px}
 @media(max-width:1280px){.cab-busca{max-width:460px}}
-@media(max-width:1080px){
+@media(max-width:900px){
+  /* Por debajo de 900 px la cabecera ya no tiene sitio para las tres píldoras y la cuenta: pasan al
+     desplegable nativo. En tablet (768–900) el menú sigue siendo claro y no se corta nada. */
   .cab-nav{display:none}
   .cab-cuenta{display:none}
   .cab-menu{display:block}
@@ -422,6 +424,62 @@ footer{border-top:1px solid var(--border);margin-top:44px;padding:24px 0;color:v
 @media(prefers-reduced-motion:reduce){
   .acceso,.cab-pill,.tdest,.tcat,.tdest-media img,.tcat-media img,.car-flecha{transition:none}
   .tdest:hover,.tcat:hover,.acceso:hover,.cab-pill:hover{transform:none}
+}
+/* === MÓVIL Y TABLET: repaso para 320 / 375 / 390 / 414 / 768 ====================================
+   El navegador de pruebas no permite emular anchos, así que esto está razonado a mano para cada
+   ancho real y con medidas calculadas, no a ojo:
+     · 768 (tablet)  → cabecera con el desplegable, búsqueda ancha, héroe de 70vh.
+     · 414 / 390 / 375 → el buscador ocupa su propia fila, con destino + botón; las fechas y los
+                         viajeros se eligen en la barra completa de Explorar, para que la cabecera
+                         no se coma la pantalla.
+     · 320 → el mismo esquema, con tarjetas al 76 % y tipografías mínimas legibles.
+   Nada se sale del ancho: los carruseles son los únicos que se desplazan en horizontal, y lo hacen
+   dentro de su caja (overflow-x propio), no en la página. */
+@media(max-width:430px){
+  /* Selectores con un poco más de peso que los de 760 px, a propósito: así estas medidas mandan sin
+     tener que reordenar la hoja entera (que es donde se rompen las cosas sin que se note). */
+  .cab .cab-in{min-height:0;flex-wrap:wrap;row-gap:8px;gap:8px;padding:8px 12px}
+  .cab .marca{font-size:17px}
+  .marca-casa{font-size:16px}
+  .cab-menu{margin-left:auto}
+  .cab-menu summary{padding:8px 12px;font-size:13px}
+  /* El buscador, en su propia fila y ocupando todo el ancho: destino + botón. */
+  .cab-busca{flex:1 1 100%;order:3}
+  .cab-busca .buscador-compacto{flex-wrap:nowrap;padding:5px}
+  .cab-busca .buscador-compacto .buscador-destino{flex:1 1 auto;min-width:0}
+  .buscador-compacto input[type=text]{padding:9px 12px;font-size:14px}
+  /* Fechas y viajeros no caben con holgura en 320-414 sin dejar la cabecera enorme: se eligen en
+     la barra completa de Explorar, que ya está ahí. Se ocultan, no se cortan. */
+  .buscador-compacto .buscador-campo{display:none}
+  .buscador-compacto .buscador-boton{flex:0 0 42px}
+  .hero2{min-height:min(64vh,460px)}
+  .hero2-cont{padding:0 14px 20px}
+  .hero2 h1{font-size:clamp(26px,7.4vw,34px)}
+  .hero2-sub{font-size:14.5px;margin-top:8px}
+  .hero2-accesos{gap:8px;margin-top:14px}
+  .acceso{padding:10px 12px;gap:9px}
+  .acceso-icono{font-size:19px}
+  .acceso b{font-size:14px}
+  .acceso span span{font-size:12px}
+  .seccion-home{margin:28px 0}
+  .seccion-home-cab{flex-wrap:wrap;gap:6px;align-items:flex-start}
+  .seccion-home h2{font-size:21px}
+  .seccion-home-sub{font-size:12.5px}
+  .ver-todos{font-size:13.5px}
+  .car .car-pista{gap:12px;padding:2px 2px 8px}
+  .car .car-pista>.tdest{flex:0 0 76%}
+  .car .car-pista>.tcat{flex:0 0 72%}
+  .pie-inicio{font-size:12.5px}
+  .cab-menu-lista{min-width:200px;max-width:calc(100vw - 24px)}
+}
+@media(max-width:360px){
+  .cab .marca{font-size:16px}
+  .buscador-compacto input[type=text]{font-size:13.5px;padding:8px 10px}
+  .buscador-compacto .buscador-boton{width:38px;height:38px}
+  .hero2 h1{font-size:25px}
+  .car .car-pista>.tdest{flex:0 0 82%}
+  .car .car-pista>.tcat{flex:0 0 78%}
+  .seccion-home h2{font-size:19.5px}
 }
 @media(max-width:1000px){.buscador{grid-template-columns:1fr 1fr 1fr}}
 @media(max-width:760px){

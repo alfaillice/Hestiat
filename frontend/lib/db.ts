@@ -165,12 +165,21 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
     filtros.push("a.province = ?");
     valores.push(opciones.provincia);
   }
+  /* PRECIO EFECTIVO. Es la misma regla que aplica `aTarjeta` (lib/tarjetas.ts), que es de donde
+     salen el precio de la tarjeta y el del marcador del mapa: el precio real si lo hay (> 0); si no,
+     el estimado (> 0); y si no hay ninguno, no hay precio y el alojamiento queda fuera del filtro,
+     sin inventarle un valor. Así tarjeta, mapa y filtro no pueden discrepar.
+     Antes esto comparaba solo contra `price_per_night`, que es nulo en 17.608 de los 17.610
+     alojamientos publicados porque su precio es estimado: filtrar por precio dejaba fuera casi todo
+     el catálogo aunque las tarjetas mostraran un precio. */
+  const PRECIO_EFECTIVO = "COALESCE(NULLIF(a.price_per_night, 0), NULLIF(a.indicative_price, 0))";
+
   if (typeof opciones.precioMin === "number" && Number.isFinite(opciones.precioMin)) {
-    filtros.push("a.price_per_night >= ?");
+    filtros.push(`${PRECIO_EFECTIVO} >= ?`);
     valores.push(opciones.precioMin);
   }
   if (typeof opciones.precioMax === "number" && Number.isFinite(opciones.precioMax)) {
-    filtros.push("a.price_per_night <= ?");
+    filtros.push(`${PRECIO_EFECTIVO} <= ?`);
     valores.push(opciones.precioMax);
   }
   /* Servicios: debe tenerlos TODOS los seleccionados (una condición por servicio, para que
@@ -197,12 +206,14 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
   }
   const where = filtros.join(" AND ");
 
+  // Ordenar por precio también es hablar de precio: se ordena por el mismo valor efectivo, para que
+  // «Precio más bajo» ordene por lo que la tarjeta enseña y no por un campo medio vacío.
   const orden =
     opciones.orden === "precio_asc"
-      ? "ORDER BY (a.price_per_night IS NULL), a.price_per_night ASC, a.id ASC"
+      ? `ORDER BY (${PRECIO_EFECTIVO} IS NULL), ${PRECIO_EFECTIVO} ASC, a.id ASC`
       : opciones.orden === "precio_desc"
-        ? "ORDER BY (a.price_per_night IS NULL), a.price_per_night DESC, a.id ASC"
-        : "ORDER BY (a.price_per_night IS NULL), a.review_count DESC, a.id ASC";
+        ? `ORDER BY (${PRECIO_EFECTIVO} IS NULL), ${PRECIO_EFECTIVO} DESC, a.id ASC`
+        : `ORDER BY (${PRECIO_EFECTIVO} IS NULL), a.review_count DESC, a.id ASC`;
 
   const [totalRows] = await pool.query<mysql.RowDataPacket[]>(
     `SELECT COUNT(*) AS n FROM accommodation a WHERE ${where}`,
@@ -347,7 +358,10 @@ export async function opcionesDeFiltros(): Promise<OpcionesFiltros> {
       GROUP BY am.amenity, s.nombre ORDER BY total DESC LIMIT 14`,
   );
   const [precio] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT COALESCE(MAX(price_per_night), 500) AS maximo FROM accommodation WHERE status = 'published' AND price_per_night IS NOT NULL`,
+    // El tope que se enseña como pista en el filtro es el del precio EFECTIVO, no el de
+    // `price_per_night`: si no, la pista diría un máximo que no corresponde a lo que se puede filtrar.
+    `SELECT COALESCE(MAX(COALESCE(NULLIF(price_per_night, 0), NULLIF(indicative_price, 0))), 500) AS maximo
+       FROM accommodation WHERE status = 'published'`,
   );
   return {
     provincias: prov as unknown as { province: string; total: number }[],

@@ -21,28 +21,34 @@ export default function ImagenSegura({
   alto,
   fondo = "tcat-sinfoto",
 }: {
-  src: string | null | undefined;
+  /**
+   * Una dirección, o una CADENA de direcciones en orden de preferencia. Con cadena, si una falla se
+   * prueba la siguiente (WebP → PNG → otras de la misma categoría → respaldo) y nunca queda un hueco.
+   */
+  src: string | string[] | null | undefined;
   alt: string;
   className?: string;
   /** Tamaño intrínseco, cuando se conoce: evita saltos de maquetación. */
   ancho?: number;
   alto?: number;
-  /** Clase del fondo que se muestra si no hay imagen o si falla. */
+  /** Clase del fondo que se muestra si no hay imagen o si fallan todas. */
   fondo?: string;
 }) {
-  const [fallo, setFallo] = useState(false);
-  if (!src || fallo) return <span className={fondo} aria-hidden="true" />;
+  const lista = (Array.isArray(src) ? src : src ? [src] : []).filter(Boolean);
+  const [indice, setIndice] = useState(0);
+  const actual = lista[indice] ?? null;
+  if (!actual) return <span className={fondo} aria-hidden="true" />;
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={actual}
       alt={alt}
       className={className}
       width={ancho}
       height={alto}
       loading="lazy"
       decoding="async"
-      onError={() => setFallo(true)}
+      onError={() => setIndice((i) => i + 1)}
     />
   );
 }

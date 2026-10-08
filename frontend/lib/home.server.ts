@@ -18,7 +18,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
-import { IMAGEN_DESTINO, IMAGEN_CATEGORIA } from "@/lib/imagenes-home";
+import { IMAGEN_DESTINO, categoryImageMap } from "@/lib/imagenes-home";
 
 /* ------------------------------------------------------------- destinos -- */
 
@@ -105,7 +105,8 @@ export interface CategoriaHome {
   /** El nombre que se enseña. */
   nombre: string;
   total: number;
-  imagen: string | null;
+  /** Cadena de imágenes propias de la categoría, en orden: WebP → PNG → otras → respaldo. */
+  imagenes: string[];
   href: string;
 }
 
@@ -129,7 +130,7 @@ export async function categoriasServicio(limite = 8): Promise<CategoriaHome[]> {
       valor,
       nombre: valor,
       total: Number(f.total ?? 0),
-      imagen: IMAGEN_CATEGORIA[`servicio:${valor}`] ?? null,
+      imagenes: categoryImageMap("servicio", valor),
       href: `/servicios?categoria=${encodeURIComponent(valor)}`,
     };
   });
@@ -156,7 +157,7 @@ export async function categoriasExperiencia(limite = 8): Promise<CategoriaHome[]
       valor,
       nombre: String(f.nombre ?? valor),
       total: Number(f.total ?? 0),
-      imagen: IMAGEN_CATEGORIA[`experiencia:${valor}`] ?? null,
+      imagenes: categoryImageMap("experiencia", valor),
       href: `/experiencias?categoria=${encodeURIComponent(valor)}`,
     };
   });

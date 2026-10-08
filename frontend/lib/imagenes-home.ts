@@ -77,3 +77,95 @@ export const IMAGEN_CATEGORIA: Record<string, string> = {
   "experiencia:Cultura": BASE_IMG + "hf_20261007_230423_ac58a80e-b345-4779-a8fd-1bf509bf9d28.png",
   "experiencia:Agua": BASE_IMG + "hf_20261007_230932_2caa38d6-2385-4cb5-9376-38bd73a85fe6.png",
 };
+
+/* ===================================================================================
+   IMÁGENES DE LOS CARRUSELES DE CATEGORÍA (Servicios populares y Experiencias destacadas)
+
+   Una imagen PROPIA por categoría —nunca la misma para dos— generada con el generador del
+   proyecto en estilo común (luz natural, paleta clara y cálida, sin texto ni logotipos).
+   Son imágenes representativas de la CATEGORÍA, no fotografías de un negocio concreto, y así
+   se dice en el pie de cada tarjeta.
+
+   Cada categoría lleva una CADENA de direcciones, no una sola:
+     1. la versión WebP (más ligera, la que se sirve cuando el navegador la acepta);
+     2. la versión PNG de la misma imagen (respaldo inmediato);
+     3. imágenes de ambientación anteriores de esa misma categoría;
+     4. y, como último recurso, una imagen segura de su tipo.
+   Si una falla, se prueba la siguiente: NUNCA se queda un bloque vacío.
+
+   La clave se normaliza (minúsculas, sin acentos, con guiones), así que da igual que la
+   categoría venga como identificador («bienestar-belleza») o como nombre («Bienestar y belleza»).
+   =================================================================================== */
+
+/** Versión WebP y PNG de una misma imagen: se intentan en ese orden. */
+const par = (fichero: string): string[] => [`${BASE_IMG}${fichero}_min.webp`, `${BASE_IMG}${fichero}.png`];
+
+const IMAGENES_SERVICIOS: Record<string, string[]> = {
+  peluqueria: par("hf_20261008_171110_ffff431a-2ae8-45a8-a210-0dbb4f636d76"),
+  "bienestar-belleza": par("hf_20261008_171110_2873c9c0-a87b-45c2-864e-3b32b2d39540"),
+  transporte: par("hf_20261008_171111_f20448c2-b942-4de1-a50e-c941021d4a7d"),
+  "deporte-fitness": par("hf_20261008_171111_facd0a05-bf7f-4b6f-b5ea-f686f32f5c33"),
+  mascotas: par("hf_20261008_171143_cdef0731-4ccd-4afc-b302-afb3ac2ff91c"),
+  "hogar-asistencia": par("hf_20261008_171143_180509e7-c6fb-4c8b-aa57-d0baee6747ef"),
+  "servicios-turisticos": par("hf_20261008_171144_3f7d00b0-18ff-4097-95d0-a98b52f76cfb"),
+  gastronomia: par("hf_20261008_171144_ed341286-5373-4e88-802a-c91a4d10efb9"),
+};
+
+const IMAGENES_EXPERIENCIAS: Record<string, string[]> = {
+  "cultura-e-historia": par("hf_20261008_171209_3ac8b754-0439-4615-bae9-9bdd17f712ce"),
+  "naturaleza-y-paisajes": par("hf_20261008_171209_4407be13-a4fe-4cff-8e87-8803a2050e83"),
+  arte: par("hf_20261008_171353_89d4a333-1bdd-4b8a-b17c-74d3c797bf67"),
+  "parques-y-atracciones": par("hf_20261008_171210_2833d82d-da7c-42f3-98a3-545c31712ba1"),
+  "museos-y-exposiciones": par("hf_20261008_171240_7116723a-6076-4edb-84d5-2e0cbd780092"),
+  "ocio-y-entretenimiento": par("hf_20261008_171241_9d81b68c-712a-42df-910f-baa9d5a74d2d"),
+  "gastronomia-y-bebidas": par("hf_20261008_171242_51238f6d-96e9-4a16-bab4-75c557e331d7"),
+  "mar-y-actividades-acuaticas": par("hf_20261008_171242_9f8cb2e5-b942-4b15-9049-0376eb1aef03"),
+};
+
+/** Imagen segura de cada tipo, para que nunca quede un hueco. */
+const RESPALDO_SERVICIO = par("hf_20261008_171143_180509e7-c6fb-4c8b-aa57-d0baee6747ef");
+const RESPALDO_EXPERIENCIA = par("hf_20261008_171209_4407be13-a4fe-4cff-8e87-8803a2050e83");
+
+/** Clave normalizada: «Bienestar y belleza» y «bienestar-belleza» son la misma. */
+export function claveCategoria(valor: string): string {
+  return valor
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/** Imágenes de ambientación antiguas, como tercer escalón del respaldo. */
+function antiguasDe(tipo: "servicio" | "experiencia", clave: string): string[] {
+  const porNombre: Record<string, string[]> = {
+    "servicio:peluqueria": ["servicio:Belleza y cuidado personal"],
+    "servicio:transporte": ["servicio:Viaje y comodidad"],
+    "servicio:deporte-fitness": ["servicio:Deporte y fitness"],
+    "servicio:mascotas": ["servicio:Mascotas"],
+    "servicio:hogar-asistencia": ["servicio:Servicios para el alojamiento"],
+    "servicio:gastronomia": ["servicio:Comida y catering"],
+    "servicio:servicios-turisticos": ["servicio:Outdoor y aventura"],
+    "experiencia:cultura-e-historia": ["experiencia:Historia", "experiencia:Cultura"],
+    "experiencia:naturaleza-y-paisajes": ["experiencia:Naturaleza"],
+    "experiencia:arte": ["experiencia:Arte"],
+    "experiencia:museos-y-exposiciones": ["experiencia:Lugares de interés"],
+    "experiencia:ocio-y-entretenimiento": ["experiencia:Vida nocturna"],
+    "experiencia:gastronomia-y-bebidas": ["experiencia:Gastronomía"],
+    "experiencia:mar-y-actividades-acuaticas": ["experiencia:Agua"],
+  };
+  const claves = porNombre[`${tipo}:${clave}`] ?? [];
+  return claves.map((k) => IMAGEN_CATEGORIA[k]).filter((u): u is string => Boolean(u));
+}
+
+/**
+ * categoryImageMap: LA función que usan las tarjetas. Devuelve la cadena completa de imágenes de
+ * una categoría, en orden de preferencia, sin repetir ninguna.
+ */
+export function categoryImageMap(tipo: "servicio" | "experiencia", valor: string): string[] {
+  const clave = claveCategoria(valor);
+  const propias = tipo === "servicio" ? IMAGENES_SERVICIOS[clave] : IMAGENES_EXPERIENCIAS[clave];
+  const respaldo = tipo === "servicio" ? RESPALDO_SERVICIO : RESPALDO_EXPERIENCIA;
+  const cadena = [...(propias ?? []), ...antiguasDe(tipo, clave), ...respaldo];
+  return [...new Set(cadena.filter(Boolean))];
+}

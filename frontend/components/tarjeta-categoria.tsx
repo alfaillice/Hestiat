@@ -21,7 +21,7 @@ export default function TarjetaCategoria({
   return (
     <Link className="tcat" href={categoria.href}>
       <span className="tcat-media">
-        <ImagenSegura src={categoria.imagen} alt={`${categoria.nombre}: imagen de ambientación`} />
+        <ImagenSegura src={categoria.imagenes} alt={`${categoria.nombre}: imagen de ambientación`} />
       </span>
       <span className="tcat-txt">
         <b>{categoria.nombre}</b>

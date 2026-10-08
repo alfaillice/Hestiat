@@ -29,6 +29,10 @@ export default function Cookies() {
           Un pequeño archivo que el navegador guarda cuando visitas una web y que permite, por ejemplo,
           recordar que ya has iniciado sesión. No es un programa ni puede leer archivos de tu equipo.
         </p>
+        <p className="m" style={{ color: "var(--muted-fg)", fontSize: 13.5 }}>
+          Responsable del sitio: <b>JM TRIVINO</b> · NIF 22009686C · Partida Carrus P1-137, Alicante ·{" "}
+          <a href="mailto:hola@hestiat.com">hola@hestiat.com</a>
+        </p>
       </section>
 
       <section className="seccion-home">

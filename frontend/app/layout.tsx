@@ -119,6 +119,23 @@ footer a{color:var(--muted-fg)}
 footer a:hover{color:var(--hestiat-primary-texto)}
 .pie-legal{font-size:12.5px;line-height:1.65;border-top:1px solid var(--border);padding-top:14px}
 .pie-legal-enlaces{flex-direction:row;gap:18px;flex-wrap:wrap;font-weight:600}
+/* Bloque «Publica gratis en Hestiat» de la portada: tarjeta serena, no un anuncio. */
+.publica{display:flex;gap:24px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:linear-gradient(135deg,var(--fucsia-soft),var(--card));border:1px solid var(--border);border-radius:calc(var(--radio) + 6px);padding:26px 28px;margin:28px 0 8px}
+.publica-txt{max-width:62ch}
+.publica-etq{font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--hestiat-primary-texto);margin-bottom:6px}
+.publica h2{font-size:clamp(20px,2.4vw,26px);margin-bottom:8px}
+.publica-sub{color:var(--muted-fg);line-height:1.6}
+.publica-acciones{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.publica-cta{background:var(--hestiat-primary);color:var(--ink);border-radius:var(--radio-pill);padding:13px 26px;font-weight:700;white-space:nowrap;transition:background .16s ease}
+.publica-cta:hover{background:var(--hestiat-primary-hover)}
+.publica-otros{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px}
+.publica-otros a{color:var(--hestiat-primary-texto);font-weight:600}
+@media(max-width:760px){
+  .publica{padding:20px 18px;gap:16px;margin:22px 0 6px}
+  .publica-acciones{width:100%}
+  .publica-cta{width:100%;text-align:center;padding:14px 20px}
+  .publica-otros{justify-content:center;width:100%}
+}
 .aviso{background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio);padding:12px 15px;font-size:13px;color:var(--muted-fg)}
 /* busqueda con mapa y filtros */
 .busqueda{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,42%);gap:26px;align-items:start}

@@ -6,6 +6,7 @@ import TarjetaDestino from "@/components/tarjeta-destino";
 import TarjetaCategoria from "@/components/tarjeta-categoria";
 import TarjetaAlojamiento from "@/components/tarjeta-alojamiento";
 import CercaDeTi from "@/components/cerca-de-ti";
+import BloquePublicaGratis from "@/components/bloque-publica-gratis";
 import { aTarjeta } from "@/lib/tarjetas";
 import { destacados } from "@/lib/db";
 import { destinosParaTi, categoriasServicio, categoriasExperiencia } from "@/lib/home.server";
@@ -137,6 +138,9 @@ export default async function Portada({
             en su título; si no hay ninguno, pasa a ser «Descubre alojamientos». Nunca finge
             proximidad. */}
         <CercaDeTi destino={q || undefined} />
+
+        {/* El modelo de negocio, dicho claro y en su sitio: publicar en Hestiat no cuesta nada. */}
+        <BloquePublicaGratis />
 
         <p className="aviso pie-inicio">
           Los alojamientos, sus precios y sus fotografías salen del catálogo real de Hestiat. Las

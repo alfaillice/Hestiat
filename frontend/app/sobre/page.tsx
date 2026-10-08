@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
  */
 async function contar(sql: string): Promise<number | null> {
   try {
-    const [filas] = await pool.query<{ n: number }[]>(sql);
+    const [filas] = await pool.query<mysql.RowDataPacket[]>(sql);
     return Number(filas[0]?.n ?? 0);
   } catch {
     return null;

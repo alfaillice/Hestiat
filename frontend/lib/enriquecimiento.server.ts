@@ -29,11 +29,37 @@
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
 
+import { buscarCandidatos, paginaHablaDe, type Candidato, type Identidad } from "@/lib/fuentes.server";
+import { buscarPrecios } from "@/lib/precio-web.server";
+
 export type TipoCatalogo = "experience" | "service" | "accommodation";
-export type Estado = "pending" | "processing" | "enriched" | "partial" | "needs_review" | "not_found" | "error";
+export type Estado =
+  | "pending"
+  | "processing"
+  | "enriched"
+  | "partial"
+  | "needs_review"
+  | "not_found"
+  | "not_found_after_search"
+  | "source_failed"
+  | "error";
+/**
+ * POR QUÉ acabó así una ficha. Es la diferencia que importa: «la fuente original falló» NO es lo
+ * mismo que «se buscó y no hay nada público». Lo primero habla de nuestros datos; lo segundo, del
+ * mundo. Se guarda por ficha para poder mirarlo después.
+ */
+export type Motivo =
+  | "ok"
+  | "sin_url"
+  | "url_muerta"
+  | "url_incorrecta"
+  | "sin_informacion_publica"
+  | "entidad_ambigua"
+  | "entidad_no_localizada"
+  | "error_tecnico";
 export type Confianza = "high" | "medium" | "low";
 
-export const VERSION_MOTOR = 1;
+export const VERSION_MOTOR = 2;
 
 /** Ficha normalizada: lo mismo para los tres catálogos. */
 export interface FichaCatalogo {
@@ -156,14 +182,48 @@ async function guardarDato(
   enriquecido: string,
   fuente: { source: string; name: string | null; url: string | null; type: string | null; confidence: Confianza },
   lote: number | null,
+  extra: { priority?: number | null; originalSourceUrl?: string | null; verificacion?: string | null } = {},
 ): Promise<void> {
   await pool.query(
-    `INSERT INTO catalogo_dato (catalog_type, item_id, campo, original_value, enriched_value, source, source_name, source_url, source_type, confidence, verified_at, lote_id)
-     VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?)
+    `INSERT INTO catalogo_dato (catalog_type, item_id, campo, original_value, enriched_value, source, source_priority, source_name, source_url, original_source_url, verificacion, source_type, confidence, verified_at, lote_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?)
      ON DUPLICATE KEY UPDATE enriched_value = VALUES(enriched_value), original_value = VALUES(original_value),
-       source = VALUES(source), source_name = VALUES(source_name), source_url = VALUES(source_url),
-       source_type = VALUES(source_type), confidence = VALUES(confidence), verified_at = NOW(), lote_id = VALUES(lote_id)`,
-    [tipo, id, campo, original, enriquecido.slice(0, 700), fuente.source, fuente.name, fuente.url, fuente.type, fuente.confidence, lote],
+       source = VALUES(source), source_priority = VALUES(source_priority), source_name = VALUES(source_name),
+       source_url = VALUES(source_url), original_source_url = VALUES(original_source_url),
+       verificacion = VALUES(verificacion), source_type = VALUES(source_type),
+       confidence = VALUES(confidence), verified_at = NOW(), lote_id = VALUES(lote_id)`,
+    [
+      tipo, id, campo, original, enriquecido.slice(0, 700), fuente.source, extra.priority ?? null,
+      fuente.name, fuente.url, extra.originalSourceUrl ?? null, extra.verificacion ?? null,
+      fuente.type, fuente.confidence, lote,
+    ],
+  );
+}
+
+/**
+ * Deja anotado por qué acabó así la ficha: si la fuente original servía o falló, con qué motivo, qué
+ * fuente se acabó usando y con qué confianza se comprobó la identidad.
+ */
+async function anotarDiagnostico(
+  tipo: TipoCatalogo,
+  id: number,
+  d: {
+    motivo?: Motivo | null;
+    estadoFuenteOriginal?: "ok" | "source_failed" | "sin_url" | null;
+    fuenteVerificada?: string | null;
+    confianzaIdentidad?: Confianza | null;
+    motores?: string | null;
+  },
+): Promise<void> {
+  await pool.query(
+    `UPDATE catalogo_enriquecimiento
+        SET motivo = ?, estado_fuente_original = ?, fuente_verificada_url = ?,
+            confianza_identidad = ?, motores = ?, actualizado_en = NOW()
+      WHERE catalog_type = ? AND item_id = ?`,
+    [
+      d.motivo ?? null, d.estadoFuenteOriginal ?? null, d.fuenteVerificada ?? null,
+      d.confianzaIdentidad ?? null, d.motores ?? null, tipo, id,
+    ],
   );
 }
 
@@ -224,25 +284,10 @@ function limpiarHtml(t: string): string {
 }
 
 /**
- * Lee la web oficial de la ficha. Una sola petición, con tiempo máximo, y solo de lo que la propia
- * página declara: título, descripción, imagen social (og:image), teléfono (tel:), dirección y precio
- * si vienen en datos estructurados. No se interpreta ni se adivina nada.
+ * Lo que la propia página declara: título, descripción, imagen social (og:image), teléfono (tel:),
+ * dirección y precio si vienen en datos estructurados. No se interpreta ni se adivina nada.
  */
-async function leerWebOficial(url: string, timeoutMs = 8000): Promise<PaginaOficial | null> {
-  if (!urlPermitida(url)) return null;
-  const control = new AbortController();
-  const t = setTimeout(() => control.abort(), timeoutMs);
-  try {
-    const r = await fetch(url, {
-      signal: control.signal,
-      redirect: "follow",
-      headers: { "user-agent": "HestiatBot/1.0 (+https://hestiat.com; hola@hestiat.com)" },
-    });
-    if (!r.ok) return null;
-    const tipo = r.headers.get("content-type") ?? "";
-    if (!tipo.includes("text/html")) return null;
-    const html = (await r.text()).slice(0, 400_000);
-
+function parsearHtml(html: string, url: string): PaginaOficial {
     const meta = (nombre: string) =>
       html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${nombre}["'][^>]+content=["']([^"']+)["']`, "i"))?.[1] ??
       html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${nombre}["']`, "i"))?.[1] ??
@@ -280,8 +325,54 @@ async function leerWebOficial(url: string, timeoutMs = 8000): Promise<PaginaOfic
       direccion,
       precio,
     };
+}
+
+interface Apertura {
+  motivo: Motivo;
+  pagina: PaginaOficial | null;
+  final: string;
+  estado: number | null;
+  /** Texto visible de la página, para comprobar si de verdad habla de esta entidad. */
+  texto: string;
+}
+
+/**
+ * Abre una dirección y DICE QUÉ HA PASADO, no solo si hay página. No es lo mismo «la web está
+ * muerta» que «la web responde pero no publica nada útil», ni que «esta dirección ahora lleva a
+ * otro sitio»: esas tres cosas se guardan distintas, porque significan cosas distintas.
+ */
+async function abrirPagina(url: string, timeoutMs = 9000): Promise<Apertura> {
+  if (!url || !urlPermitida(url)) return { motivo: "sin_url", pagina: null, final: url, estado: null, texto: "" };
+  const control = new AbortController();
+  const t = setTimeout(() => control.abort(), timeoutMs);
+  try {
+    const r = await fetch(url, {
+      signal: control.signal,
+      redirect: "follow",
+      headers: { "user-agent": "HestiatBot/2.0 (+https://hestiat.com; hola@hestiat.com)" },
+    });
+    const final = r.url || url;
+    if (!r.ok) return { motivo: "url_muerta", pagina: null, final, estado: r.status, texto: "" };
+    const tipo = r.headers.get("content-type") ?? "";
+    if (!tipo.includes("text/html")) return { motivo: "url_muerta", pagina: null, final, estado: r.status, texto: "" };
+    const html = (await r.text()).slice(0, 400_000);
+    const pagina = parsearHtml(html, final);
+    const texto = limpiarHtml(html).slice(0, 60_000);
+    // Si acaba en OTRO dominio, la dirección guardada ya no lleva ahí: no se usa como fuente propia.
+    let otroDominio = false;
+    try {
+      const a = new URL(final).hostname.replace(/^www\./, "");
+      const b = new URL(url).hostname.replace(/^www\./, "");
+      otroDominio = a !== b;
+    } catch {
+      /* una dirección rara no rompe nada */
+    }
+    if (otroDominio) return { motivo: "url_incorrecta", pagina, final, estado: r.status, texto };
+    const util = Boolean(pagina.titulo || pagina.descripcion || pagina.imagen || pagina.precio || pagina.telefono);
+    if (!util) return { motivo: "sin_informacion_publica", pagina, final, estado: r.status, texto };
+    return { motivo: "ok", pagina, final, estado: r.status, texto };
   } catch {
-    return null;
+    return { motivo: "url_muerta", pagina: null, final: url, estado: null, texto: "" };
   } finally {
     clearTimeout(t);
   }
@@ -343,73 +434,205 @@ export async function enriquecerFicha(
       revisar.push(["sin clasificar", "No se ha podido asignar categoría con seguridad"]);
     }
 
-    /* 2 · LA WEB OFICIAL. Es la fuente prioritaria, y la única que se lee. */
-    const web = (ficha.web ?? "").trim();
-    if (!web || !urlPermitida(web)) {
-      await marcarEstado(tipo, id, "not_found", { campos: campos.length, error: "Sin web oficial que consultar", lote });
-      await registrar(tipo, id, "not_found", campos, null, "Sin fuente oficial disponible", null, lote);
-      return { id, estado: "not_found", campos, fuente: null };
-    }
+    /* 2 · LA FUENTE ORIGINAL, Y QUÉ PASA CON ELLA. Una dirección muerta NO significa que no haya
+       información: significa que falló la fuente. Se anota la diferencia —404, otro destino, página
+       vacía— y se sigue buscando por otra vía. */
+    const webOriginal = (ficha.web ?? "").trim();
+    const apertura = await abrirPagina(webOriginal);
+    const motivoOriginal: Motivo = webOriginal ? apertura.motivo : "sin_url";
+    let pagina = apertura.motivo === "ok" ? apertura.pagina : null;
+    let usada: { url: string; prioridad: number; tipo: string; procedencia: string } | null = null;
+    let identidadConfirmada: Confianza | null = pagina ? "high" : null;
+    let motores = "";
+    let imagenAlternativa: { url: string; procedencia: string } | null = null;
+    let entidadLocalizada = false;
 
-    const pagina = await leerWebOficial(web);
+    /* 3 · SEGUNDA ESTRATEGIA. Si la dirección original no sirve, se busca la entidad en fuentes
+       abiertas (Wikidata, Wikipedia, Nominatim) y se comprueba NOMBRE + UBICACIÓN antes de aceptar
+       nada. No vale la primera que aparezca ni una que solo comparta una palabra. */
     if (!pagina) {
-      await marcarEstado(tipo, id, "error", { campos: campos.length, error: "La web oficial no respondió o no es HTML", lote });
-      await registrar(tipo, id, "error", campos, web, "Sin respuesta de la web", "timeout o respuesta no válida", lote);
-      return { id, estado: "error", campos, fuente: web };
+      const ident: Identidad = {
+        nombre: ficha.nombre,
+        municipio: ficha.municipio,
+        provincia: ficha.provincia,
+        pais: "España",
+        lat: ficha.lat,
+        lng: ficha.lng,
+      };
+      const busqueda = await buscarCandidatos(ident);
+      motores = busqueda.motores.join(", ");
+      entidadLocalizada = busqueda.localizada;
+      let huboParecidos = false;
+      for (const candidato of busqueda.candidatos.slice(0, 4)) {
+        if (!candidato.nombreCoincide) {
+          huboParecidos = true;
+          continue;
+        }
+        const prueba = await abrirPagina(candidato.url);
+        if (!prueba.pagina) continue;
+        const habla = paginaHablaDe(prueba.texto, ident);
+        if (!habla.nombre) {
+          huboParecidos = true;
+          continue;
+        }
+        // Aceptada: el nombre coincide y la página habla de la entidad. La ubicación fija la confianza.
+        pagina = prueba.pagina;
+        usada = { url: prueba.final, prioridad: candidato.prioridad, tipo: candidato.tipo, procedencia: candidato.procedencia };
+        identidadConfirmada =
+          habla.lugar || candidato.ubicacionCoincide === true
+            ? "high"
+            : candidato.ubicacionCoincide === false
+              ? "low"
+              : "medium";
+        if (candidato.imagen) {
+          imagenAlternativa = { url: candidato.imagen, procedencia: `${candidato.imagenProcedencia ?? candidato.procedencia} · ${candidato.procedenciaUrl}` };
+        }
+        break;
+      }
+
+      if (!pagina) {
+        // No se ha podido confirmar nada. Se distingue POR QUÉ, que es justo lo que se preguntó.
+        const motivo: Motivo =
+          motivoOriginal === "url_muerta" || motivoOriginal === "url_incorrecta" || motivoOriginal === "sin_informacion_publica"
+            ? motivoOriginal
+            : huboParecidos
+              ? "entidad_ambigua"
+              : entidadLocalizada
+                ? "sin_informacion_publica"
+                : "entidad_no_localizada";
+        const estado: Estado = webOriginal ? "source_failed" : "not_found_after_search";
+        if (huboParecidos) {
+          await anotarRevision(tipo, id, "identidad sin confirmar", "Se encontraron páginas parecidas, pero no se pudo confirmar nombre y ubicación", lote);
+        }
+        await marcarEstado(tipo, id, estado, {
+          campos: campos.length,
+          error: `Fuente original: ${motivoOriginal}. Sin alternativa confirmada (${motivo})`,
+          lote,
+        });
+        // El diagnóstico se anota DESPUÉS de crear la fila de estado: si no, el UPDATE no tendría dónde.
+        await anotarDiagnostico(tipo, id, {
+          motivo,
+          estadoFuenteOriginal: webOriginal ? "source_failed" : "sin_url",
+          confianzaIdentidad: huboParecidos ? "low" : null,
+          motores: motores || "sin resultados",
+        });
+        await registrar(tipo, id, estado, campos, webOriginal || null, "Sin fuente utilizable", motivo, lote);
+        return { id, estado, campos, fuente: null };
+      }
     }
 
+    /* 4 · CON LA FUENTE BUENA: la original si servía, o la que se ha verificado buscándola. Todo lo
+       que se guarde lleva su procedencia, su prioridad y, si la original estaba rota, la dirección
+       original al lado de la verificada. */
+    const fuenteDe = (campo: string, confidence: Confianza) =>
+      usada
+        ? { source: "external_verified", name: `${usada.procedencia} · ${usada.tipo}`, url: usada.url, type: campo, confidence }
+        : { source: "official_web", name: ficha.nombre, url: pagina.url, type: campo, confidence };
+    const extra = {
+      priority: usada?.prioridad ?? 1,
+      originalSourceUrl: webOriginal || null,
+      verificacion: usada
+        ? `nombre + ubicación: ${identidadConfirmada === "high" ? "confirmados" : identidadConfirmada === "medium" ? "el nombre sí, la ubicación no visible" : "sin confirmar"}`
+        : "fuente original del catálogo",
+    };
     const fuenteWeb = (campo: string, valor: string, confidence: Confianza) =>
-      guardarDato(tipo, id, campo, null, valor, {
-        source: "official_web", name: ficha.nombre, url: pagina.url, type: campo, confidence,
-      }, lote);
+      guardarDato(tipo, id, campo, null, valor, fuenteDe(campo, confidence), lote, extra);
 
-    /* 3 · DESCRIPCIÓN: solo si falta. Nunca se pisa la que ya hay. */
+    /* 5 · DESCRIPCIÓN: solo si falta. Nunca se pisa la que ya hay. */
     if (!ficha.descripcion && pagina.descripcion) {
-      await fuenteWeb("descripcion", pagina.descripcion.slice(0, 700), "medium");
+      await fuenteWeb("descripcion", pagina.descripcion.slice(0, 700), usada ? identidadConfirmada ?? "medium" : "medium");
       campos.push("descripcion");
     }
 
-    /* 4 · TELÉFONO: solo si falta y la web lo publica. */
+    /* 6 · TELÉFONO: solo si falta y la web lo publica. */
     if (!ficha.telefono && pagina.telefono) {
-      await fuenteWeb("telefono", pagina.telefono, "high");
+      await fuenteWeb("telefono", pagina.telefono, usada ? "medium" : "high");
       campos.push("telefono");
     }
 
-    /* 5 · DIRECCIÓN: solo si falta y viene en los datos estructurados de la propia web. */
+    /* 7 · DIRECCIÓN: solo si falta y viene en los datos estructurados de la propia web. */
     if (!ficha.direccion && pagina.direccion) {
-      await fuenteWeb("direccion", pagina.direccion.slice(0, 300), "high");
+      await fuenteWeb("direccion", pagina.direccion.slice(0, 300), usada ? "medium" : "high");
       campos.push("direccion");
     }
 
-    /* 6 · IMAGEN OFICIAL: se guarda como candidata, no se pone en el catálogo por su cuenta. */
+    /* 8 · FOTOGRAFÍA: la oficial del sitio; si no la hay, la de la entidad encontrada (con su
+       procedencia). Nunca una foto de otra empresa ni de otro lugar: va con la entidad verificada. */
     if (pagina.imagen && urlPermitida(pagina.imagen)) {
       await fuenteWeb("imagen_oficial", pagina.imagen.slice(0, 700), "medium");
       campos.push("imagen_oficial");
       revisar.push(["imagen oficial propuesta", "La imagen oficial está disponible para revisión"]);
+    } else if (imagenAlternativa && urlPermitida(imagenAlternativa.url)) {
+      await guardarDato(
+        tipo,
+        id,
+        "imagen_oficial",
+        null,
+        imagenAlternativa.url.slice(0, 700),
+        { source: "external_verified", name: imagenAlternativa.procedencia, url: usada?.url ?? pagina.url, type: "imagen_oficial", confidence: "medium" },
+        lote,
+        extra,
+      );
+      campos.push("imagen_oficial");
+      revisar.push(["imagen oficial propuesta", `Imagen de la entidad verificada · ${imagenAlternativa.procedencia}`]);
     }
 
-    /* 7 · PRECIO: solo si la web lo publica en datos estructurados, y SIEMPRE como orientativo. */
-    if (!ficha.precioValor && pagina.precio) {
-      const num = Number(String(pagina.precio).replace(",", "."));
-      if (Number.isFinite(num) && num > 0) {
-        await fuenteWeb("precio_orientativo", `${num}`, "medium");
-        campos.push("precio_orientativo");
-        revisar.push(["precio orientativo propuesto", `La web publica ${num}; hay que confirmarlo antes de mostrarlo`]);
+    /* 9 · PRECIO. Se busca donde puede verificarse: en la web del propio sitio y en sus páginas de
+       tarifas, entradas o reservas. Siempre ORIENTATIVO, con la dirección exacta de donde salió. Si
+       no hay ninguna tarifa legible, no se escribe nada: la ficha sigue diciendo «Consultar». */
+    let precioWeb = pagina.precio ? Number(String(pagina.precio).replace(",", ".")) : NaN;
+    let precioDetalle = precioWeb ? "datos estructurados de la web" : "";
+    let visitadas = 0;
+    if (!ficha.precioValor && (!Number.isFinite(precioWeb) || precioWeb <= 0)) {
+      const objetivo = usada?.url ?? pagina.url;
+      const busquedaPrecio = await buscarPrecios(objetivo, { maxPaginas: 3 });
+      visitadas = busquedaPrecio.visitadas.length;
+      const elegido = busquedaPrecio.precios.find((p) => p.confianza === "high") ?? busquedaPrecio.precios.find((p) => p.confianza === "medium") ?? null;
+      if (elegido) {
+        precioWeb = elegido.valor;
+        precioDetalle = elegido.contexto.slice(0, 120);
       }
+    }
+    if (!ficha.precioValor && Number.isFinite(precioWeb) && precioWeb > 0) {
+      await guardarDato(
+        tipo,
+        id,
+        "precio_orientativo",
+        null,
+        `${precioWeb}`,
+        { ...fuenteDe("precio_orientativo", "medium"), url: usada?.url ?? pagina.url },
+        lote,
+        { ...extra, verificacion: `${extra.verificacion} · ${precioDetalle}`.slice(0, 120) },
+      );
+      campos.push("precio_orientativo");
+      revisar.push(["precio orientativo propuesto", `Publicado por el propio sitio: ${precioDetalle}. Hay que confirmarlo antes de mostrarlo`]);
+    } else if (!ficha.precioValor) {
+      revisar.push([
+        "precio no encontrado",
+        visitadas > 1 ? `Se miraron ${visitadas} páginas del sitio y ninguna publica tarifa legible` : "El sitio no publica tarifas legibles",
+      ]);
     }
 
     /* 8 · Lo que sigue faltando, a la cola de revisión. */
     if (!ficha.lat || !ficha.lng) revisar.push(["sin coordenadas", "No hay coordenadas para mostrar el mapa"]);
     if (!ficha.imagen && !pagina.imagen) revisar.push(["sin fotografía", "No hay imagen propia ni oficial disponible"]);
-    if (ficha.precioTipo === "unavailable" || (!ficha.precioValor && !pagina.precio)) {
-      revisar.push(["precio no encontrado", "Se muestra «Consultar» hasta que alguien lo confirme"]);
-    }
     for (const [problema, detalle] of revisar) await anotarRevision(tipo, id, problema, detalle, lote);
 
-    /* 9 · ESTADO FINAL del elemento. */
+    /* 10 · ESTADO FINAL del elemento, con su diagnóstico. */
     const encontrados = campos.filter((c) => !["categoria", "subcategoria"].includes(c)).length;
-    const estado: Estado = encontrados === 0 ? "not_found" : revisar.length > 0 ? "partial" : "enriched";
+    // Si la fuente se localizó y se verificó pero no publica nada que falte, la ficha NO está «sin
+    // encontrar»: está verificada y sin nada que añadir. No es lo mismo, y se dice distinto.
+    const fuenteConfirmada = Boolean(usada || motivoOriginal === "ok");
+    const estado: Estado =
+      encontrados === 0 ? (fuenteConfirmada ? "enriched" : "not_found_after_search") : revisar.length > 0 ? "partial" : "enriched";
     await marcarEstado(tipo, id, estado, { campos: campos.length, lote });
+    await anotarDiagnostico(tipo, id, {
+      motivo: motivoOriginal,
+      estadoFuenteOriginal: webOriginal ? (motivoOriginal === "ok" ? "ok" : "source_failed") : "sin_url",
+      fuenteVerificada: usada?.url ?? (motivoOriginal === "ok" ? pagina.url : null),
+      confianzaIdentidad: identidadConfirmada,
+      motores: motores || null,
+    });
     await registrar(tipo, id, estado, campos, pagina.url, `Enriquecidos ${campos.length} campos`, null, lote);
     return { id, estado, campos, fuente: pagina.url };
   } catch (error) {

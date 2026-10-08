@@ -112,8 +112,11 @@ export async function buscarServicios(f: FiltrosServ = {}): Promise<{ total: num
   // funcionan los dos, que es lo que se espera al pulsarlos.
   const elegido = (f.categoria ?? f.subcategoria ?? "").trim();
   if (elegido) {
-    where.push("(c.slug = ? OR sub.slug = ?)");
-    valores.push(elegido, elegido);
+    // Se acepta el identificador (`peluqueria`), el NOMBRE de antes (`Peluquería`) y el id numérico,
+    // para que los enlaces antiguos sigan funcionando.
+    const n = Number(elegido);
+    where.push("(c.slug = ? OR c.nombre = ? OR c.id = ? OR sub.slug = ? OR sub.nombre = ? OR sub.id = ?)");
+    valores.push(elegido, elegido, Number.isFinite(n) ? n : 0, elegido, elegido, Number.isFinite(n) ? n : 0);
   }
   if (f.provincia) {
     where.push("s.province = ?");

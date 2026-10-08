@@ -142,8 +142,19 @@ export async function buscarExperiencias(f: FiltrosExp = {}): Promise<{ total: n
 
   const where: string[] = ["e.is_active = 1", "e.slug IS NOT NULL", "e.slug <> ''"];
   const valores: unknown[] = [];
-  if (f.categoria) { where.push("c.slug = ?"); valores.push(f.categoria); }
-  if (f.subcategoria) { where.push("s.slug = ?"); valores.push(f.subcategoria); }
+  /* Compatibilidad de enlaces: se acepta el identificador nuevo (`museos-exposiciones`), el NOMBRE
+     que usaban los enlaces antiguos (`Museos y exposiciones`) y el id numérico. Así un enlace
+     indexado hace meses sigue llevando a su categoría en vez de a una página vacía. */
+  const porCategoria = (valor: string) => {
+    const n = Number(valor);
+    return { sql: "(c.slug = ? OR c.nombre = ? OR c.id = ?)", valores: [valor, valor, Number.isFinite(n) ? n : 0] };
+  };
+  const porSubcategoria = (valor: string) => {
+    const n = Number(valor);
+    return { sql: "(s.slug = ? OR s.nombre = ? OR s.id = ?)", valores: [valor, valor, Number.isFinite(n) ? n : 0] };
+  };
+  if (f.categoria) { const c = porCategoria(f.categoria); where.push(c.sql); valores.push(...c.valores); }
+  if (f.subcategoria) { const s = porSubcategoria(f.subcategoria); where.push(s.sql); valores.push(...s.valores); }
   if (f.provincia) { where.push("e.province = ?"); valores.push(f.provincia); }
   if (f.familia) where.push("e.family_friendly = 1");
   if (f.accesible) where.push("e.accessible = 1");

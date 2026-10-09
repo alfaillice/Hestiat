@@ -29,6 +29,10 @@ api() { curl -sS -X POST -H "Cookie: hestiat_sesion=$T" -H 'Content-Type: applic
 echo "############ 1. BUCLE DEL AGENTE (servidor simulado local, coste 0) ############"
 if [ "$MODO" != "--real" ]; then
   cp "$ENVF" /root/env-copia-ia.bak
+  # La clave REAL del administrador, si existe, se guarda aparte y se DEVUELVE al terminar. Antes el
+  # script borraba todas las líneas IA_ y, si había una clave de verdad, se perdía.
+  grep '^IA_' "$ENVF" > /tmp/ia-real.txt 2>/dev/null || true
+  echo "   líneas IA_ que había antes: $(wc -l < /tmp/ia-real.txt)"
   sed -i '/^IA_/d' "$ENVF"
   nohup python3 /root/servidor-simulado.py 8899 >/tmp/stub.log 2>&1 &
   sleep 2
@@ -148,8 +152,13 @@ PY
 echo
 echo "############ 6. LIMPIEZA ############"
 if [ "$MODO" != "--real" ]; then
-  pkill -f servidor-simulado.py 2>/dev/null
+  pkill -f 'servidor-simula[d]o.py' 2>/dev/null
   sed -i '/^IA_/d' "$ENVF"
+  if [ -s /tmp/ia-real.txt ]; then
+    cat /tmp/ia-real.txt >> "$ENVF"          # se devuelve la clave real, sin mostrarla nunca
+    rm -f /tmp/ia-real.txt
+    echo "   clave real del administrador devuelta al entorno (no se borra)"
+  fi
   systemctl restart hestiat
   for i in $(seq 1 8); do sleep 3; [ "$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 http://127.0.0.1:3000/)" = "200" ] && break; done
   echo "   servidor simulado detenido y entorno restaurado (líneas IA_: $(grep -c '^IA_' $ENVF || true))"

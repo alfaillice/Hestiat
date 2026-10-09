@@ -16,3 +16,7 @@ pkg*/
 
 # Proyecto aparte del marketplace de Higgsfield: no forma parte de Hestiat.
 hestiat-marketplace*/
+
+# Caché de Python (nunca debe subirse)
+__pycache__/
+*.pyc

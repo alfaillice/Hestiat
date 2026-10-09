@@ -10,6 +10,8 @@ import Galeria from "@/components/galeria";
 import ReservaCaja from "@/components/reserva-caja";
 import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
+import Corazon from "@/components/corazon";
+import { guardadosEntre } from "@/lib/favoritos.server";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +114,21 @@ export default async function Ficha({
   if (permiso === "no") notFound();
 
   const { alojamiento: a, fotos, servicios, nochesBloqueadas, anfitrion, similares, resenas } = datos;
+
+  /*
+   * FAVORITOS EN LA FICHA.
+   *
+   * Faltaba: el corazón solo existía en las tarjetas de resultados, así que en una ficha no había
+   * nada que pulsar y el estado no se podía mantener al pasar de los resultados a la ficha.
+   *
+   * Se reutiliza el mismo componente (`Corazon`) y el mismo ayudante que usan la búsqueda, la portada,
+   * «cerca de ti» y la página de favoritos (`guardadosEntre`). No se crea ningún sistema paralelo.
+   * El identificador es el REAL del alojamiento (`a.id`), no el antiguo ni la posición en la lista.
+   */
+  const sesionFicha = await getCurrentUser();
+  const yaGuardado = sesionFicha
+    ? (await guardadosEntre(Number(sesionFicha.id), [Number(a.id)])).has(Number(a.id))
+    : false;
 
   // La misma decisión que en los metadatos: solo se muestra lo publicado, y un borrador únicamente
   // a quien puede editarlo y entrando con «vista=previa».
@@ -230,7 +247,17 @@ export default async function Ficha({
         {a.province ? <> <span>/</span> <Link href={`/search?provincia=${encodeURIComponent(a.province)}`}>{a.province}</Link></> : null}
       </nav>
 
-      <Galeria fotos={fotos} titulo={a.title} todasReferenciales={datos.todasReferenciales} />
+      {/* El corazón va sobre la galería, en la misma posición que en las tarjetas (arriba a la
+          derecha). El contenedor es relativo para que se coloque encima de la foto, como allí. */}
+      <div style={{ position: "relative" }}>
+        <Galeria fotos={fotos} titulo={a.title} todasReferenciales={datos.todasReferenciales} />
+        <Corazon
+          accommodationId={Number(a.id)}
+          guardadoInicial={yaGuardado}
+          haySesion={Boolean(sesionFicha)}
+          volverA={`/alojamiento/${a.slug}`}
+        />
+      </div>
 
       <div className="ficha-cols">
         <div className="ficha-principal">
@@ -509,3 +536,4 @@ export default async function Ficha({
     </main>
   );
 }
+

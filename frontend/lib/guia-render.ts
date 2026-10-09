@@ -51,3 +51,36 @@ export function trozosDelCuerpo(cuerpo: string): Trozo[] {
 export function textoReconstruido(trozos: Trozo[]): string {
   return trozos.map((t) => t.valor).join("");
 }
+
+/**
+ * ¿Esta línea del cuerpo es un título de sección?
+ *
+ * Los títulos del cuerpo van en mayúsculas (por ejemplo «CÓMO ELEGIR ZONA»). Se detectan para
+ * servirlos como encabezados <h2> de verdad, que es lo que necesitan un buscador y un lector de
+ * pantalla. La detección es deliberadamente conservadora: una línea solo cuenta como título si
+ * tiene al menos cuatro letras y ninguna minúscula, y nunca si es una dirección.
+ */
+export function esTituloDeSeccion(linea: string): boolean {
+  const t = String(linea ?? "").trim();
+  if (t.length < 6 || t.length > 130) return false;
+  if (/^https?:\/\//i.test(t)) return false;
+  const letras = t.replace(/[^\p{L}]/gu, "");
+  if (letras.length < 4) return false;
+  return letras === letras.toUpperCase();
+}
+
+/**
+ * Fecha de publicación en ISO 8601.
+ *
+ * El servidor y MariaDB van en UTC (comprobado: zona Etc/UTC y NOW() igual a UTC_TIMESTAMP()), así
+ * que la fecha guardada se publica tal cual con el desfase +00:00. Si no hay fecha, no se inventa
+ * ninguna: devuelve undefined y el dato estructurado simplemente no la lleva.
+ */
+export function fechaISO(valor: unknown): string | undefined {
+  if (valor === null || valor === undefined || valor === "") return undefined;
+  const s = String(valor).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2}):(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}+00:00`;
+  const d = new Date(s);
+  return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}

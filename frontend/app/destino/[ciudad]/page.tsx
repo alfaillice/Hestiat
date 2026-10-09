@@ -46,6 +46,19 @@ async function alojamientosDeCiudad(ciudad: string, limite = 24) {
   return filas as unknown as Record<string, unknown>[];
 }
 
+/* La guía de viaje de esta ciudad, y SOLO si está publicada: un borrador no se enlaza nunca. */
+async function guiaDeCiudad(ciudad: string): Promise<string | null> {
+  try {
+    const [f] = await pool.query<any[]>(
+      `SELECT slug FROM guia WHERE estado = 'publicada' AND BINARY destino = BINARY ? LIMIT 1`,
+      [ciudad],
+    );
+    return f[0]?.slug ? String(f[0].slug) : null;
+  } catch {
+    return null; // si la tabla todavía no existe, la página funciona igual
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ ciudad: string }> }): Promise<Metadata> {
   const { ciudad: slug } = await params;
   const loc = await localidadPorSlug(slug);
@@ -89,6 +102,7 @@ export default async function PaginaCiudad({ params }: { params: Promise<{ ciuda
   ]);
   const total = d.alojamientos + d.experiencias + d.servicios;
   const tarjetasMapeadas = tarjetas.map(aTarjeta);
+  const guia = await guiaDeCiudad(ciudad);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -166,6 +180,12 @@ export default async function PaginaCiudad({ params }: { params: Promise<{ ciuda
               — {d.servicios === 0 ? "todavía sin fichas en el catálogo" : `${d.servicios} en el catálogo`}
             </li>
             <li><Link href="/destinos">Ver todos los destinos</Link> · <Link href="/search">Buscar alojamiento</Link></li>
+            {guia ? (
+              <li>
+                <Link href={`/guia/${guia}`}>Guía de viaje de {ciudad}</Link>{" "}
+                — qué mirar antes de reservar, con los datos del catálogo
+              </li>
+            ) : null}
           </ul>
         </section>
 

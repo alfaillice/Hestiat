@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pool } from "@/lib/db";
-import { trozosDelCuerpo } from "@/lib/guia-render";
+import { esTituloDeSeccion, fechaISO, trozosDelCuerpo } from "@/lib/guia-render";
 
 export const dynamic = "force-dynamic";
 
@@ -76,8 +76,16 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
         "@type": "Article",
         headline: g.titulo,
         description: g.resumen ?? undefined,
-        datePublished: g.publicado_en ?? undefined,
-        dateModified: g.revisado_en ?? g.publicado_en ?? undefined,
+        // Fecha real de publicación, en ISO 8601 (el servidor y la base de datos van en UTC).
+        datePublished: fechaISO(g.publicado_en),
+        dateModified: fechaISO(g.revisado_en ?? g.publicado_en),
+        // Solo se declara imagen si existe una imagen de referencia real, y se dice qué es.
+        ...(referencia?.url
+          ? {
+              image: referencia.url,
+              creditText: "Imagen de referencia de la localidad (no es una fotografía del establecimiento)",
+            }
+          : {}),
         author: { "@type": "Organization", name: "Hestiat" },
         publisher: { "@type": "Organization", name: "Hestiat", url: "https://hestiat.com" },
       },
@@ -112,13 +120,27 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
       <h1>{g.titulo}</h1>
       {g.resumen ? <p style={{ color: "var(--muted-fg)", maxWidth: "70ch" }}>{g.resumen}</p> : null}
       <article style={{ maxWidth: "70ch", lineHeight: 1.65, whiteSpace: "pre-wrap", marginTop: 16 }}>
-        {partes.map((t, i) =>
-          t.tipo === "texto" ? (
-            <span key={i}>{t.valor}</span>
-          ) : (
-            <a key={i} href={t.href} rel={t.interno ? undefined : "noopener"}>{t.valor}</a>
-          ),
-        )}
+        {/* Las direcciones van como enlaces; los títulos de sección, como encabezados <h2> reales
+            (un solo <h1> en la página, que es el título de la guía). El aspecto no cambia: el
+            encabezado hereda el tamaño y el peso del texto. */}
+        {partes.flatMap((t, i) => {
+          if (t.tipo === "enlace") {
+            return [<a key={`e${i}`} href={t.href} rel={t.interno ? undefined : "noopener"}>{t.valor}</a>];
+          }
+          const lineas = t.valor.split("\n");
+          return lineas.flatMap((linea, j) => {
+            if (esTituloDeSeccion(linea)) {
+              return [
+                <h2 key={`h${i}-${j}`} style={{ fontSize: "inherit", fontWeight: "inherit", margin: 0 }}>
+                  {linea}
+                </h2>,
+              ];
+            }
+            return j < lineas.length - 1
+              ? [<span key={`t${i}-${j}`}>{linea}</span>, <span key={`n${i}-${j}`}>{"\n"}</span>]
+              : [<span key={`t${i}-${j}`}>{linea}</span>];
+          });
+        })}
       </article>
       <p className="aviso" style={{ marginTop: 20, fontSize: 13 }}>
         Guía revisada por {g.revisor ?? "el equipo de Hestiat"} y publicada el{" "}

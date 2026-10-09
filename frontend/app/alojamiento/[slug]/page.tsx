@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { alojamientoIndexable } from "@/lib/seo.server";
+import { alojamientoIndexable, imagenDeReferencia } from "@/lib/seo.server";
 import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
@@ -59,6 +59,8 @@ export async function generateMetadata({
   const ficha: DatosFicha = datos!;
   const a = ficha.alojamiento;
   const lugar = [a.city, a.province].filter(Boolean).join(", ");
+  // Resuelta antes de construir los metadatos: dentro del objeto no puede ir una promesa.
+  const imagenCompartir = ficha.fotos[0]?.url ?? (await imagenDeReferencia(a.city, a.province))?.url ?? undefined;
   return {
     title: `${a.title}${lugar ? ` — ${lugar}` : ""} — Hestiat`,
     description:
@@ -74,7 +76,9 @@ export async function generateMetadata({
       type: "website",
       title: `${a.title}${lugar ? ` — ${lugar}` : ""}`,
       description: a.description?.slice(0, 155) ?? undefined,
-      images: ficha.fotos[0]?.url ? [ficha.fotos[0].url] : [],
+      // Si la ficha no tiene foto propia, se comparte la imagen de referencia de su localidad: es la
+      // misma que ya se enseña en la web, y así la ficha nunca se comparte sin imagen.
+      images: imagenCompartir ? [imagenCompartir] : [],
     },
   };
 }

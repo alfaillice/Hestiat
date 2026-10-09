@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { pool } from "@/lib/db";
 import { aTarjeta } from "@/lib/tarjetas";
 import TarjetaAlojamiento from "@/components/tarjeta-alojamiento";
-import { ciudadesDestacadas, datosCiudad, localidadPorSlug, slugCiudad } from "@/lib/seo.server";
+import { ciudadesDestacadas, datosCiudad, imagenDeReferencia, localidadPorSlug, slugCiudad } from "@/lib/seo.server";
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +68,12 @@ export async function generateMetadata({ params }: { params: Promise<{ ciudad: s
     alternates: { canonical: `/destino/${slugCiudad(ciudad)}` },
     // Si no reúne contenido suficiente, no se pide la indexación.
     robots: d.indexable ? { index: true, follow: true } : { index: false, follow: true },
-    openGraph: { title: `${ciudad} — Hestiat`, type: "website" },
+    openGraph: {
+      title: `${ciudad} — Hestiat`,
+      type: "website",
+      // La imagen de referencia de la propia localidad: la página nunca se comparte sin imagen.
+      images: (await imagenDeReferencia(ciudad, null))?.url ? [(await imagenDeReferencia(ciudad, null))!.url] : [],
+    },
   };
 }
 

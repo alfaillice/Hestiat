@@ -212,3 +212,28 @@ export async function ciudadesDestacadas(limite = 60): Promise<Array<{ ciudad: s
     return [];
   }
 }
+
+
+/**
+ * Imagen de referencia para compartir (og:image) cuando la ficha o la ciudad no tiene foto propia.
+ * Reutiliza la cadena que ya existe: localidad → provincia → respaldo general. Se devuelve también
+ * la etiqueta, para no hacer pasar una imagen de referencia por fotografía del negocio.
+ */
+export async function imagenDeReferencia(ciudad: string | null, provincia: string | null): Promise<{ url: string; referencial: true } | null> {
+  const claves: Array<[string, string]> = [];
+  if (ciudad) claves.push(["ciudad", String(ciudad).toLowerCase()]);
+  if (provincia) claves.push(["provincia", String(provincia).toLowerCase()]);
+  claves.push(["pais", "espana"]);
+  for (const [tipo, clave] of claves) {
+    try {
+      const [filas] = await pool.query<any[]>(
+        `SELECT url FROM localidad_imagen WHERE tipo = ? AND clave = ? AND url IS NOT NULL LIMIT 1`,
+        [tipo, clave],
+      );
+      if (filas[0]?.url) return { url: String(filas[0].url), referencial: true };
+    } catch {
+      /* si no hay tabla o no hay fila, se prueba la siguiente */
+    }
+  }
+  return null;
+}

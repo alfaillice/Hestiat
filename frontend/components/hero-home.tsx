@@ -42,6 +42,11 @@ export default function HeroHome({
   // PRIMERO se decide si hay vídeo (y cuál). El elemento se pinta a partir de aquí.
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return; // solo póster
+    // En conexiones lentas o con ahorro de datos, el vídeo no se pide: es un fondo decorativo y no
+    // merece gastar megas a quien va con datos contados. Se queda el póster, que es una imagen real.
+    const red = (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (red?.saveData === true) return;
+    if (red?.effectiveType && /^(slow-)?2g$|^3g$/.test(red.effectiveType)) return;
     setFuente(window.matchMedia("(max-width: 820px)").matches ? videoMovil : video);
   }, [video, videoMovil]);
 

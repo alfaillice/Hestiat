@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ciudadesDestacadas } from "@/lib/seo.server";
 import { metadatosInformativos } from "@/lib/paginas-info";
 import { pool } from "@/lib/db";
 
@@ -13,6 +14,7 @@ export const metadata = metadatosInformativos({
 
 /** Destinos con datos reales: provincias con alojamientos publicados y su recuento de verdad. */
 export default async function Destinos() {
+  const ciudades = await ciudadesDestacadas(48);
   let provincias: { provincia: string; total: number }[] = [];
   try {
     const [filas] = await pool.query<any[]>(
@@ -33,6 +35,18 @@ export default async function Destinos() {
           ? `${provincias.length} provincias con alojamientos publicados, con su recuento real.`
           : "Explora el catálogo por destino."}
       </p>
+
+      <h2 style={{ marginTop: 26 }}>Ciudades con contenido</h2>
+      <p style={{ color: "var(--muted-fg)", fontSize: 14 }}>
+        Páginas de ciudad con las fichas reales de alojamientos, experiencias y servicios de cada una.
+      </p>
+      <div className="f-chips" style={{ marginBottom: 18 }}>
+        {ciudades.map((c) => (
+          <Link className="f-chip" key={c.slug} href={`/destino/${c.slug}`}>
+            {c.ciudad} <em>({c.total.toLocaleString("es-ES")})</em>
+          </Link>
+        ))}
+      </div>
 
       {provincias.length === 0 ? (
         <p className="aviso">

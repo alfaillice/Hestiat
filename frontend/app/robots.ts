@@ -15,7 +15,23 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin", "/host", "/login", "/api/"],
+        disallow: [
+          // Zonas privadas: nunca se indexan.
+          "/admin",
+          "/host",
+          "/login",
+          "/registro",
+          "/api/",
+          // Resultados internos de búsqueda y filtros: son casi idénticos entre sí y compiten por las
+          // mismas palabras. Al buscador le interesan las fichas y las páginas de ciudad, no esto.
+          "/search?",
+          "/*?",
+          // Sondas de escaneo que no llevan a ninguna parte (cientos al día en el registro).
+          "/*.php",
+          "/xmlrpc.php",
+          "/wp-admin",
+          "/wp-login.php",
+        ],
       },
     ],
     sitemap: "https://hestiat.com/sitemap.xml",

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { alojamientoIndexable } from "@/lib/seo.server";
 import Link from "next/link";
 import { cache } from "react";
 import type { Metadata } from "next";
@@ -61,9 +62,14 @@ export async function generateMetadata({
   return {
     title: `${a.title}${lugar ? ` — ${lugar}` : ""} — Hestiat`,
     description:
-      a.description?.slice(0, 155) ??
+      a.description?.replace(/([A-Za-zÁÉÍÓÚÑáéíóúñ])(\d)/g, "$1 · $2").replace(/(\d)([A-Za-zÁÉÍÓÚÑáéíóúñ])/g, "$1 · $2").slice(0, 155) ??
       `${a.title} en ${lugar}. Consulta precios, servicios y disponibilidad en Hestiat.`,
     alternates: { canonical: `/alojamiento/${a.slug}` },
+    // Indexación selectiva: solo se pide indexar la ficha si tiene contenido suficiente y datos
+    // fiables (coordenadas, foto propia o precio, y servicios declarados).
+    robots: (await alojamientoIndexable(Number(a.id)))
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       type: "website",
       title: `${a.title}${lugar ? ` — ${lugar}` : ""}`,

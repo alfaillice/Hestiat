@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { servicioIndexable } from "@/lib/seo.server";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import type { Metadata } from "next";
@@ -33,6 +34,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${s.nombre}${lugar ? ` — ${lugar}` : ""} — Servicios Hestiat`,
     description: descripcion || `${s.nombre} en Hestiat: ubicación, categoría y toda la información disponible.`,
     alternates: { canonical: `/servicios/${s.slug}` },
+    robots: (await servicioIndexable(Number(s.id)))
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       title: s.nombre,
       description: descripcion,

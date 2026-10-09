@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { experienciaIndexable } from "@/lib/seo.server";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import type { Metadata } from "next";
@@ -35,6 +36,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${e.nombre}${lugar ? ` — ${lugar}` : ""} — Experiencias Hestiat`,
     description: descripcion || `${e.nombre} en Hestiat: ubicación, categoría y toda la información disponible.`,
     alternates: { canonical: `/experiencias/${e.slug}` },
+    robots: (await experienciaIndexable(Number(e.id)))
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       title: e.nombre,
       description: descripcion,

@@ -52,6 +52,26 @@ export default async function Portada({
   // Enlace antiguo de resultados en la raíz: se sigue sirviendo igual.
   if (q !== "" || pagina > 1) {
     return (
+      <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "WebSite",
+                name: "Hestiat",
+                url: "https://hestiat.com",
+                description:
+                  "Alojamientos, experiencias y servicios de toda España. Publicar es gratis: sin cuotas de publicación ni comisiones de Hestiat.",
+                inLanguage: "es",
+              },
+              { "@type": "Organization", name: "Hestiat", url: "https://hestiat.com", email: "hola@hestiat.com" },
+            ],
+          }),
+        }}
+      />
       <main className="inicio">
         <div className="wrap">
           <SeccionHome titulo={`Resultados para «${q}»`} verTodos="/search" verTodosTexto="Buscar otra cosa">
@@ -64,6 +84,7 @@ export default async function Portada({
           </section>
         </div>
       </main>
+      </>
     );
   }
 
@@ -81,6 +102,26 @@ export default async function Portada({
 
   return (
     <main className="inicio">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  name: "Hestiat",
+                  url: "https://hestiat.com",
+                  description:
+                    "Alojamientos, experiencias y servicios de toda España. Publicar es gratis: sin cuotas de publicación ni comisiones de Hestiat.",
+                  inLanguage: "es",
+                },
+                { "@type": "Organization", name: "Hestiat", url: "https://hestiat.com", email: "hola@hestiat.com" },
+              ],
+            }),
+          }}
+        />
+
       <HeroHome
         poster="/hero/hero-poster-1600.webp"
         posterMovil="/hero/hero-poster-900.webp"

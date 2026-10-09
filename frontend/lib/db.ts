@@ -250,12 +250,21 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
             a.price_per_night, a.indicative_price, a.price_type,
             a.capacity, a.bedrooms, a.beds, a.review_score, a.review_count,
             ${hayPunto ? `${DISTANCIA_M} AS distancia_m` : "NULL AS distancia_m"},
-            (SELECT COALESCE(p.origin_url, p.storage_key)
-               FROM accommodation_photo p
-              WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
-              ORDER BY p.is_primary DESC, p.sort_order ASC
-              LIMIT 1) AS portada
+            COALESCE(
+              (SELECT COALESCE(p.origin_url, p.storage_key)
+                 FROM accommodation_photo p
+                WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
+                ORDER BY p.is_primary DESC, p.sort_order ASC
+                LIMIT 1),
+              li.url, lp.url, lg.url) AS portada,
+            -- Si la ficha no tiene foto propia, la que se enseña es de REFERENCIA (de su localidad, de
+            -- su provincia o del respaldo general) y la tarjeta lo dice. Nunca se hace pasar por foto
+            -- de la propiedad.
+            ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
+       LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
+       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
+       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'
       WHERE ${where}
       ${orden}
       LIMIT ? OFFSET ?`,
@@ -533,11 +542,17 @@ export async function destacados(limite = 8): Promise<AlojamientoTarjeta[]> {
     `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.country,
             a.price_per_night, a.indicative_price, a.price_type,
             a.capacity, a.bedrooms, a.beds, a.review_score, a.review_count,
-            (SELECT COALESCE(p.origin_url, p.storage_key)
-               FROM accommodation_photo p
-              WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
-              ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1) AS portada
+            COALESCE(
+              (SELECT COALESCE(p.origin_url, p.storage_key)
+                 FROM accommodation_photo p
+                WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
+                ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
+              li.url, lp.url, lg.url) AS portada,
+            ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
+       LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
+       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
+       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'
       WHERE a.status = 'published'
       ORDER BY (a.price_per_night IS NULL), a.review_count DESC, a.id ASC
       LIMIT ?`,
@@ -560,11 +575,17 @@ export async function porIds(ids: number[]): Promise<AlojamientoTarjeta[]> {
     `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.country,
             a.price_per_night, a.indicative_price, a.price_type,
             a.capacity, a.bedrooms, a.beds, a.review_score, a.review_count,
-            (SELECT COALESCE(p.origin_url, p.storage_key)
-               FROM accommodation_photo p
-              WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
-              ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1) AS portada
+            COALESCE(
+              (SELECT COALESCE(p.origin_url, p.storage_key)
+                 FROM accommodation_photo p
+                WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
+                ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
+              li.url, lp.url, lg.url) AS portada,
+            ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
+       LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
+       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
+       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'
       WHERE a.id IN (${huecos})
       ORDER BY FIELD(a.id, ${huecos})`,
     [...limpios, ...limpios],

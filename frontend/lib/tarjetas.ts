@@ -24,6 +24,8 @@ export interface TarjetaGaleria {
   puntuacion: number | null;
   resenas: number;
   portada: string | null;
+  /** true cuando la imagen que se enseña NO es del alojamiento, sino de referencia (su localidad). */
+  portadaReferencial?: boolean;
 }
 
 export function aTarjeta(f: Record<string, unknown>): TarjetaGaleria {
@@ -47,6 +49,7 @@ export function aTarjeta(f: Record<string, unknown>): TarjetaGaleria {
     resenas: Number(f.review_count) || 0,
     // Miniatura a 420 px: 42 tarjetas por tanda tienen que pesar poco.
     portada: f.portada ? miniatura(String(f.portada), 420) : null,
+    portadaReferencial: Boolean(f.portada_referencial),
   };
 }
 

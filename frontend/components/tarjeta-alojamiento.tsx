@@ -39,7 +39,17 @@ export default function TarjetaAlojamiento({
     <article className="tjg">
       <div className="tjg-foto">
         {a.portada ? (
-          <ImagenSegura src={a.portada} alt={a.titulo} ancho={420} alto={315} fondo="tjg-sinfoto" />
+          <>
+            <ImagenSegura
+              src={a.portada}
+              alt={a.portadaReferencial ? `${a.titulo}: imagen de referencia de la zona` : a.titulo}
+              ancho={420}
+              alto={315}
+              fondo="tjg-sinfoto"
+            />
+            {/* Nunca se hace pasar una imagen de referencia por foto de la propiedad: se dice. */}
+            {a.portadaReferencial ? <span className="tjg-ref">Imagen de referencia</span> : null}
+          </>
         ) : (
           <span className="tjg-sinfoto">Sin fotografía</span>
         )}

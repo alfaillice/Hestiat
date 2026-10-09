@@ -143,6 +143,8 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .publi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radio);margin:22px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .publi-horizontal{width:100%}
 .publi-cuadrado{width:100%;max-width:300px;margin:0 auto}
+/* Etiqueta de las imágenes de referencia: la tarjeta nunca hace pasar por foto propia una que no lo es. */
+.tjg-ref{position:absolute;left:8px;bottom:8px;background:rgba(12,30,36,.72);color:#fff;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:999px;letter-spacing:.02em}
 /* AI Manager (panel de administración): consola, listas y avisos. */
 .ia-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .ia-lista{display:flex;flex-direction:column;gap:6px;font-size:13.5px;line-height:1.55}

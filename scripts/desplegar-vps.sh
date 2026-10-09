@@ -10,7 +10,8 @@
 #    responde 200 en 18 s, VUELVE SOLA a la release anterior.
 # 5. Comprueba desde fuera que producción responde.
 #
-# No borra releases anteriores. Uso:  bash scripts/desplegar-vps.sh
+# Mantiene sincronizados los dos enlaces (`app` y `current`) para que ninguno apunte a una
+# release vieja. No borra releases anteriores. Uso:  bash scripts/desplegar-vps.sh
 # =============================================================================
 set -euo pipefail
 
@@ -50,6 +51,7 @@ tar xzf /tmp/$(basename "$STAGE").tgz -C \$D
 chown -R hestiat:hestiat \$D
 ANTERIOR=\$(readlink -f /opt/hestiat/app)
 ln -sfn \$D /opt/hestiat/app
+ln -sfn \$D /opt/hestiat/current
 systemctl restart hestiat
 C=000
 for i in 1 2 3 4 5 6; do
@@ -61,6 +63,7 @@ echo \"   aplicación en 127.0.0.1:3000 → \$C\"
 if [ \"\$C\" != 200 ]; then
   echo '   FALLO: vuelvo a la release anterior'
   ln -sfn \$ANTERIOR /opt/hestiat/app
+  ln -sfn \$ANTERIOR /opt/hestiat/current
   systemctl restart hestiat
   sleep 8
   curl -s -o /dev/null -w '   restaurada: %{http_code}\n' --max-time 20 http://127.0.0.1:3000/ || true

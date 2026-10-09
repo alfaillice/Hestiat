@@ -191,7 +191,7 @@ export function clavePorContenido(datos: Uint8Array, extension: string): string 
   return `${sha256Hex(datos).slice(0, 32)}.${extension.replace(/^\./, "")}`;
 }
 
-export type ObjetoR2 = { clave: string; bytes: number; modificado: string };
+export type ObjetoR2 = { clave: string; bytes: number; modificado: string; etag: string | null };
 
 /** Deshace el escapado XML mínimo que R2 aplica a claves y token de continuación. */
 function desescaparXml(s: string): string {
@@ -259,6 +259,9 @@ export async function listarObjetos(opciones: { prefijo?: string; continuacion?:
       clave: desescaparXml(clave),
       bytes: Number(/<Size>(\d+)<\/Size>/.exec(bloque)?.[1] ?? 0),
       modificado: /<LastModified>([\s\S]*?)<\/LastModified>/.exec(bloque)?.[1] ?? "",
+      // El ETag es la huella del contenido: sirve para comprobar que una operación de
+      // metadatos NO ha cambiado los bytes de la imagen.
+      etag: (/<ETag>([\s\S]*?)<\/ETag>/.exec(bloque)?.[1] ?? "").replace(/&quot;/g, "").replace(/"/g, "") || null,
     });
   }
   const truncado = /<IsTruncated>true<\/IsTruncated>/.test(xml);
@@ -321,6 +324,42 @@ export async function borrarObjeto(clave: string): Promise<boolean> {
   const { url, headers } = cabecerasFirmadas(cfg, "DELETE", clave, new Uint8Array(0));
   const res = await fetch(url, { method: "DELETE", headers });
   return res.ok || res.status === 404;
+}
+
+/**
+ * Cambia los METADATOS de un objeto sin tocar su contenido ni su dirección.
+ *
+ * Para qué: las fotos que ya estaban en el almacén se subieron sin cabecera de caché, así que el
+ * navegador tenía que preguntar por cada una en cada visita. Ahora se les pone la misma caché que
+ * llevan las nuevas, sin volver a subirlas y sin cambiar su URL: la ficha sigue apuntando al mismo
+ * sitio y ninguna foto se mueve.
+ *
+ * Cómo: una copia del objeto sobre sí mismo (`CopyObject`) indicando que los metadatos se
+ * reemplazan. La copia ocurre dentro del propio almacén, no viaja por la red, y la clave no cambia.
+ *
+ * La dirección de origen va codificada igual que en la firma, y el tipo de contenido se conserva:
+ * si se perdiera, las imágenes se servirían como fichero genérico y dejarían de verse.
+ *
+ * R2 devuelve el ETag del objeto resultante: como el ETag es la huella del contenido, compararlo con
+ * el de antes demuestra que los bytes son exactamente los mismos.
+ */
+export async function reemplazarMetadatos(clave: string, tipoContenido: string) {
+  const cfg = exigirConfigValida();
+  const origen = codificarRuta(`/${cfg.bucket}/${clave.replace(/^\/+/, "")}`);
+  const { url, headers } = cabecerasFirmadas(cfg, "PUT", clave, new Uint8Array(0), {
+    "content-type": tipoContenido,
+    "cache-control": "public, max-age=31536000, immutable",
+    "x-amz-copy-source": origen,
+    "x-amz-metadata-directive": "REPLACE",
+  });
+  const res = await fetch(url, { method: "PUT", headers });
+  if (!res.ok) {
+    const detalle = (await res.text().catch(() => "")).slice(0, 300);
+    throw new Error(`R2 rechazó el cambio de metadatos (${res.status}): ${detalle}`);
+  }
+  const xml = await res.text().catch(() => "");
+  const etag = (/<ETag>([\s\S]*?)<\/ETag>/.exec(xml)?.[1] ?? "").replace(/&quot;/g, "").replace(/"/g, "") || null;
+  return { clave, etag };
 }
 
 /** Estado del almacenamiento, sin exponer secretos. */

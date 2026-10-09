@@ -44,7 +44,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tip
   } else if (tipo === "guias") {
     try {
       const [filas] = await pool.query<any[]>(
-        `SELECT slug, actualizado_en FROM guia WHERE estado = 'publicada' ORDER BY id ASC`,
+        `SELECT slug FROM guia WHERE estado = 'publicada' ORDER BY id ASC`,
       );
       urls = filas.map((f) => `${BASE}/guia/${f.slug}`);
       changefreq = "monthly";

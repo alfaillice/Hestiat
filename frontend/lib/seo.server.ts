@@ -31,11 +31,13 @@ export const CRITERIO_ALOJAMIENTO = `(a.lat IS NOT NULL AND a.lng IS NOT NULL
    AND (SELECT COUNT(*) FROM accommodation_amenity m WHERE m.accommodation_id = a.id) >= 3)`;
 
 export const CRITERIO_EXPERIENCIA = `(latitude IS NOT NULL AND COALESCE(main_image,'') <> ''
-   AND CHAR_LENGTH(COALESCE(short_description, description, '')) >= 120)`;
+   AND CHAR_LENGTH(COALESCE(short_description, description, '')) >= 120
+   AND NOT EXISTS (SELECT 1 FROM imagen_compartida i WHERE i.url = experiencia.main_image COLLATE utf8mb4_general_ci AND i.n > 20))`;
 
 export const CRITERIO_SERVICIO = `(latitude IS NOT NULL AND COALESCE(main_image,'') <> ''
    AND CHAR_LENGTH(COALESCE(short_description,'')) >= 120
-   AND (COALESCE(website_url,'') <> '' OR COALESCE(phone,'') <> '' OR COALESCE(email,'') <> ''))`;
+   AND (COALESCE(website_url,'') <> '' OR COALESCE(phone,'') <> '' OR COALESCE(email,'') <> '')
+   AND NOT EXISTS (SELECT 1 FROM imagen_compartida i WHERE i.url = servicio_turistico.main_image COLLATE utf8mb4_general_ci AND i.n > 20))`;
 
 /** ¿Esta ficha concreta debe indexarse? Se comprueba en el momento de pintarla. */
 export async function alojamientoIndexable(id: number): Promise<boolean> {

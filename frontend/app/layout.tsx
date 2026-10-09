@@ -803,6 +803,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="es" className={`${manrope.variable} ${dmSans.variable}`}>
       <head>
+        {process.env.GOOGLE_SITE_VERIFICATION ? (
+          <meta name="google-site-verification" content={process.env.GOOGLE_SITE_VERIFICATION} />
+        ) : null}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <style dangerouslySetInnerHTML={{ __html: estilos }} />
       </head>

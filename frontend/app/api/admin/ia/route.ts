@@ -200,7 +200,11 @@ export async function POST(request: Request) {
         cambios.push(["limite_llamadas_por_hora", String(Math.max(1, Number(cuerpo.limite_llamadas_por_hora) || 120))]);
       }
       if (cuerpo.limite_gasto_diario_usd !== undefined) {
-        cambios.push(["limite_gasto_diario_usd", String(Math.max(0, Number(cuerpo.limite_gasto_diario_usd) || 5))]);
+        // OJO: `Number(x) || 5` convertía un 0 en 5 (el 0 es falsy), así que poner el presupuesto a
+        // cero no bloqueaba nada. Detectado al probar el control de gasto. Con `Number.isFinite` se
+        // respeta el 0, que es justo el valor que sirve para cortar el gasto.
+        const valorGasto = Number(cuerpo.limite_gasto_diario_usd);
+        cambios.push(["limite_gasto_diario_usd", String(Number.isFinite(valorGasto) ? Math.max(0, valorGasto) : 5)]);
       }
       if (cambios.length === 0) return NextResponse.json({ ok: false, error: "No hay ningún cambio." }, { status: 400 });
 

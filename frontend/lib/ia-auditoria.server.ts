@@ -146,8 +146,11 @@ export async function comprobarLimites(): Promise<Limites> {
   try {
     const [filas] = await pool.query<any[]>(`SELECT clave, valor FROM ia_config`);
     for (const f of filas) {
-      if (f.clave === "limite_llamadas_por_hora") limiteHora = Number(f.valor) || limiteHora;
-      if (f.clave === "limite_gasto_diario_usd") presupuestoDia = Number(f.valor) || presupuestoDia;
+      // `Number(valor) || porDefecto` convertia un 0 en el valor por defecto (el 0 es falsy), asi que
+      // un presupuesto de 0 no cortaba el gasto. Se comprueba que sea un numero de verdad.
+      const numero = Number(f.valor);
+      if (f.clave === "limite_llamadas_por_hora" && Number.isFinite(numero)) limiteHora = numero;
+      if (f.clave === "limite_gasto_diario_usd" && Number.isFinite(numero)) presupuestoDia = numero;
     }
   } catch {
     /* se queda con los valores por defecto */

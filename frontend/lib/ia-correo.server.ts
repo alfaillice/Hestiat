@@ -50,6 +50,32 @@ export async function enviadosHoy(): Promise<number> {
   return Number(filas[0]?.n ?? 0);
 }
 
+/**
+ * Cancela un correo redactado que todavía no ha salido. Es la otra cara de la aprobación: si algo no
+ * debe enviarse, se deja constancia de que se ha descartado, con quién lo decidió.
+ */
+export async function cancelarBorrador(contactoId: number, quien: string) {
+  const [filas] = await pool.query<any[]>(
+    `SELECT id, resultado FROM lead_contacto WHERE id = ? LIMIT 1`,
+    [contactoId],
+  );
+  const c = filas[0];
+  if (!c) return { ok: false as const, motivo: "no existe ese correo" };
+  if (c.resultado === "enviado") return { ok: false as const, motivo: "ese correo ya se envió: no se puede cancelar" };
+  await pool.query(
+    `UPDATE lead_contacto SET resultado = 'cancelado', aprobado_por = ? WHERE id = ?`,
+    [`cancelado por ${quien}`.slice(0, 120), contactoId],
+  );
+  await registrarAccion({
+    accion: "envio_cancelado",
+    usuarioEmail: quien,
+    entidad: "lead_contacto",
+    entidadId: contactoId,
+    detalle: { motivo: "cancelado antes de enviarse" },
+  });
+  return { ok: true as const };
+}
+
 /** Comprueba quién autoriza: tiene que ser un administrador real de Hestiat. */
 async function esAdmin(email: string): Promise<boolean> {
   const [filas] = await pool.query<any[]>(

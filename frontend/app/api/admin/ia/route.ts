@@ -6,6 +6,9 @@ import { configIA, estadoIA, ejecutarAgente, guardarMensaje, historialConversaci
 import { catalogoHerramientas, ejecutarHerramienta } from "@/lib/ia-herramientas.server";
 import { comprobarLimites, configAutonomia, consumoDeHoy, registrarAccion } from "@/lib/ia-auditoria.server";
 import { borradoresPendientes, enviarAprobado, enviadosHoy, LIMITE_ENVIOS_DIA } from "@/lib/ia-correo.server";
+import { cancelarBorrador } from "@/lib/ia-correo.server";
+import { actualizarLead, crearLead, crearTicket, actualizarTicket, excluirEmail, obtenerLead, registrarContactoLead, buscarCoincidenciasLead, extraerDominio } from "@/lib/ia-datos.server";
+import { PLANTILLAS, personalizar, plantillaDe } from "@/lib/ia-plantillas.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,11 +30,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Solo administración." }, { status: 403 });
   }
 
+  // La consola y el CRM usan formularios normales (funcionan sin JavaScript): se acepta tanto JSON
+  // como datos de formulario. Sin esto, un envío desde el navegador llegaría vacío.
   let cuerpo: Record<string, unknown> = {};
-  try {
-    cuerpo = (await request.json()) as Record<string, unknown>;
-  } catch {
-    return NextResponse.json({ ok: false, error: "Petición no válida." }, { status: 400 });
+  const tipoContenido = request.headers.get("content-type") ?? "";
+  if (tipoContenido.includes("application/x-www-form-urlencoded") || tipoContenido.includes("multipart/form-data")) {
+    try {
+      const formulario = await request.formData();
+      cuerpo = Object.fromEntries([...formulario.entries()].map(([k, v]) => [k, typeof v === "string" ? v : ""]));
+    } catch {
+      return NextResponse.json({ ok: false, error: "Formulario no válido." }, { status: 400 });
+    }
+  } else {
+    try {
+      cuerpo = (await request.json()) as Record<string, unknown>;
+    } catch {
+      return NextResponse.json({ ok: false, error: "Petición no válida." }, { status: 400 });
+    }
   }
 
   const accion = String(cuerpo.accion ?? "estado");
@@ -228,6 +243,149 @@ export async function POST(request: Request) {
       }
       const r = await enviarAprobado(contactoId, admin.email);
       return NextResponse.json({ ok: r.ok, motivo: r.motivo ?? null, detalle: r.detalle ?? null });
+    }
+
+    /**
+     * ACCIONES DEL CRM Y DE TICKETS DESDE EL PANEL.
+     *
+     * Vienen de formularios normales, así que responden con una redirección RELATIVA a la página de
+     * la que salieron (nunca absoluta: detrás del proxy una dirección absoluta apuntaría al servidor
+     * interno y rompería la navegación). El resultado se cuenta en la propia página con `aviso`.
+     * Toda acción queda en la auditoría, con quién la hizo.
+     */
+    if (accion.startsWith("crm_") || accion.startsWith("ticket_")) {
+      const volver = String(cuerpo.volver ?? "");
+      const responde = (ok: boolean, aviso: string) => {
+        if (volver.startsWith("/")) {
+          const sep = volver.includes("?") ? "&" : "?";
+          return new NextResponse(null, {
+            status: 303,
+            headers: { location: `${volver}${sep}ok=${ok ? 1 : 0}&aviso=${encodeURIComponent(aviso.slice(0, 300))}` },
+          });
+        }
+        return NextResponse.json({ ok, aviso });
+      };
+
+      if (accion === "crm_crear") {
+        const empresa = String(cuerpo.empresa ?? "").trim();
+        if (!empresa) return responde(false, "Hace falta el nombre del negocio.");
+        const email = String(cuerpo.email ?? "").trim();
+        const web = String(cuerpo.web ?? "").trim();
+        const localidad = String(cuerpo.localidad ?? "").trim();
+        const coincidencias = await buscarCoincidenciasLead({
+          email: email || null,
+          dominio: web ? extraerDominio(web) : email ? extraerDominio(email) : null,
+          empresa,
+          localidad: localidad || null,
+        });
+        if (coincidencias.length > 0) {
+          return responde(false, `Ya existe un potencial cliente (${coincidencias[0].por}, #${coincidencias[0].leadId}): no se ha duplicado.`);
+        }
+        const r = await crearLead({
+          empresa,
+          tipoNegocio: String(cuerpo.tipo_negocio ?? "otro"),
+          localidad: localidad || null,
+          provincia: String(cuerpo.provincia ?? "").trim() || null,
+          pais: String(cuerpo.pais ?? "").trim() || "España",
+          web: web || null,
+          email: email || null,
+          telefono: String(cuerpo.telefono ?? "").trim() || null,
+          contactoNombre: String(cuerpo.contacto_nombre ?? "").trim() || null,
+          notas: String(cuerpo.notas ?? "").trim() || null,
+          fuente: "manual",
+          responsable: admin.email,
+        });
+        await registrarAccion({ accion: "crm_crear", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: r.id, detalle: { empresa, localidad } });
+        return responde(true, `Creado el potencial cliente #${r.id}.`);
+      }
+
+      if (accion === "crm_actualizar") {
+        const id = Number(cuerpo.id);
+        if (!Number.isFinite(id) || id <= 0) return responde(false, "Falta el cliente.");
+        const cambios: Record<string, unknown> = {};
+        for (const campo of ["estado", "notas", "responsable", "email", "telefono", "web"]) {
+          if (cuerpo[campo] !== undefined) cambios[campo] = String(cuerpo[campo]);
+        }
+        cambios.excluido = cuerpo.excluido === "1" ? 1 : 0;
+        if (cuerpo.excluido === "1") cambios.estado = "OPT_OUT";
+        const r = await actualizarLead(id, cambios, admin.email);
+        await registrarAccion({ accion: "crm_actualizar", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: id, detalle: cambios });
+        return responde(r.ok, r.ok ? "Ficha actualizada." : (r.motivo ?? "No se pudo actualizar."));
+      }
+
+      if (accion === "crm_preparar_email") {
+        const id = Number(cuerpo.id);
+        const plantilla = plantillaDe(String(cuerpo.plantilla ?? ""));
+        const lead = await obtenerLead(id);
+        if (!lead) return responde(false, "No existe ese potencial cliente.");
+        if (!plantilla) return responde(false, "Esa plantilla no existe.");
+        if (Number(lead.excluido) === 1) return responde(false, "Ese contacto está excluido: no se le prepara ningún correo.");
+        if (!lead.email) return responde(false, "Ese cliente no tiene email registrado.");
+        const { asunto, cuerpo: texto } = personalizar(plantilla, {
+          empresa: lead.empresa,
+          localidad: lead.localidad,
+          contacto: lead.contacto_nombre,
+        });
+        await registrarContactoLead({
+          leadId: id,
+          canal: "email",
+          asunto,
+          cuerpo: texto,
+          resultado: null,
+          autor: admin.email,
+        });
+        await registrarAccion({ accion: "crm_preparar_email", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: id, detalle: { plantilla: plantilla.id, asunto } });
+        return responde(true, "Correo redactado y pendiente de aprobación. NO se ha enviado.");
+      }
+
+      if (accion === "crm_baja") {
+        const id = Number(cuerpo.id);
+        const lead = await obtenerLead(id);
+        if (!lead) return responde(false, "No existe ese potencial cliente.");
+        if (!lead.email) return responde(false, "Ese cliente no tiene email registrado.");
+        await excluirEmail(String(lead.email), "Ha pedido no recibir comunicaciones", "usuario");
+        await actualizarLead(id, { estado: "OPT_OUT", excluido: 1 }, admin.email);
+        await registrarAccion({ accion: "crm_baja", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: id, detalle: { email: lead.email } });
+        return responde(true, "Dado de baja: no se le volverá a escribir.");
+      }
+
+      if (accion === "crm_cancelar_envio") {
+        const contactoId = Number(cuerpo.contactoId);
+        const r = await cancelarBorrador(contactoId, admin.email);
+        return responde(r.ok, r.ok ? "Correo cancelado." : (r.motivo ?? "No se pudo cancelar."));
+      }
+
+      if (accion === "ticket_crear") {
+        const asunto = String(cuerpo.asunto ?? "").trim();
+        if (!asunto) return responde(false, "Hace falta el asunto.");
+        const r = await crearTicket({
+          asunto,
+          categoria: String(cuerpo.categoria ?? "otro"),
+          prioridad: String(cuerpo.prioridad ?? "normal"),
+          mensaje: String(cuerpo.mensaje ?? "").trim() || null,
+          contactoEmail: String(cuerpo.contacto_email ?? "").trim() || null,
+          contactoNombre: String(cuerpo.contacto_nombre ?? "").trim() || null,
+          usuarioId: admin.id,
+          autor: admin.email,
+        });
+        await registrarAccion({ accion: "ticket_crear", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "ticket", entidadId: r.codigo, detalle: { asunto, categoria: r.categoria, prioridad: r.prioridad } });
+        return responde(true, `Incidencia ${r.codigo} creada.`);
+      }
+
+      if (accion === "ticket_actualizar") {
+        const codigo = String(cuerpo.codigo ?? "").trim();
+        if (!codigo) return responde(false, "Falta el identificador de la incidencia.");
+        const r = await actualizarTicket(codigo, {
+          estado: cuerpo.estado ? String(cuerpo.estado) : undefined,
+          prioridad: cuerpo.prioridad ? String(cuerpo.prioridad) : undefined,
+          responsable: cuerpo.responsable !== undefined ? String(cuerpo.responsable) : undefined,
+          resolucion: cuerpo.resolucion !== undefined ? String(cuerpo.resolucion) : undefined,
+          mensaje: cuerpo.mensaje ? String(cuerpo.mensaje) : undefined,
+          autor: admin.email,
+        });
+        await registrarAccion({ accion: "ticket_actualizar", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "ticket", entidadId: codigo, detalle: { ok: r.ok } });
+        return responde(r.ok, r.ok ? "Incidencia actualizada." : (r.motivo ?? "No se pudo actualizar."));
+      }
     }
 
     return NextResponse.json({ ok: false, error: `Acción no reconocida: ${accion}` }, { status: 400 });

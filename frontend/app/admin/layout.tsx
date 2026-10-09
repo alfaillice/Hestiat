@@ -24,6 +24,8 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     ["/admin/reclamaciones", "Reclamaciones"],
     ["/admin/revision", "Propuestas de enriquecimiento"],
     ["/admin/solicitudes", "Solicitudes de alta"],
+    ["/admin/crm", "CRM de captación"],
+    ["/admin/tickets", "Atención al cliente"],
     ["/admin/ia", "AI Manager"],
     ["/admin/auditoria", "Auditoría"],
   ];

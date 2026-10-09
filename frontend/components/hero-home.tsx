@@ -22,11 +22,13 @@ import Link from "next/link";
  */
 export default function HeroHome({
   poster,
+  posterMovil,
   video,
   videoMovil,
   credito,
 }: {
   poster: string;
+  posterMovil?: string;
   video: string;
   videoMovil: string;
   credito: string;
@@ -34,6 +36,8 @@ export default function HeroHome({
   const referencia = useRef<HTMLVideoElement>(null);
   const [fuente, setFuente] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
+  // La versión pequeña del póster: es la que descarga el móvil.
+  const p900 = posterMovil ?? poster;
 
   // PRIMERO se decide si hay vídeo (y cuál). El elemento se pinta a partir de aquí.
   useEffect(() => {
@@ -68,16 +72,39 @@ export default function HeroHome({
 
   return (
     <section className="hero2">
-      <div className="hero2-fondo" style={{ backgroundImage: `url(${poster})` }}>
+      {/* El póster se declara como recurso de la propia página para que el navegador lo descubra al
+          leer el HTML, sin esperar a que termine el CSS. Es el elemento que mide el LCP: cuanto
+          antes se pida, antes se pinta. Y va en WebP (57 KB en móvil, 146 KB en escritorio) en
+          lugar del JPG de 204 KB, con las dos medidas declaradas para que nadie descargue de más. */}
+      <link
+        rel="preload"
+        as="image"
+        href={poster}
+        imageSrcSet={`${p900} 900w, ${poster} 1600w`}
+        imageSizes="100vw"
+        fetchPriority="high"
+      />
+      <div className="hero2-fondo">
+        <img
+          className="hero2-poster"
+          src={poster}
+          srcSet={`${p900} 900w, ${poster} 1600w`}
+          sizes="100vw"
+          alt=""
+          width={1600}
+          height={900}
+          fetchPriority="high"
+          decoding="async"
+        />
         {fuente ? (
           <video
             ref={referencia}
             className={visible ? "hero2-video hero2-video-visible" : "hero2-video"}
             poster={poster}
+            preload="none"
             muted
             loop
             playsInline
-            autoPlay
             onPlaying={() => setVisible(true)}
             onError={() => setFuente(null)}
           >

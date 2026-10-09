@@ -7,6 +7,7 @@ import TarjetaCategoria from "@/components/tarjeta-categoria";
 import TarjetaAlojamiento from "@/components/tarjeta-alojamiento";
 import CercaDeTi from "@/components/cerca-de-ti";
 import BloquePublicaGratis from "@/components/bloque-publica-gratis";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import { aTarjeta } from "@/lib/tarjetas";
 import { destacados } from "@/lib/db";
 import { destinosParaTi, categoriasServicio, categoriasExperiencia } from "@/lib/home.server";
@@ -81,7 +82,8 @@ export default async function Portada({
   return (
     <main className="inicio">
       <HeroHome
-        poster="/hero/hero-poster.jpg"
+        poster="/hero/hero-poster-1600.webp"
+        posterMovil="/hero/hero-poster-900.webp"
         video="/hero/hero.mp4"
         videoMovil="/hero/hero-movil.mp4"
         credito="Escena de ambientación, no es un alojamiento concreto"
@@ -97,6 +99,9 @@ export default async function Portada({
             <TarjetaDestino key={d.nombre} destino={d} />
           ))}
         </SeccionHome>
+
+        {/* Hueco de publicidad previsto: hoy no dibuja nada (ver lib/publicidad.ts). */}
+        <EspacioPublicidad hueco="portada-tras-destinos" />
 
         <SeccionHome
           titulo="Servicios populares"

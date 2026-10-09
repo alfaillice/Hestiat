@@ -138,6 +138,11 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 }
 .aviso{background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio);padding:12px 15px;font-size:13px;color:var(--muted-fg)}
 /* busqueda con mapa y filtros */
+/* Hueco de publicidad. Con la publicidad apagada no se pinta nada; estos estilos solo se aplicarán
+   el día que se encienda, para que el anuncio no rompa la retícula ni empuje el contenido. */
+.publi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radio);margin:22px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.publi-horizontal{width:100%}
+.publi-cuadrado{width:100%;max-width:300px;margin:0 auto}
 .busqueda{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,42%);gap:26px;align-items:start}
 .mapa-lado{position:sticky;top:76px}
 .filtros{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:14px;margin-bottom:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
@@ -383,6 +388,7 @@ footer a:hover{color:var(--hestiat-primary-texto)}
    no una intro: no bloquea el scroll ni los clics. */
 .hero2{position:relative;min-height:min(72vh,640px);display:flex;align-items:flex-end;overflow:hidden;margin-bottom:10px}
 .hero2-fondo{position:absolute;inset:0;background-size:cover;background-position:center;background-color:#20343c}
+.hero2-poster{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .hero2-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .5s ease}
 .hero2-video-visible{opacity:1}
 .hero2-velo{position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,26,32,.10) 0%,rgba(12,26,32,.28) 45%,rgba(12,26,32,.74) 100%)}

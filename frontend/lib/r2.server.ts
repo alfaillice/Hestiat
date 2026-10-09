@@ -290,7 +290,20 @@ export function exigirConfigValida(): ConfigR2 {
 /** Sube un objeto y devuelve su URL pública. Sin configuración válida, lanza un error legible. */
 export async function subirObjeto(clave: string, datos: Uint8Array, tipoContenido: string) {
   const cfg = exigirConfigValida();
-  const { url, headers } = cabecerasFirmadas(cfg, "PUT", clave, datos, { "content-type": tipoContenido });
+  /**
+   * CACHÉ DE LAS IMÁGENES PÚBLICAS.
+   *
+   * Comprobado en producción: los objetos de R2 se servían SIN ninguna cabecera `Cache-Control`,
+   * solo con su ETag. El navegador tenía que preguntar por cada foto en cada visita.
+   *
+   * La clave del objeto es el hash de su contenido (`clavePorContenido`): si el contenido cambia,
+   * cambia la URL. Por eso la caché puede ser de un año e `immutable` sin ningún riesgo de servir
+   * una foto vieja: nunca hay dos ficheros distintos en la misma dirección.
+   */
+  const { url, headers } = cabecerasFirmadas(cfg, "PUT", clave, datos, {
+    "content-type": tipoContenido,
+    "cache-control": "public, max-age=31536000, immutable",
+  });
   // `datos` son los bytes exactos del objeto: se envían sin transformar. El tipo se ajusta
   // porque los tipos de `fetch` de esta versión no aceptan `Uint8Array` genérico, pero el
   // cuerpo es válido en tiempo de ejecución (y la firma V4 se calcula sobre esos mismos bytes).

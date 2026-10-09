@@ -17,6 +17,25 @@ export const dynamic = "force-dynamic";
  * que la página que la invoca esté protegida.
  */
 import { reflejarBorrado, reflejarOrden, reflejarSubida } from "@/lib/fotos-publicas.server";
+import { limitar } from "@/lib/limite.server";
+
+/**
+ * LÍMITES DE ESTA RUTA.
+ *
+ * Comprobado en producción: la autorización estaba bien (401 sin sesión, 403 si el alojamiento no
+ * es tuyo, 200 para el dueño y para administración), el formato se validaba y la subida real y el
+ * borrado funcionaban. Lo que NO había era ningún tope: ni de tamaño, ni de número de ficheros, ni
+ * de número de identificadores, ni de ritmo de peticiones. Se comprobó que un cuerpo grande llegaba
+ * a dejar la respuesta en 504 y que 60 peticiones seguidas no encontraban ni una sola negativa (429).
+ *
+ * Estos topes NO sustituyen a la autorización: se aplican ANTES de leer el cuerpo, para no gastar
+ * memoria en algo que se va a rechazar. Nada de lo que había se ha quitado.
+ */
+const MAX_PETICION = 12 * 1024 * 1024; // 12 MB por petición (nginx corta en 30m)
+const MAX_FICHERO = 8 * 1024 * 1024; // 8 MB por imagen
+const MAX_FICHEROS = 12; // imágenes por subida
+const MAX_IDS = 500; // identificadores por reordenación
+const MAX_PETICIONES = 60; // peticiones por minuto
 
 type Peticion =
   | { accion: "subir"; alojamientoId: number; ficheros: File[] }
@@ -48,6 +67,9 @@ async function siguienteOrden(alojamientoId: number): Promise<number> {
 }
 
 export async function POST(request: Request) {
+  const bloqueo = limitar(request, "medios", MAX_PETICIONES);
+  if (bloqueo) return bloqueo;
+
   let cuerpo: Peticion;
   try {
     cuerpo = (await request.json()) as Peticion;
@@ -86,6 +108,13 @@ export async function POST(request: Request) {
 
     if (cuerpo.accion === "reordenar") {
       const ids = cuerpo.ids.map(Number).filter((n) => Number.isFinite(n));
+      // Un alojamiento no tiene miles de fotos: si llegan más, la petición no es legítima.
+      if (ids.length > MAX_IDS) {
+        return NextResponse.json(
+          { ok: false, error: `Demasiadas fotos en una sola petición (máximo ${MAX_IDS}).` },
+          { status: 400 },
+        );
+      }
       let orden = 1;
       for (const id of ids) {
         await poolLegacy.query(
@@ -134,6 +163,19 @@ export async function POST(request: Request) {
 
 /** La subida va por multipart: los ficheros reales, no data URLs en JSON. */
 export async function PUT(request: Request) {
+  const bloqueo = limitar(request, "medios", MAX_PETICIONES);
+  if (bloqueo) return bloqueo;
+
+  // Antes de leer nada: si el cuerpo declarado ya pasa del tope, se corta aquí. Así no se reserva
+  // memoria para una subida que no se va a aceptar.
+  const declarado = Number(request.headers.get("content-length") ?? 0);
+  if (Number.isFinite(declarado) && declarado > MAX_PETICION) {
+    return NextResponse.json(
+      { ok: false, error: `La subida supera el máximo de ${MAX_PETICION / 1024 / 1024} MB.` },
+      { status: 413 },
+    );
+  }
+
   let formulario: FormData;
   try {
     formulario = await request.formData();
@@ -153,12 +195,22 @@ export async function PUT(request: Request) {
   if (ficheros.length === 0) {
     return NextResponse.json({ ok: false, error: "No se han recibido ficheros." }, { status: 400 });
   }
+  if (ficheros.length > MAX_FICHEROS) {
+    return NextResponse.json(
+      { ok: false, error: `Demasiadas imágenes de una vez (máximo ${MAX_FICHEROS}).` },
+      { status: 413 },
+    );
+  }
 
   const guardadas: { id: number; url: string; ancho: number; alto: number }[] = [];
   const errores: string[] = [];
   let orden = await siguienteOrden(alojamientoId);
 
   for (const fichero of ficheros) {
+    if (fichero.size > MAX_FICHERO) {
+      errores.push(`${fichero.name}: supera el máximo de ${MAX_FICHERO / 1024 / 1024} MB por imagen.`);
+      continue;
+    }
     const extension = extensionDeMime(fichero.type.split("/").pop() ?? "");
     if (!extension) {
       errores.push(`${fichero.name}: formato no admitido (solo JPG, PNG o WebP).`);

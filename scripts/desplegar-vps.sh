@@ -67,6 +67,8 @@ if [ \"\$C\" != 200 ]; then
   exit 1
 fi
 echo \"   en servicio: \$(readlink -f /opt/hestiat/app)\"
+# La caché pública guarda HTML de la versión anterior: se vacía para no servir nada viejo.
+bash /root/hestiat-purgar-cache.sh 2>/dev/null || true
 rm -f /tmp/$(basename "$STAGE").tgz
 "
 

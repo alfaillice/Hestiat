@@ -194,6 +194,44 @@ export default async function PanelIA() {
         )}
       </section>
 
+      {!estado.clave_configurada ? (
+        <section className="admin-bloque">
+          <h2>Cómo activar la conexión</h2>
+          <p style={{ fontSize: 13.5 }}>
+            El agente no conversa porque falta la credencial del modelo. No se simula nada: sin clave,
+            cada intento devuelve el motivo y lo deja en la auditoría. Estos son los pasos exactos:
+          </p>
+          <ol className="ia-lista" style={{ listStyle: "decimal", paddingLeft: 20 }}>
+            <li>
+              Abre el fichero de entorno del servicio que ejecuta el backend:
+              <code> /opt/hestiat/shared/.env</code> (permisos <code>640 root:hestiat</code>). Es el
+              fichero que carga <code>hestiat.service</code> con <code>EnvironmentFile</code>.
+            </li>
+            <li>
+              Añade una línea con la variable que el código espera de verdad, <code>IA_API_KEY</code>:
+              <code> IA_API_KEY=tu-clave</code>. Nunca en el repositorio, ni en el frontend, ni en un
+              mensaje: solo en ese fichero del servidor.
+            </li>
+            <li>
+              Opcionales: <code>IA_BASE_URL</code> (por defecto <code>https://api.openai.com/v1</code>),
+              <code>IA_PROVEEDOR</code>, <code>IA_MODELO_ECONOMICO</code>, <code>IA_MODELO_POTENTE</code>,
+              <code>IA_PRECIO_&lt;MODELO&gt;_ENTRADA</code> y <code>_SALIDA</code> si tu proveedor cobra
+              distinto de la tabla de referencia.
+            </li>
+            <li>Reinicia el servicio para que lea el fichero: <code>systemctl restart hestiat</code>.</li>
+            <li>
+              Vuelve aquí y pulsa «Probar conexión»: hace una llamada REAL y, hasta que funcione, esta
+              pantalla no dará la integración por conectada.
+            </li>
+          </ol>
+          <p style={{ fontSize: 13 }}>
+            Comprobado desde este servidor: el proveedor responde (una petición sin credencial devuelve
+            <b> 401 Missing bearer authentication</b>), así que la red y el TLS están bien. Lo único que
+            falta es la clave. La clave no viaja al navegador: solo la lee el servidor.
+          </p>
+        </section>
+      ) : null}
+
       <IaConsola
         configurada={estado.clave_configurada}
         probada={estado.probada}

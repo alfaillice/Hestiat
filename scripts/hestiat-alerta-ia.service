@@ -1,0 +1,8 @@
+[Unit]
+Description=Hestiat — aviso automático si la conexión del agente de IA no está sana
+After=network-online.target hestiat.service
+
+[Service]
+Type=oneshot
+ExecStart=/root/hestiat-alerta-ia.sh
+Nice=10

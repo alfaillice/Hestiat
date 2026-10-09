@@ -1,5 +1,6 @@
 import Link from "next/link";
 import ImagenSegura from "@/components/imagen-segura";
+import Corazon from "@/components/corazon";
 
 /**
  * LA TARJETA DEL CATÁLOGO. Una sola pieza para experiencias y servicios, y la misma para las filas
@@ -66,16 +67,33 @@ export function textoDeImagen(tipo: string | null | undefined): string {
   return ETIQUETA_IMAGEN[tipo ?? "sin_imagen_verificada"] ?? "Imagen de referencia";
 }
 
-export default function TarjetaCatalogo({ item }: { item: ItemCatalogo }) {
+export default function TarjetaCatalogo({
+  item,
+  tipo,
+  guardado = false,
+  haySesion = false,
+  volverA = "/",
+}: {
+  item: ItemCatalogo;
+  /** El tipo forma parte de la identificación del favorito: la experiencia 43 y el servicio 43 son cosas distintas. */
+  tipo: "experiencia" | "servicio";
+  guardado?: boolean;
+  haySesion?: boolean;
+  volverA?: string;
+}) {
   const lugar = [item.municipio, item.provincia].filter(Boolean).join(", ");
   // La imagen se rotula por lo que es: oficial del sitio o de referencia. Nunca se hace pasar una por
   // la otra.
   const etiquetaImagen = textoDeImagen(item.imagenEtiqueta);
   const alt = `${item.nombre}: ${etiquetaImagen.toLowerCase()}`;
   return (
-    <Link className="serv-card" href={item.href}>
+    <article className="serv-card">
       <span className="serv-media">
         <ImagenSegura src={item.imagen} alt={alt} />
+        {/* Mismo corazón y mismo criterio que en los alojamientos. Nunca un botón dentro de un enlace:
+            el enlace que abre la ficha se estira por encima de la tarjeta y el corazón queda por
+            encima con más índice de capa, así que pulsarlo no abre la ficha. */}
+        <Corazon tipo={tipo} itemId={item.id} guardadoInicial={guardado} haySesion={haySesion} volverA={volverA} />
       </span>
       <span className="serv-txt">
         <b>{item.nombre}</b>
@@ -96,6 +114,9 @@ export default function TarjetaCatalogo({ item }: { item: ItemCatalogo }) {
           <span className="serv-fuente">{etiquetaImagen}</span>
         ) : null}
       </span>
-    </Link>
+      <Link className="serv-enlace" href={item.href}>
+        <span className="sr-only">Ver la ficha de {item.nombre}{lugar ? ` en ${lugar}` : ""}</span>
+      </Link>
+    </article>
   );
 }

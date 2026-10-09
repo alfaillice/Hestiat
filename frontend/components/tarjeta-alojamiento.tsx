@@ -54,7 +54,7 @@ export default function TarjetaAlojamiento({
           <span className="tjg-sinfoto">Sin fotografía</span>
         )}
         {a.precioConfirmado && <span className="tjg-badge">Precio confirmado</span>}
-        <Corazon accommodationId={a.id} guardadoInicial={guardado} haySesion={haySesion} volverA={volverA} />
+        <Corazon tipo="alojamiento" itemId={a.id} guardadoInicial={guardado} haySesion={haySesion} volverA={volverA} />
       </div>
 
       <div className="tjg-info">

@@ -57,7 +57,7 @@ export async function GET(request: Request) {
   // llegar por scroll aparecerían con el corazón vacío aunque estuvieran en favoritos.
   const sesion = await getCurrentUser();
   const guardados = sesion
-    ? [...(await guardadosEntre(Number(sesion.id), tarjetas.map((t) => t.id)))]
+    ? [...(await guardadosEntre(Number(sesion.id), "alojamiento", tarjetas.map((t) => t.id)))]
     : [];
 
   return NextResponse.json(

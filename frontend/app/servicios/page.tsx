@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import SeccionHome from "@/components/seccion-home";
 import CercaDeTi from "@/components/cerca-de-ti";
+import { getCurrentUser } from "@/lib/auth.server";
+import { guardadosEntre } from "@/lib/favoritos.server";
 import ListaCatalogo from "@/components/lista-catalogo";
 import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
 import {
@@ -54,6 +56,17 @@ export default async function Servicios({
     buscarServicios({ q, categoria, provincia, desde, porPagina: POR_PAGINA }),
   ]);
   const destacados = filtrando ? [] : await destacadosServicios(13);
+
+  /*
+   * FAVORITOS. La sesión y qué elementos de esta pantalla están guardados, con el mismo ayudante y el
+   * mismo corazón que usan los alojamientos. El tipo forma parte de la identificación.
+   */
+  const sesionLista = await getCurrentUser();
+  const destacadosIds = destacados.map((x) => Number(x.id));
+  const idsPantalla = [...destacadosIds, ...listado.items.map((i) => Number(i.id))];
+  const guardadosPantalla = sesionLista
+    ? [...(await guardadosEntre(Number(sesionLista.id), "servicio", idsPantalla))]
+    : [];
   const elegida = categorias.find((c) => c.slug === categoria) ?? categorias.find((c) => c.hijas.some((h) => h.slug === categoria));
 
   /* Los filtros actuales, sin el cursor: la consulta que viaja en cada tanda del scroll infinito. */
@@ -130,7 +143,14 @@ export default async function Servicios({
       {destacados.length > 0 ? (
         <SeccionHome titulo="Servicios destacados" sub="Los que tienen más información publicada: web, teléfono y horario reales" verTodos="/servicios">
           {destacados.map((s) => (
-            <TarjetaCatalogo key={s.id} item={aItemCatalogo(s)} />
+            <TarjetaCatalogo
+              key={s.id}
+              item={aItemCatalogo(s)}
+              tipo="servicio"
+              guardado={guardadosPantalla.includes(Number(s.id))}
+              haySesion={Boolean(sesionLista)}
+              volverA="/servicios"
+            />
           ))}
         </SeccionHome>
       ) : null}
@@ -169,6 +189,8 @@ export default async function Servicios({
           <ListaCatalogo
             key={consulta}
             iniciales={listado.items.map(aItemCatalogo)}
+            haySesion={Boolean(sesionLista)}
+            guardadosIniciales={guardadosPantalla}
             total={listado.total}
             consulta={consulta}
             cursor={listado.items.length === POR_PAGINA ? ultimo : null}

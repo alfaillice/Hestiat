@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Carrusel from "@/components/carrusel";
 import SeccionHome from "@/components/seccion-home";
 import CercaDeTi from "@/components/cerca-de-ti";
+import { getCurrentUser } from "@/lib/auth.server";
+import { guardadosEntre } from "@/lib/favoritos.server";
 import ListaCatalogo from "@/components/lista-catalogo";
 import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
 import {
@@ -63,6 +65,17 @@ export default async function Experiencias({
     buscarExperiencias({ q, categoria, subcategoria, provincia, familia, accesible, desde, porPagina: POR_PAGINA }),
   ]);
   const destacadas = filtrando ? [] : await destacadasExperiencias(13);
+
+  /*
+   * FAVORITOS. La sesión y qué elementos de esta pantalla están guardados, con el mismo ayudante y el
+   * mismo corazón que usan los alojamientos. El tipo forma parte de la identificación.
+   */
+  const sesionLista = await getCurrentUser();
+  const destacadosIds = destacadas.map((x) => Number(x.id));
+  const idsPantalla = [...destacadosIds, ...listado.items.map((i) => Number(i.id))];
+  const guardadosPantalla = sesionLista
+    ? [...(await guardadosEntre(Number(sesionLista.id), "experiencia", idsPantalla))]
+    : [];
 
   /* Los filtros actuales, sin el cursor: es la consulta que viaja en cada tanda del scroll infinito. */
   const consulta = (() => {
@@ -151,7 +164,14 @@ export default async function Experiencias({
       {destacadas.length > 0 ? (
         <SeccionHome titulo="Experiencias destacadas" sub="Las mejor valoradas del catálogo, con valoración real" verTodos="/experiencias">
           {destacadas.map((e) => (
-            <TarjetaCatalogo key={e.id} item={aItemCatalogo(e)} />
+            <TarjetaCatalogo
+              key={e.id}
+              item={aItemCatalogo(e)}
+              tipo="experiencia"
+              guardado={guardadosPantalla.includes(Number(e.id))}
+              haySesion={Boolean(sesionLista)}
+              volverA="/experiencias"
+            />
           ))}
         </SeccionHome>
       ) : null}
@@ -195,6 +215,8 @@ export default async function Experiencias({
           <ListaCatalogo
             key={consulta}
             iniciales={listado.items.map(aItemCatalogo)}
+            haySesion={Boolean(sesionLista)}
+            guardadosIniciales={guardadosPantalla}
             total={listado.total}
             consulta={consulta}
             cursor={listado.items.length === POR_PAGINA ? ultima : null}

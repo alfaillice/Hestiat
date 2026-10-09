@@ -127,7 +127,7 @@ export default async function Ficha({
    */
   const sesionFicha = await getCurrentUser();
   const yaGuardado = sesionFicha
-    ? (await guardadosEntre(Number(sesionFicha.id), [Number(a.id)])).has(Number(a.id))
+    ? (await guardadosEntre(Number(sesionFicha.id), "alojamiento", [Number(a.id)])).has(Number(a.id))
     : false;
 
   // La misma decisión que en los metadatos: solo se muestra lo publicado, y un borrador únicamente
@@ -252,7 +252,8 @@ export default async function Ficha({
       <div style={{ position: "relative" }}>
         <Galeria fotos={fotos} titulo={a.title} todasReferenciales={datos.todasReferenciales} />
         <Corazon
-          accommodationId={Number(a.id)}
+          tipo="alojamiento"
+          itemId={Number(a.id)}
           guardadoInicial={yaGuardado}
           haySesion={Boolean(sesionFicha)}
           volverA={`/alojamiento/${a.slug}`}

@@ -23,6 +23,8 @@ export default function ListaCatalogo({
   tipo,
   etiqueta,
   limite,
+  haySesion,
+  guardadosIniciales,
 }: {
   iniciales: ItemCatalogo[];
   total: number;
@@ -35,8 +37,11 @@ export default function ListaCatalogo({
   /** «experiencias» o «servicios», para los textos. */
   etiqueta: string;
   limite: number;
+  haySesion: boolean;
+  guardadosIniciales: number[];
 }) {
   const [items, setItems] = useState<ItemCatalogo[]>(iniciales);
+  const [guardados, setGuardados] = useState<Set<number>>(() => new Set(guardadosIniciales));
   const [cursorActual, setCursorActual] = useState<number | null>(cursor);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(false);
@@ -61,6 +66,11 @@ export default function ListaCatalogo({
         const vistas = new Set(previas.map((i) => i.id));
         const nuevas = (datos.items as ItemCatalogo[]).filter((i) => !vistas.has(i.id));
         return [...previas, ...nuevas];
+      });
+      setGuardados((previos) => {
+        const s = new Set(previos);
+        for (const id of ((datos.guardados ?? []) as number[])) s.add(id);
+        return s;
       });
       setCursorActual(datos.siguiente === null ? null : Number(datos.siguiente));
     } catch {
@@ -100,7 +110,14 @@ export default function ListaCatalogo({
 
       <div className="serv-grid">
         {items.map((i) => (
-          <TarjetaCatalogo key={i.id} item={i} />
+          <TarjetaCatalogo
+            key={i.id}
+            item={i}
+            tipo={tipo === "experience" ? "experiencia" : "servicio"}
+            guardado={guardados.has(i.id)}
+            haySesion={haySesion}
+            volverA={basePath}
+          />
         ))}
       </div>
 

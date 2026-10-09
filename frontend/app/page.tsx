@@ -97,7 +97,7 @@ export default async function Portada({
   ]);
   const tarjetas = alojamientos.map((a) => aTarjeta(a as unknown as Record<string, unknown>));
   const guardados = sesion
-    ? await guardadosEntre(Number(sesion.id), tarjetas.map((t) => t.id))
+    ? await guardadosEntre(Number(sesion.id), "alojamiento", tarjetas.map((t) => t.id))
     : new Set<number>();
 
   return (

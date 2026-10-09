@@ -1,21 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import type { TipoFavorito } from "@/lib/favoritos.server";
 
 /**
  * Corazón de favoritos sobre la fotografía.
  *
- * Es real, no decorativo: guarda y quita de la tabla `favorito` mediante `/api/favoritos`.
+ * Es real, no decorativo: guarda y quita mediante `/api/favoritos`, para las TRES categorías
+ * (alojamiento, experiencia y servicio). El tipo forma parte de la identificación: la experiencia 43
+ * y el alojamiento 43 son favoritos distintos.
+ *
  *  · Con sesión: alterna, con cambio inmediato en pantalla y vuelta atrás si el servidor falla.
  *  · Sin sesión: no finge nada. Lleva a identificarse, indicando a dónde volver.
+ *  · Mientras guarda, el botón queda deshabilitado: no se puede pulsar dos veces.
  */
 export default function Corazon({
-  accommodationId,
+  tipo,
+  itemId,
   guardadoInicial,
   haySesion,
   volverA,
 }: {
-  accommodationId: number;
+  tipo: TipoFavorito;
+  itemId: number;
   guardadoInicial: boolean;
   haySesion: boolean;
   volverA: string;
@@ -29,7 +36,7 @@ export default function Corazon({
       <a
         className="corazon"
         href={`/login?volver=${encodeURIComponent(volverA)}`}
-        aria-label="Entra para guardar este alojamiento en favoritos"
+        aria-label="Entra para guardar esto en favoritos"
         title="Entra para guardar en favoritos"
       >
         <span aria-hidden="true">♡</span>
@@ -47,7 +54,7 @@ export default function Corazon({
       const r = await fetch("/api/favoritos", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ accommodationId }),
+        body: JSON.stringify({ tipo, itemId }),
       });
       const datos = await r.json();
       if (!r.ok || !datos?.ok) throw new Error("fallo");

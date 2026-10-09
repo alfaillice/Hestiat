@@ -1,3 +1,5 @@
+import { getCurrentUser } from "@/lib/auth.server";
+import { guardadosEntre } from "@/lib/favoritos.server";
 import { NextResponse } from "next/server";
 import { buscarExperiencias } from "@/lib/experiencias.server";
 import { buscarServicios } from "@/lib/servicios.server";
@@ -36,11 +38,18 @@ export async function GET(request: Request) {
       : await buscarExperiencias({ q, categoria, subcategoria, provincia, desde: tras, porPagina: limite });
     const ultimo = listado.items.length > 0 ? listado.items[listado.items.length - 1].id : null;
     const hayMas = listado.items.length === limite && ultimo !== null;
+    // Qué está guardado de esta tanda: así las tarjetas que añade el scroll salen con el corazón
+    // en su estado real y no todas vacías.
+    const sesionLista = await getCurrentUser();
+    const guardados = sesionLista
+      ? [...(await guardadosEntre(Number(sesionLista.id), tipo === "service" ? "servicio" : "experiencia", listado.items.map((i) => i.id)))]
+      : [];
     return NextResponse.json({
       ok: true,
       tipo,
       total: listado.total,
       items: listado.items,
+      guardados,
       mostrados: listado.items.length,
       // Si no viene lleno, se acabó: no se pide una tanda más para descubrirlo.
       siguiente: hayMas ? ultimo : null,

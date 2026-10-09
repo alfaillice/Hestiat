@@ -480,7 +480,8 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .serv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:16px;margin-top:6px}
 .serv-card{border:1px solid var(--border);border-radius:var(--radio);overflow:hidden;background:var(--card);transition:transform .18s ease, box-shadow .18s ease}
 .serv-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(20,40,50,.13)}
-.serv-media{display:block;aspect-ratio:4/3;background:var(--surface-strong);overflow:hidden}
+.serv-media{position:relative;display:block;aspect-ratio:4/3;background:var(--surface-strong);overflow:hidden}
+.serv-enlace{position:absolute;inset:0;z-index:1;border-radius:var(--radio)}
 .serv-media img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
 .serv-card:hover .serv-media img{transform:scale(1.04)}
 .serv-txt{display:flex;flex-direction:column;gap:3px;padding:11px 12px 13px}

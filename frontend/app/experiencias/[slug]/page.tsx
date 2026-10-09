@@ -5,6 +5,9 @@ import { cache } from "react";
 import type { Metadata } from "next";
 import SeccionHome from "@/components/seccion-home";
 import ImagenSegura from "@/components/imagen-segura";
+import Corazon from "@/components/corazon";
+import { getCurrentUser } from "@/lib/auth.server";
+import { estaGuardado } from "@/lib/favoritos.server";
 import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
@@ -69,6 +72,11 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
   const { slug } = await params;
   const e = await cargar(slug);
   if (!e) notFound();
+
+  /* Favoritos: la sesión y si ESTE elemento está guardado, con el mismo ayudante que el resto. */
+  const sesionFicha = await getCurrentUser();
+  const guardadoFicha = sesionFicha ? await estaGuardado(Number(sesionFicha.id), "experiencia", Number(e.id)) : false;
+
 
   const lugar = [e.municipio, e.provincia].filter(Boolean).join(", ") || "España";
   const [similares, cercanas] = await Promise.all([

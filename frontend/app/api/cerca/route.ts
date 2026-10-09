@@ -70,7 +70,7 @@ export async function GET(request: Request) {
 
     const sesion = await getCurrentUser();
     const guardados = sesion
-      ? [...(await guardadosEntre(Number(sesion.id), aloj.items.map((t) => t.id)))]
+      ? [...(await guardadosEntre(Number(sesion.id), "alojamiento", aloj.items.map((t) => t.id)))]
       : [];
 
     const respuesta: RespuestaCerca = {

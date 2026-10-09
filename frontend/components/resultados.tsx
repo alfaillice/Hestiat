@@ -34,7 +34,7 @@ export default async function Resultados({
   const sesion = await getCurrentUser();
   const { total, items, porPagina: tanda } = await buscar({ ...(filtros ?? {}), q, pagina, porPagina });
   const tarjetas = items.map((i) => aTarjeta(i as unknown as Record<string, unknown>));
-  const guardados = sesion ? await guardadosEntre(Number(sesion.id), tarjetas.map((t) => t.id)) : new Set<number>();
+  const guardados = sesion ? await guardadosEntre(Number(sesion.id), "alojamiento", tarjetas.map((t) => t.id)) : new Set<number>();
 
   // Filtros en formato de consulta, sin `p`: es lo que usan el scroll infinito y el enlace de
   // respaldo. Así las tandas siguientes llevan exactamente los mismos criterios.

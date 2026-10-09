@@ -55,7 +55,10 @@ export default function Vitales() {
       enviado = true;
       const datos = JSON.stringify({
         ruta: window.location.pathname,
-        lcp,
+        // Si el navegador no llegó a informar del LCP (por ejemplo, se sale de la página antes),
+        // se envía «sin medir» en lugar de un cero: un 0 no es una medida, y contarlo como tal
+        // ensuciaría la media. Se comprobó en producción: había muestras con lcp=0ms.
+        lcp: lcp > 0 ? lcp : null,
         cls: Math.round(cls * 1000) / 1000,
         inp,
         pantalla: `${window.innerWidth}x${window.innerHeight}`,

@@ -1,0 +1,10 @@
+[Unit]
+Description=Hestiat — copia de seguridad de las bases de datos
+Documentation=file:/root/hestiat-backup-bd.sh
+
+[Service]
+Type=oneshot
+ExecStart=/root/hestiat-backup-bd.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=1800

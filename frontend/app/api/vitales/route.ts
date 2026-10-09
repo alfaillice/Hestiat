@@ -33,16 +33,25 @@ export async function POST(request: Request) {
     return Number.isFinite(n) && n >= 0 && n <= max ? n : null;
   };
   const ruta = String(datos.ruta ?? "").slice(0, 120);
-  const lcp = numero(datos.lcp, 60_000);
+  // El LCP puede venir «sin medir» (null): no es un 0, es que el navegador no llegó a informarlo.
+  // Se acepta y se registra como «sin-medir», para no contar ceros falsos en la media.
+  //
+  // OJO: «sin medir» (null) y «valor imposible» son cosas distintas. Si viene un número fuera de
+  // rango, la petición se rechaza: si no, una medida absurda entraría por la puerta de atrás
+  // disfrazada de «sin medir».
+  const sinMedir = datos.lcp === null || datos.lcp === undefined;
+  const lcp = sinMedir ? null : numero(datos.lcp, 60_000);
   const cls = numero(datos.cls, 10);
   const inp = numero(datos.inp, 60_000);
   const pantalla = String(datos.pantalla ?? "").slice(0, 20);
   const conexion = String(datos.conexion ?? "").slice(0, 12);
 
-  if (!RUTAS_VALIDAS.test(ruta) || lcp === null || cls === null || inp === null) {
+  if (!RUTAS_VALIDAS.test(ruta) || cls === null || inp === null || (!sinMedir && lcp === null)) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
-  console.log(`[vitales] ruta=${ruta} lcp=${lcp}ms cls=${cls} inp=${inp}ms pantalla=${pantalla} red=${conexion || "-"}`);
+  console.log(
+    `[vitales] ruta=${ruta} lcp=${lcp === null ? "sin-medir" : `${lcp}ms`} cls=${cls} inp=${inp}ms pantalla=${pantalla} red=${conexion || "-"}`,
+  );
   return new NextResponse(null, { status: 204 });
 }

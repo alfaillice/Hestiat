@@ -1,0 +1,12 @@
+[Unit]
+Description=Hestiat — copia de seguridad diaria de las bases de datos
+
+[Timer]
+# Todos los días a las 03:30 UTC (05:30 en España en verano): la hora de menos tráfico.
+OnCalendar=*-*-* 03:30:00 UTC
+# Si el servidor estaba apagado a esa hora, se hace en cuanto arranque.
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

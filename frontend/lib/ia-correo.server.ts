@@ -160,7 +160,16 @@ export async function enviarAprobado(contactoId: number, aprobadoPor: string): P
     `UPDATE lead_contacto SET resultado = 'enviado', enviado_en = NOW(), aprobado_por = ? WHERE id = ?`,
     [autorizador.slice(0, 120), contactoId],
   );
-  await pool.query(`UPDATE \`lead\` SET estado = IF(estado IN ('DETECTED','RESEARCHED','CONTACT_READY'), 'CONTACTED', estado) WHERE id = ?`, [c.lead_id]);
+  // La aprobación queda también en el propio correo, para medir «aprobados» y «enviados» aparte.
+  await pool.query(`UPDATE lead_contacto SET revisado_por = ?, revisado_en = NOW() WHERE id = ?`, [autorizador.slice(0, 120), contactoId]);
+  // El lead avanza por la vía oficial: con el evento real (el envío) y dejando rastro en el historial.
+  const { cambiarEstado } = await import("@/lib/captacion.server");
+  const cambio = await cambiarEstado(Number(c.lead_id), "CONTACTED", {
+    motivo: "Correo aprobado y enviado",
+    responsable: autorizador,
+    evento: "envio_real",
+  });
+  if (!cambio.ok) console.error("[hestiat] el envío se hizo pero el estado no avanzó:", cambio.motivo);
   await registrarAccion({
     accion: "email_comercial_enviado",
     usuarioEmail: autorizador,

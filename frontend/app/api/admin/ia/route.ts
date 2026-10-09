@@ -9,6 +9,16 @@ import { borradoresPendientes, enviarAprobado, enviadosHoy, LIMITE_ENVIOS_DIA } 
 import { cancelarBorrador } from "@/lib/ia-correo.server";
 import { actualizarLead, crearLead, crearTicket, actualizarTicket, excluirEmail, obtenerLead, registrarContactoLead, buscarCoincidenciasLead, extraerDominio } from "@/lib/ia-datos.server";
 import { PLANTILLAS, personalizar, plantillaDe } from "@/lib/ia-plantillas.server";
+import {
+  cambiarEstado,
+  componerInvitacion,
+  exportarLead,
+  investigarNegocio,
+  lotePiloto,
+  metricasCaptacion,
+  puedeEscribirse,
+  suprimirLead,
+} from "@/lib/captacion.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -257,7 +267,9 @@ export async function POST(request: Request) {
      * interno y rompería la navegación). El resultado se cuenta en la propia página con `aviso`.
      * Toda acción queda en la auditoría, con quién la hizo.
      */
-    if (accion.startsWith("crm_") || accion.startsWith("ticket_")) {
+    // OJO: el bloque tiene que aceptar también las acciones de captación. Antes solo miraba
+    // «crm_» y «ticket_», así que las de captación nunca llegaban a ejecutarse.
+    if (accion.startsWith("crm_") || accion.startsWith("ticket_") || accion.startsWith("captacion_")) {
       const volver = String(cuerpo.volver ?? "");
       const responde = (ok: boolean, aviso: string) => {
         if (volver.startsWith("/")) {
@@ -319,27 +331,141 @@ export async function POST(request: Request) {
 
       if (accion === "crm_preparar_email") {
         const id = Number(cuerpo.id);
-        const plantilla = plantillaDe(String(cuerpo.plantilla ?? ""));
         const lead = await obtenerLead(id);
         if (!lead) return responde(false, "No existe ese potencial cliente.");
-        if (!plantilla) return responde(false, "Esa plantilla no existe.");
-        if (Number(lead.excluido) === 1) return responde(false, "Ese contacto está excluido: no se le prepara ningún correo.");
-        if (!lead.email) return responde(false, "Ese cliente no tiene email registrado.");
-        const { asunto, cuerpo: texto } = personalizar(plantilla, {
+        // Si pidió la baja, dijo que no o rebotó, aquí se para: no se prepara nada.
+        const permiso = await puedeEscribirse(id);
+        if (!permiso.ok) return responde(false, permiso.motivo ?? "No se le puede escribir.");
+        // La invitación se compone con datos verificados; no promete reservas ni finge una visita.
+        const invitacion = componerInvitacion({
           empresa: lead.empresa,
           localidad: lead.localidad,
-          contacto: lead.contacto_nombre,
+          tipo_negocio: String(lead.tipo_negocio ?? "otro"),
+          publicacion_id: lead.publicacion_id ?? null,
+          objetivo: String(lead.objetivo ?? "nueva_publicacion"),
         });
         await registrarContactoLead({
           leadId: id,
           canal: "email",
-          asunto,
-          cuerpo: texto,
+          asunto: invitacion.asunto,
+          cuerpo: invitacion.cuerpo,
           resultado: null,
           autor: admin.email,
         });
-        await registrarAccion({ accion: "crm_preparar_email", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: id, detalle: { plantilla: plantilla.id, asunto } });
-        return responde(true, "Correo redactado y pendiente de aprobación. NO se ha enviado.");
+        await pool.query(
+          `UPDATE lead_contacto SET motivo_seleccion = ?, base_juridica = ?, plantilla = ?, idioma = 'es'
+            WHERE lead_id = ? AND canal='email' AND resultado IS NULL`,
+          [invitacion.motivoSeleccion.slice(0, 255), invitacion.baseJuridica.slice(0, 255), invitacion.plantilla, id],
+        );
+        // El flujo marca CONTACT_READY al tener el correo listo para revisar.
+        const avance = await cambiarEstado(id, "CONTACT_READY", {
+          motivo: "Invitación preparada para revisión humana",
+          responsable: admin.email,
+          evento: "borrador_preparado",
+        });
+        await registrarAccion({ accion: "crm_preparar_email", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: id, detalle: { plantilla: invitacion.plantilla, asunto: invitacion.asunto, avance: avance.ok } });
+        return responde(true, "Invitación redactada y pendiente de aprobación. NO se ha enviado.");
+      }
+
+      if (accion === "crm_aprobar") {
+        // Marca el borrador como revisado y aprobado (sin enviarlo): el envío es un paso aparte.
+        const contactoId = Number(cuerpo.contactoId);
+        const [c] = await pool.query<any[]>(
+          `SELECT id, lead_id, resultado FROM lead_contacto WHERE id = ? LIMIT 1`,
+          [contactoId],
+        );
+        if (!c[0]) return responde(false, "No existe ese correo.");
+        if (c[0].resultado === "enviado") return responde(false, "Ese correo ya se envió.");
+        await pool.query(`UPDATE lead_contacto SET revisado_por = ?, revisado_en = NOW() WHERE id = ?`, [admin.email.slice(0, 120), contactoId]);
+        const r = await cambiarEstado(Number(c[0].lead_id), "APPROVED", {
+          motivo: "Correo revisado y aprobado por administración",
+          responsable: admin.email,
+          evento: "aprobacion_humana",
+        });
+        return responde(true, r.ok ? "Correo aprobado. El envío es el siguiente paso, y también lo decides tú." : `Aprobado en el correo, pero el estado no pudo avanzar: ${r.motivo}`);
+      }
+
+      if (accion === "crm_editar_borrador") {
+        const contactoId = Number(cuerpo.contactoId);
+        const asunto = String(cuerpo.asunto ?? "").trim();
+        const texto = String(cuerpo.cuerpo ?? "").trim();
+        if (!contactoId || !asunto || !texto) return responde(false, "Hacen falta el asunto y el cuerpo.");
+        const [c] = await pool.query<any[]>(`SELECT resultado FROM lead_contacto WHERE id = ? LIMIT 1`, [contactoId]);
+        if (!c[0]) return responde(false, "No existe ese correo.");
+        if (c[0].resultado === "enviado") return responde(false, "Ya se envió: no se puede editar.");
+        await pool.query(`UPDATE lead_contacto SET asunto = ?, cuerpo = ?, revisado_por = ?, revisado_en = NOW() WHERE id = ?`, [
+          asunto.slice(0, 255),
+          texto.slice(0, 20000),
+          admin.email.slice(0, 120),
+          contactoId,
+        ]);
+        await registrarAccion({ accion: "crm_editar_borrador", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead_contacto", entidadId: contactoId, detalle: { asunto } });
+        return responde(true, "Borrador editado.");
+      }
+
+      if (accion === "crm_estado") {
+        const id = Number(cuerpo.id);
+        const nuevo = String(cuerpo.estado ?? "");
+        const motivo = String(cuerpo.motivo ?? "").trim();
+        if (!id || !nuevo) return responde(false, "Faltan el cliente o el estado.");
+        const r = await cambiarEstado(id, nuevo as never, { motivo: motivo || "Cambio manual desde el CRM", responsable: admin.email });
+        return responde(r.ok, r.ok ? `Estado cambiado a ${nuevo}. ${r.detalle ?? ""}` : (r.motivo ?? "No se pudo cambiar."));
+      }
+
+      if (accion === "crm_investigar") {
+        const inv = await investigarNegocio({
+          nombre: String(cuerpo.nombre ?? ""),
+          localidad: cuerpo.localidad ? String(cuerpo.localidad) : null,
+          provincia: cuerpo.provincia ? String(cuerpo.provincia) : null,
+          web: cuerpo.web ? String(cuerpo.web) : null,
+          email: cuerpo.email ? String(cuerpo.email) : null,
+          categoria: cuerpo.categoria ? String(cuerpo.categoria) : "otro",
+          fuente: "manual",
+        });
+        await registrarAccion({ accion: "crm_investigar", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "negocio", entidadId: inv.nombre, detalle: { ya_publicado: inv.yaPublicado, confianza: inv.confianza } });
+        return NextResponse.json({ ok: true, investigacion: inv });
+      }
+
+      if (accion === "crm_suprimir") {
+        const id = Number(cuerpo.id);
+        const r = await suprimirLead(id, String(cuerpo.motivo ?? "solicitud del interesado"), admin.email);
+        return responde(r.ok, r.ok ? "Datos suprimidos. La dirección queda solo en la lista de exclusión." : (r.motivo ?? "No se pudo suprimir."));
+      }
+
+      if (accion === "crm_exportar") {
+        const datos = await exportarLead(Number(cuerpo.id));
+        if (!datos) return NextResponse.json({ ok: false, error: "No existe ese potencial cliente." }, { status: 404 });
+        await registrarAccion({ accion: "crm_exportar", usuarioId: admin.id, usuarioEmail: admin.email, entidad: "lead", entidadId: Number(cuerpo.id) });
+        return NextResponse.json({ ok: true, datos });
+      }
+
+      if (accion === "crm_registrar_respuesta") {
+        const email = String(cuerpo.email ?? "").trim();
+        const tipo = String(cuerpo.tipo ?? "").trim();
+        const TIPOS = ["interesado", "no_interesado", "baja", "pregunta", "rebote", "otro"];
+        if (!email || !email.includes("@")) return responde(false, "Falta la dirección que ha respondido.");
+        if (!TIPOS.includes(tipo)) return responde(false, `Tipo no válido.`);
+        const { registrarRespuesta } = await import("@/lib/captacion.server");
+        const r = await registrarRespuesta({
+          email,
+          tipo: tipo as "interesado" | "no_interesado" | "baja" | "pregunta" | "rebote" | "otro",
+          asunto: cuerpo.asunto ? String(cuerpo.asunto) : null,
+          extracto: cuerpo.extracto ? String(cuerpo.extracto) : null,
+          fuente: "panel",
+          responsable: admin.email,
+        });
+        return responde(true, r.seguimientoDetenido
+          ? "Respuesta registrada y seguimiento DETENIDO: la dirección queda en la lista de exclusión."
+          : "Respuesta registrada.");
+      }
+
+      if (accion === "captacion_piloto") {
+        const r = await lotePiloto(Number(cuerpo.limite ?? 5), admin.email);
+        return NextResponse.json({ ok: true, ...r });
+      }
+
+      if (accion === "captacion_metricas") {
+        return NextResponse.json({ ok: true, metricas: await metricasCaptacion() });
       }
 
       if (accion === "crm_baja") {

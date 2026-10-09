@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pool } from "@/lib/db";
+import { trozosDelCuerpo } from "@/lib/guia-render";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +38,29 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
   const g = await cargar(slug);
   if (!g || String(g.estado) !== "publicada") notFound();
 
+  // Cabecera: la imagen de referencia de la LOCALIDAD, y solo si el catálogo la tiene.
+  // Se busca por el nombre exacto del destino (no se usa la cadena de respaldo de
+  // provincia ni de país: una imagen de España no es una imagen de Santiago). Si no
+  // existe, no se muestra ninguna fotografía y no se genera nada que lo sustituya.
+  let referencia: { url: string; fuente: string | null } | null = null;
+  if (g.destino) {
+    try {
+      const [filas] = await pool.query<any[]>(
+        `SELECT url, fuente FROM localidad_imagen
+          WHERE tipo = 'ciudad' AND clave = ? AND url IS NOT NULL LIMIT 1`,
+        [String(g.destino).toLowerCase()],
+      );
+      referencia = filas[0]?.url
+        ? { url: String(filas[0].url), fuente: filas[0].fuente ? String(filas[0].fuente) : null }
+        : null;
+    } catch {
+      referencia = null;
+    }
+  }
+
+  // El cuerpo se sirve como trozos: las direcciones, como enlaces; el texto, intacto.
+  const partes = trozosDelCuerpo(String(g.cuerpo ?? ""));
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -66,10 +90,35 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
       <nav aria-label="Migas de pan" className="migas">
         <Link href="/">Hestiat</Link> / <Link href="/guia">Guías</Link> / <span>{g.titulo}</span>
       </nav>
+      {referencia?.url ? (
+        <figure style={{ margin: "12px 0 0", maxWidth: "70ch" }}>
+          <img
+            src={referencia.url}
+            alt={`Imagen de referencia de ${g.destino}: no es una fotografía del establecimiento`}
+            loading="lazy"
+            decoding="async"
+            style={{ width: "100%", height: "auto", borderRadius: 12, display: "block" }}
+          />
+          <figcaption style={{ fontSize: 13, color: "var(--muted-fg)", marginTop: 6 }}>
+            Imagen de referencia. No es una fotografía del establecimiento.
+            {referencia.fuente ? (
+              <>
+                {" "}Procedencia: <a href={referencia.fuente} rel="noopener">{referencia.fuente}</a>.
+              </>
+            ) : null}
+          </figcaption>
+        </figure>
+      ) : null}
       <h1>{g.titulo}</h1>
       {g.resumen ? <p style={{ color: "var(--muted-fg)", maxWidth: "70ch" }}>{g.resumen}</p> : null}
       <article style={{ maxWidth: "70ch", lineHeight: 1.65, whiteSpace: "pre-wrap", marginTop: 16 }}>
-        {g.cuerpo}
+        {partes.map((t, i) =>
+          t.tipo === "texto" ? (
+            <span key={i}>{t.valor}</span>
+          ) : (
+            <a key={i} href={t.href} rel={t.interno ? undefined : "noopener"}>{t.valor}</a>
+          ),
+        )}
       </article>
       <p className="aviso" style={{ marginTop: 20, fontSize: 13 }}>
         Guía revisada por {g.revisor ?? "el equipo de Hestiat"} y publicada el{" "}

@@ -143,6 +143,17 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .publi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radio);margin:22px 0;display:flex;align-items:center;justify-content:center;overflow:hidden}
 .publi-horizontal{width:100%}
 .publi-cuadrado{width:100%;max-width:300px;margin:0 auto}
+/* AI Manager (panel de administración): consola, listas y avisos. */
+.ia-fila{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ia-lista{display:flex;flex-direction:column;gap:6px;font-size:13.5px;line-height:1.55}
+.ia-lista li{list-style:none}
+.ia-aviso{background:var(--secondary);border:1px solid var(--border);border-radius:var(--radio);padding:10px 12px}
+.ia-chat{margin-top:12px;display:flex;flex-direction:column;gap:10px;max-height:480px;overflow-y:auto;padding:4px}
+.ia-msg{border:1px solid var(--border);border-radius:var(--radio);padding:10px 12px;font-size:14px;background:var(--card)}
+.ia-usuario{background:var(--secondary)}
+.ia-error{border-color:var(--hestiat-primary);background:var(--fucsia-soft)}
+.ia-pasos{margin-top:6px;font-size:12px;color:var(--muted-fg);display:flex;flex-direction:column;gap:2px}
+.ia-pasos li{list-style:none}
 .busqueda{display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,42%);gap:26px;align-items:start}
 .mapa-lado{position:sticky;top:76px}
 .filtros{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:14px;margin-bottom:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}

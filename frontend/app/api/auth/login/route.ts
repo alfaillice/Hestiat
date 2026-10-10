@@ -1,5 +1,6 @@
 import { login } from "@/lib/auth.server";
 import { redirigir } from "@/lib/http.server";
+import { NextResponse } from "next/server";
 
 import { limitar } from "@/lib/limite.server";
 
@@ -12,7 +13,18 @@ export async function POST(request: Request) {
   const excedido = limitar(request, "/api/auth/login", 10, 60);
   if (excedido) return excedido;
 
-  const formulario = await request.formData();
+  // Leer el formulario va DENTRO de una protección: si la petición no trae un formulario (un JSON,
+  // un cuerpo cortado…) esto lanzaba una excepción que salía como error 500 del servidor.
+  let formulario: FormData;
+  try {
+    formulario = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "La solicitud no tiene el formato esperado." },
+      { status: 400 },
+    );
+  }
+
   const email = String(formulario.get("email") ?? "");
   const password = String(formulario.get("password") ?? "");
   const destino = String(formulario.get("redirect") ?? "/") || "/";

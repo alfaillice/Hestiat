@@ -18,7 +18,19 @@ function redirigir(ruta: string): NextResponse {
 }
 
 export async function POST(request: Request) {
-  const formulario = await request.formData();
+  // Leer el formulario va DENTRO de una protección: si la petición no trae un formulario (un JSON,
+  // un cuerpo cortado…) esto lanzaba una excepción que salía como error 500 del servidor. Sin sesión
+  // y con un cuerpo válido, la comprobación de anfitrión de más abajo ya lo rechaza como siempre.
+  let formulario: FormData;
+  try {
+    formulario = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "La solicitud no tiene el formato esperado." },
+      { status: 400 },
+    );
+  }
+
   const id = Number(formulario.get("id"));
   const nuevo = String(formulario.get("estado") ?? "") as EstadoReserva;
 

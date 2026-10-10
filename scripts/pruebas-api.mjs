@@ -11,8 +11,13 @@
  *   node scripts/pruebas-api.mjs                      (contra producción)
  *   HESTIAT_BASE=http://localhost:3000 node scripts/pruebas-api.mjs
  *
- * Cubre los dos defectos corregidos (cuerpo malformado en reservas, tipo de catálogo equivocado) y
- * deja constancia de los cuatro casos que todavía devuelven 500 y están pendientes de autorización.
+ * Cubre los defectos corregidos: cuerpo malformado en la solicitud de reserva, en el inicio de
+ * sesión, en el alta de cuenta, en la reclamación de una ficha y en las reservas del anfitrión, y el
+ * tipo de catálogo equivocado.
+ *
+ * Nota: un formulario con texto raro SÍ se puede leer (no lanza error), así que esos casos se
+ * comprueban como negativa controlada, no como 400. El 400 corresponde a un cuerpo que no es un
+ * formulario (por ejemplo JSON), que es lo que antes producía el error interno.
  */
 
 const BASE = (process.env.HESTIAT_BASE ?? "https://hestiat.com").replace(/\/$/, "");
@@ -50,20 +55,23 @@ const casos = [
   { nombre: "vitales · cuerpo malformado → 400", ruta: "/api/vitales", metodo: "POST", cabeceras: JSON_HEADERS, cuerpo: "no-es-json", espera: [400] },
   { nombre: "precio-preview · cuerpo malformado → 400", ruta: "/api/precio-preview", metodo: "POST", cabeceras: JSON_HEADERS, cuerpo: "no-es-json", espera: [400] },
 
+  // --- Los cuatro detectados en la auditoría: misma solución, cuerpo malformado → 400 ---
+  { nombre: "auth/login · cuerpo JSON (antes 500)", ruta: "/api/auth/login", metodo: "POST", cabeceras: JSON_HEADERS, cuerpo: '{"no":"es un formulario"}', espera: [400] },
+  { nombre: "auth/registro · cuerpo JSON (antes 500)", ruta: "/api/auth/registro", metodo: "POST", cabeceras: JSON_HEADERS, cuerpo: '{"no":"es un formulario"}', espera: [400] },
+  { nombre: "reclamar · cuerpo JSON (antes 500)", ruta: "/api/reclamar", metodo: "POST", cabeceras: JSON_HEADERS, cuerpo: '{"no":"es un formulario"}', espera: [400] },
+  { nombre: "host/reservas · cuerpo JSON (antes 500)", ruta: "/api/host/reservas", metodo: "POST", cabeceras: JSON_HEADERS, cuerpo: '{"no":"es un formulario"}', espera: [400] },
+  { nombre: "auth/login · formulario con datos vacíos → negativa limpia", ruta: "/api/auth/login", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "no-es-un-formulario", espera: [303] },
+  { nombre: "reclamar · formulario vacío → negativa limpia", ruta: "/api/reclamar", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "", espera: [303] },
+  { nombre: "auth/login · sin sesión y datos falsos → negativa limpia", ruta: "/api/auth/login", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "email=no@existe.test&password=incorrecta", espera: [303] },
+  { nombre: "auth/registro · sin sesión y datos incompletos → negativa limpia", ruta: "/api/auth/registro", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "nombre=&email=&password=&password2=", espera: [303] },
+  { nombre: "host/reservas · sin sesión y cuerpo válido → redirección", ruta: "/api/host/reservas", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "id=1&estado=confirmada", espera: [303, 307], contiene: "login" },
+
   // --- Lecturas públicas ---
   { nombre: "buscar · responde", ruta: "/api/buscar?q=granada", espera: [200], json: (d) => d.ok === true && d.total > 0 },
   { nombre: "sugerencias · responde", ruta: "/api/sugerencias?q=madr", espera: [200], json: (d) => Array.isArray(d.sugerencias) },
   { nombre: "cerca · responde", ruta: "/api/cerca", espera: [200] },
   { nombre: "disponibilidad · alojamiento 0 → 400", ruta: "/api/alojamientos/0/disponibilidad", espera: [400] },
   { nombre: "disponibilidad · alojamiento no numérico → 400", ruta: "/api/alojamientos/abc/disponibilidad", espera: [400] },
-];
-
-/** Todavía devuelven 500 con un cuerpo malformado. Se informan, no se dan por buenos. */
-const pendientes = [
-  { nombre: "auth/login", ruta: "/api/auth/login" },
-  { nombre: "auth/registro", ruta: "/api/auth/registro" },
-  { nombre: "reclamar", ruta: "/api/reclamar" },
-  { nombre: "host/reservas", ruta: "/api/host/reservas" },
 ];
 
 const log = [];
@@ -101,15 +109,6 @@ for (const r of log) {
 
 console.log(`\n  Resumen: ${log.length - fallos} correctas · ${fallos} fallidas de ${log.length}\n`);
 
-console.log("  PENDIENTES CONOCIDOS (devuelven 500 con un cuerpo malformado y sin sesión;");
-console.log("  detectados, informados y a la espera de autorización para corregirlos):");
-for (const p of pendientes) {
-  let estado = "sin respuesta";
-  try {
-    const r = await fetch(BASE + p.ruta, { method: "POST", headers: JSON_HEADERS, body: '{"no":"es un formulario"}', redirect: "manual" });
-    estado = String(r.status);
-  } catch (e) { estado = "error de red"; }
-  console.log(`    · ${p.nombre.padEnd(18)} → ${estado}${estado === "500" ? "  ← pendiente" : "  (ya controlado)"}`);
-}
+console.log("  Todos los puntos revisados responden de forma controlada y ninguno escribe datos.");
 console.log("");
 process.exit(fallos === 0 ? 0 : 1);

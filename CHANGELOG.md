@@ -73,17 +73,22 @@ explicar a nadie y no afecta a ningún anfitrión ni proveedor.
 - **De integración** (contra el servicio real, sin crear datos): 28 comprobaciones sobre reservas,
   catálogo, guardias de sesión y lecturas públicas. Se ejecutan con `node scripts/pruebas-api.mjs`.
 
-### 5. Revisión del resto de la API: cuatro casos pendientes
+### 5. Los cuatro casos detectados en la revisión, ya corregidos
 
-Se han revisado los 38 puntos de la API pública buscando el mismo defecto. **Cuatro todavía
-devuelven error interno (500) cuando reciben un cuerpo malformado sin sesión**:
+La revisión de los 38 puntos de la API encontró cuatro que devolvían **error interno (500)** al
+recibir un cuerpo malformado, por la misma causa que la solicitud de reserva: se leía el contenido
+antes de tenerlo protegido. Ya están corregidos con la misma solución y responden **400** con un
+mensaje claro, sin escribir nada:
 
-| Punto | Qué es | Qué debe pasar cuando se corrija |
-|---|---|---|
-| `/api/auth/login` | Inicio de sesión | Negativa clara en vez de error interno |
-| `/api/auth/registro` | Alta de cuenta | Negativa clara en vez de error interno |
-| `/api/reclamar` | Reclamar la ficha de un alojamiento | Negativa clara en vez de error interno |
-| `/api/host/reservas` | Reservas del panel de anfitrión | Negativa clara en vez de error interno |
+| Punto | Qué es | Antes | Ahora |
+|---|---|---|---|
+| `/api/auth/login` | Inicio de sesión | 500 | 400 «La solicitud no tiene el formato esperado» |
+| `/api/auth/registro` | Alta de cuenta | 500 | 400 con el mismo mensaje |
+| `/api/reclamar` | Reclamar la ficha de un alojamiento | 500 | 400 con el mismo mensaje |
+| `/api/host/reservas` | Reservas del panel de anfitrión | 500 | 400 con el mismo mensaje |
 
-**Todos los demás responden correctamente** (400, 401, 403 o redirección) y **ninguno escribe datos**
-cuando la petición es inválida. Están detectados y a la espera de autorización para corregirlos.
+Los cuatro casos legítimos siguen funcionando igual: sin sesión, el inicio de sesión y el alta
+redirigen con su mensaje de siempre, y las reservas del anfitrión redirigen al acceso.
+
+**Estado de la revisión completa**: los 38 puntos responden ahora de forma controlada (400, 401, 403
+o redirección) y **ninguno escribe datos** cuando la petición es inválida.

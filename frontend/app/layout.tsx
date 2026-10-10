@@ -820,6 +820,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <meta name="google-site-verification" content={process.env.GOOGLE_SITE_VERIFICATION} />
         ) : null}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#0A1435" />
         <style dangerouslySetInnerHTML={{ __html: estilos }} />
       </head>
       <body>
@@ -830,8 +831,15 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 al ancho de pantalla, sin depender de que ninguna regla de móvil lo recoja. El texto
                 alternativo nombra el enlace: no hace falta un aria-label aparte. */}
             <a href="/" className="marca">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="80" height="30" />
+              {/* EL LOGOTIPO CAMBIA SOLO CON EL TEMA. Con <picture> y prefers-color-scheme no hace
+                  falta JavaScript ni un conmutador: el navegador elige el archivo según el tema del
+                  sistema. En tema oscuro se usa la versión con placa marino, porque la palabra en
+                  crema necesita fondo oscuro para leerse: sobre una cabecera clara quedaría invisible. */}
+              <picture>
+                <source srcSet="/marca/logotipo-web-oscuro.svg" media="(prefers-color-scheme: dark)" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="80" height="30" />
+              </picture>
             </a>
 
             {/* LA BÚSQUEDA GENERAL VIVE AQUÍ: un destino y la lupa, en el mismo bloque. Está en todas

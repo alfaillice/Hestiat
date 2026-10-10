@@ -388,7 +388,7 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .cab{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40}
 .cab-in{display:flex;align-items:center;gap:16px;min-height:72px;padding:8px 18px;flex-wrap:nowrap}
 .marca{font-weight:700;letter-spacing:-.02em;font-size:21px;color:var(--ink);font-family:var(--fuente-titulo);display:flex;align-items:center;gap:7px;white-space:nowrap}
-.marca-logo{height:clamp(22px,4.5vw,30px);width:auto;display:block}
+.marca-logo{height:clamp(26px,6vw,32px);width:auto;display:block}
 .marca-logo-mini{height:24px;width:auto;max-width:100%;display:inline-block;vertical-align:middle}
 .marca-casa{font-size:18px}
 .cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
@@ -851,11 +851,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   falta JavaScript ni un conmutador: el navegador elige el archivo según el tema del
                   sistema. En tema oscuro se usa la versión con placa marino, porque la palabra en
                   crema necesita fondo oscuro para leerse: sobre una cabecera clara quedaría invisible. */}
-              <picture>
-                <source srcSet="/marca/logotipo-web-oscuro.svg" media="(prefers-color-scheme: dark)" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="80" height="30" />
-              </picture>
+              {/* UN SOLO ARCHIVO, TAMBIÉN EN MODO OSCURO. La cabecera es blanca siempre, así que
+                  la palabra va en azul marino siempre. Antes había una variante de tema oscuro con la
+                  palabra en crema: si el móvil estaba en modo oscuro, el navegador servía letras crema
+                  sobre la cabecera blanca y el nombre era ilegible. Se ha retirado esa variante. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="85" height="32" />
             </a>
 
             {/* LA BÚSQUEDA GENERAL VIVE AQUÍ: un destino y la lupa, en el mismo bloque. Está en todas

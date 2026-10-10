@@ -15,6 +15,7 @@
  *  · Todas las escrituras son parametrizadas y todas las lecturas de perfil salen del usuario de la
  *    sesión, nunca de un identificador que venga en la petición.
  */
+import { CARPETA_AVATARES, borrarImagen, esUrlNuestra, guardarImagenOptimizada, urlsDeVariantes } from "@/lib/almacen.server";
 import { poolLegacy } from "@/lib/db";
 import { hashPassword, verificarPassword, createSession, setSessionCookie, type Rol } from "@/lib/auth.server";
 
@@ -147,5 +148,104 @@ export async function cambiarPassword(
   if (!verificarPassword(actual, u.pass_hash)) return { ok: false, error: "La contraseña actual no es correcta." };
 
   await poolLegacy.query(`UPDATE usuario SET pass_hash = ? WHERE id = ?`, [hashPassword(nueva), usuarioId]);
+  return { ok: true };
+}
+
+
+/* -------------------------------------------------------------------- foto de perfil -- */
+
+/**
+ * FOTO DE PERFIL.
+ *
+ * Reutiliza el almacenamiento que ya usa el resto de la web (misma carpeta `avatares`, mismo
+ * optimizador, mismo criterio de nombres por contenido) y el mismo borrado que comprueba si la
+ * imagen la usa alguien más. No se crea ningún sistema aparte y no tiene nada que ver con las fotos
+ * de los alojamientos: son campos y carpetas distintas.
+ *
+ * Reglas:
+ *  · El formato se comprueba por los BYTES del archivo, no por lo que diga el navegador.
+ *  · La imagen anterior se conserva si la subida falla: primero se sube, después se apunta.
+ *  · Solo se borra la anterior si es nuestra y no la usa otro registro.
+ */
+const MAX_AVATAR = 8 * 1024 * 1024; // 8 MB, el mismo tope que en el resto de subidas
+
+const FORMATOS: Array<{ ext: string; comprueba: (b: Uint8Array) => boolean }> = [
+  { ext: "jpg", comprueba: (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff },
+  { ext: "png", comprueba: (b) => b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47 },
+  {
+    ext: "webp",
+    comprueba: (b) =>
+      b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 && b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50,
+  },
+];
+
+/** Guarda la foto del usuario. Devuelve error legible sin tocar lo que ya tenía si algo falla. */
+export async function guardarAvatar(usuarioId: number, formulario: FormData): Promise<ResultadoCuenta> {
+  const fichero = formulario.get("foto");
+  if (!(fichero instanceof File) || fichero.size === 0) {
+    return { ok: false, error: "No has elegido ninguna imagen." };
+  }
+  if (fichero.size > MAX_AVATAR) {
+    return { ok: false, error: `La imagen ocupa más de ${Math.round(MAX_AVATAR / 1024 / 1024)} MB. Elige una más ligera.` };
+  }
+  let datos: Uint8Array;
+  try {
+    datos = new Uint8Array(await fichero.arrayBuffer());
+  } catch {
+    return { ok: false, error: "No se ha podido leer el archivo." };
+  }
+  const formato = FORMATOS.find((f) => datos.length > 12 && f.comprueba(datos));
+  if (!formato) {
+    return { ok: false, error: "El archivo no es una imagen JPG, PNG o WebP de verdad." };
+  }
+
+  // Se sube primero: si esto falla, la foto que ya tenía sigue intacta.
+  let guardada;
+  try {
+    guardada = await guardarImagenOptimizada(datos, formato.ext, CARPETA_AVATARES);
+  } catch {
+    return { ok: false, error: "No se ha podido guardar la imagen. Inténtalo de nuevo en un momento." };
+  }
+
+  const [filas] = await poolLegacy.query<any[]>(`SELECT avatar_url FROM usuario WHERE id = ? LIMIT 1`, [usuarioId]);
+  const anterior = (filas[0]?.avatar_url as string | null) ?? null;
+
+  await poolLegacy.query(
+    `UPDATE usuario SET avatar_url = ?, avatar_original = ? WHERE id = ?`,
+    [guardada.principal.url, JSON.stringify(guardada.variantes.map((v) => v.url)), usuarioId],
+  );
+
+  // La anterior solo se borra si es nuestra y no la usa nadie más: lo comprueba `borrarImagen`.
+  if (anterior && anterior !== guardada.principal.url && esUrlNuestra(anterior)) {
+    try {
+      await borrarImagen(anterior);
+    } catch {
+      /* si no se puede borrar, se queda: nunca se rompe la foto nueva por esto */
+    }
+  }
+  return { ok: true };
+}
+
+/** Quita la foto y vuelve al avatar predeterminado. Primero la base, después los archivos. */
+export async function quitarAvatar(usuarioId: number): Promise<ResultadoCuenta> {
+  const [filas] = await poolLegacy.query<any[]>(
+    `SELECT avatar_url, avatar_original FROM usuario WHERE id = ? LIMIT 1`,
+    [usuarioId],
+  );
+  if (!filas[0]) return { ok: false, error: "No se ha encontrado tu cuenta." };
+  const url = (filas[0].avatar_url as string | null) ?? null;
+  const originales = urlsDeVariantes(filas[0].avatar_original as string | null);
+
+  await poolLegacy.query(`UPDATE usuario SET avatar_url = NULL, avatar_original = NULL WHERE id = ?`, [usuarioId]);
+
+  for (const u of [url, ...originales]) {
+    if (u && esUrlNuestra(u)) {
+      try {
+        await borrarImagen(u);
+      } catch {
+        /* compartida por otro registro: se conserva */
+      }
+    }
+  }
   return { ok: true };
 }

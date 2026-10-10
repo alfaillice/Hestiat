@@ -1,3 +1,4 @@
+import AvatarPerfil from "@/components/avatar-perfil";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -67,6 +68,12 @@ export default async function Perfil({
           en el centro, con los raíles desalineados respecto a la cabecera. */}
       <div className="pagina-cols pagina-cols-inv">
         <div>
+      <AvatarPerfil
+        actual={perfil.avatar_url}
+        inicial={(perfil.nombre_mostrado ?? perfil.nombre ?? perfil.email ?? "?").slice(0, 1).toUpperCase()}
+        nombre={perfil.nombre_mostrado ?? perfil.nombre ?? "Tu foto"}
+      />
+
       <h2 style={{ fontSize: 19, margin: "8px 0 10px" }}>Mis datos</h2>
       <form action="/api/perfil" method="post" className="form-edicion">
         <input type="hidden" name="accion" value="perfil" />

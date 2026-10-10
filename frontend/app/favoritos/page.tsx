@@ -28,7 +28,7 @@ async function filasCatalogo(tabla: "experiencia" | "servicio_turistico", ids: n
   if (limpios.length === 0) return [] as Record<string, unknown>[];
   const huecos = limpios.map(() => "?").join(",");
   const [filas] = await pool.query<any[]>(
-    `SELECT id, nombre, slug, category FROM ${tabla} WHERE id IN (${huecos}) ORDER BY nombre LIMIT 500`,
+    `SELECT id, name AS nombre, slug, category AS categoria FROM ${tabla} WHERE id IN (${huecos}) ORDER BY name LIMIT 500`,
     limpios,
   );
   return filas as unknown as Record<string, unknown>[];
@@ -111,7 +111,7 @@ export default async function MisFavoritos() {
           {expFilas.map((f) => (
             <li key={String(f.id)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Link href={`/experiencias/${String(f.slug ?? "")}`}>{String(f.nombre ?? "")}</Link>
-              {f.category ? <span className="m">{String(f.category)}</span> : null}
+              {f.categoria ? <span className="m">{String(f.categoria)}</span> : null}
               <span style={{ position: "relative", width: 40, height: 32, display: "inline-block" }}>
                 <Corazon tipo="experiencia" itemId={Number(f.id)} guardadoInicial haySesion volverA="/favoritos" />
               </span>
@@ -130,7 +130,7 @@ export default async function MisFavoritos() {
           {servFilas.map((f) => (
             <li key={String(f.id)} style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <Link href={`/servicios/${String(f.slug ?? "")}`}>{String(f.nombre ?? "")}</Link>
-              {f.category ? <span className="m">{String(f.category)}</span> : null}
+              {f.categoria ? <span className="m">{String(f.categoria)}</span> : null}
               <span style={{ position: "relative", width: 40, height: 32, display: "inline-block" }}>
                 <Corazon tipo="servicio" itemId={Number(f.id)} guardadoInicial haySesion volverA="/favoritos" />
               </span>

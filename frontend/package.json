@@ -4,6 +4,7 @@
   "private": true,
   "description": "Hestiat 2.0 — frontend definitivo. Next.js App Router (SSR) sobre el esquema nuevo (db/migrations/001_init.sql).",
   "scripts": {
+    "test:unit": "node --experimental-strip-types --test tests/*.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

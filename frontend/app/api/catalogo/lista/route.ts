@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { buscarExperiencias } from "@/lib/experiencias.server";
 import { buscarServicios } from "@/lib/servicios.server";
 import { limitar } from "@/lib/limite.server";
+import { normalizarTipoCatalogo } from "@/lib/tipos-catalogo";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,20 +25,9 @@ export async function GET(request: Request) {
   if (excedido) return excedido;
 
   const p = new URL(request.url).searchParams;
-  // El tipo se acepta en inglés y en español. Antes cualquier valor que no fuese exactamente
-  // «service» caía en experiencias SIN avisar: un tipo mal escrito devolvía datos equivocados con
-  // respuesta correcta. Ahora un valor no reconocido es un error explícito.
-  const tipoCrudo = (p.get("tipo") ?? "").trim().toLowerCase();
-  const TIPOS_VALIDOS: Record<string, "service" | "experience"> = {
-    service: "service",
-    servicio: "service",
-    servicios: "service",
-    servicio_turistico: "service",
-    experience: "experience",
-    experiencia: "experience",
-    experiencias: "experience",
-  };
-  const tipo = tipoCrudo === "" ? "experience" : TIPOS_VALIDOS[tipoCrudo];
+  // El tipo se acepta en inglés y en español (ver `lib/tipos-catalogo`). Un valor no reconocido es
+  // un error explícito en vez de devolver experiencias con respuesta correcta.
+  const tipo = normalizarTipoCatalogo(p.get("tipo"));
   if (!tipo) {
     return NextResponse.json(
       { ok: false, error: "Tipo de catálogo no válido. Usa «experiencia» o «servicio»." },

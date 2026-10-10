@@ -4,6 +4,7 @@ import { crearSolicitud } from "@/lib/reservas.server";
 import { avisarReservaCreada } from "@/lib/correo-reservas.server";
 
 import { limitar } from "@/lib/limite.server";
+import { leerEntradaReserva } from "@/lib/reserva-entrada";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -42,23 +43,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const slug = String(formulario.get("slug") ?? "");
-  const desde = String(formulario.get("desde") ?? "");
-  const hasta = String(formulario.get("hasta") ?? "");
-  const huespedes = Number(formulario.get("huespedes") ?? 1);
-  const accommodationId = Number(formulario.get("accommodationId"));
-  const base = `/reservar/${encodeURIComponent(slug)}`;
+  const base = `/reservar/${encodeURIComponent(String(formulario.get("slug") ?? ""))}`;
 
   // Sin un alojamiento válido no se sigue: antes se llegaba a la consulta con un valor no numérico.
-  if (!Number.isInteger(accommodationId) || accommodationId <= 0) {
+  const entrada = leerEntradaReserva({
+    accommodationId: formulario.get("accommodationId"),
+    slug: formulario.get("slug"),
+    desde: formulario.get("desde"),
+    hasta: formulario.get("hasta"),
+    huespedes: formulario.get("huespedes"),
+  });
+  if (!entrada) {
     const p = new URLSearchParams({
-      desde,
-      hasta,
-      huespedes: String(huespedes),
+      desde: String(formulario.get("desde") ?? ""),
+      hasta: String(formulario.get("hasta") ?? ""),
+      huespedes: String(formulario.get("huespedes") ?? 1),
       error: "Solicitud no válida.",
     });
     return redirigir(`${base}?${p}`);
   }
+  const { accommodationId, desde, hasta, huespedes } = entrada;
 
   try {
     const usuario = await getCurrentUser();

@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 const estilos = `
 :root{
   --background:oklch(98.8% .005 92); --foreground:oklch(23.5% .021 225); --ink:oklch(18.5% .024 230);
-  --card:oklch(100% 0 0); --primary:oklch(41.5% .072 197); --primary-fg:oklch(98.5% .008 190);
+  --card:oklch(100% 0 0); --primary:#0A1435; --primary-fg:oklch(98.5% .008 190);
   --primary-soft:oklch(94.5% .022 195); --accent:oklch(79.5% .135 74); --accent-fg:oklch(29% .06 62);
   --secondary:oklch(96.2% .008 92); --muted:oklch(95.5% .007 92); --muted-fg:oklch(51.5% .019 232);
   --success:oklch(58% .115 158); --destructive:oklch(55.2% .191 25);
@@ -637,15 +637,18 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 }
 @media(prefers-reduced-motion:reduce){.hero-cine{height:auto}}
 /* ---------- ficha divertida: iconos ilustrativos y acento fucsia ---------- */
-:root{--fucsia:oklch(58% .25 348); --fucsia-soft:oklch(95.5% .035 348); --fucsia-tinta:oklch(38% .17 348)}
+/* Los tres tokens conservan su nombre por compatibilidad con las reglas que ya los usan, pero su
+   valor es ahora el de la marca tomada del logo del canal: oro, crema y marino. Así la interfaz entera
+   (botones, enlaces, destacados, cabecera y pie) cambia de una vez sin tocar ni una regla. */
+:root{--fucsia:#C8A858; --fucsia-soft:#F7EFD8; --fucsia-tinta:#0A1435}
 /* Color primario oficial de acción, tomado de la ficha (ver la explicación junto a .f-aplicar).
    --hestiat-primary        relleno de los botones principales: el pastel que se ve en la ficha.
    --hestiat-primary-hover  el mismo tono un poco más profundo, solo al pasar el ratón.
    --hestiat-primary-texto  el mismo tono oscuro, para enlaces y estados activos (contraste). */
-:root{--hestiat-primary:#eb7fc9; --hestiat-primary-hover:#dd66b6; --hestiat-primary-texto:#7b0052}
+:root{--hestiat-primary:#C8A858; --hestiat-primary-hover:#B8963F; --hestiat-primary-texto:#0A1435}
 /* Identidad de marca tomada del logo del canal: emblema circular con casa y corazón.
    Se AÑADEN; los tokens de acción de arriba se conservan tal cual para no alterar ningún flujo. */
-:root{--marca-marino:#0A1435; --marca-oro:#C8A858; --marca-oro-claro:#F2E3B4; --marca-oro-oscuro:#6E5220;
+:root{--marca-oro-texto:#8A6A1E; --marca-marino:#0A1435; --marca-oro:#C8A858; --marca-oro-claro:#F2E3B4; --marca-oro-oscuro:#6E5220;
       --marca-arena:#D0B890; --marca-crema:#F7EFD8}
 /* Los accesorios se ven antes de leerse: cada uno con su icono, que viene del diccionario de
    servicios (su campo de icono), no de una lista metida en el código. */

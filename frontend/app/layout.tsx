@@ -373,6 +373,7 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .cab{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40}
 .cab-in{display:flex;align-items:center;gap:16px;min-height:72px;padding:8px 18px;flex-wrap:nowrap}
 .marca{font-weight:700;letter-spacing:-.02em;font-size:21px;color:var(--ink);font-family:var(--fuente-titulo);display:flex;align-items:center;gap:7px;white-space:nowrap}
+.marca-logo{height:clamp(22px,4.5vw,30px);width:auto;display:block}
 .marca-casa{font-size:18px}
 .cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
 .cab-nav{display:flex;gap:8px;align-items:center;flex:0 0 auto}
@@ -824,9 +825,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         <header className="cab">
           <div className="wrap cab-in">
+            {/* EL LOGOTIPO DE LA MARCA. El archivo trae la palabra convertida a trazados, así que no
+                depende de ninguna fuente instalada. Se le da el alto con clamp() para que se adapte solo
+                al ancho de pantalla, sin depender de que ninguna regla de móvil lo recoja. El texto
+                alternativo nombra el enlace: no hace falta un aria-label aparte. */}
             <a href="/" className="marca">
-              <span className="marca-casa" aria-hidden="true">🏠</span>
-              hestiat
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="80" height="30" />
             </a>
 
             {/* LA BÚSQUEDA GENERAL VIVE AQUÍ: un destino y la lupa, en el mismo bloque. Está en todas

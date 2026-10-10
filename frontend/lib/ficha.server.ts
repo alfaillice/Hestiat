@@ -175,15 +175,18 @@ export async function datosDeFicha(slug: string): Promise<DatosFicha | null> {
   // El anfitrión: solo si existe el vínculo real. Con 3 vínculos en 27.359 alojamientos, inventarlo
   // sería lo más fácil y lo más deshonesto.
   let anfitrion: AnfitrionFicha | null = null;
-  if (legacyId) {
+  // `alojamiento_anfitrion.alojamiento_id` guarda el identificador del catálogo NUEVO (`accommodation.id`),
+  // no el antiguo: buscar por `legacy_id` no encontraba nada y por eso las fichas no mostraban ni el
+  // nombre ni la foto del anfitrión aunque el vínculo existiera.
+  if (id) {
     try {
       const [af] = await poolLegacy.query<any[]>(
         `SELECT u.id, u.nombre, u.nombre_mostrado, u.apellidos, u.avatar_url, u.bio, u.ciudad, u.creado_en,
                 (SELECT COUNT(*) FROM alojamiento_anfitrion x WHERE x.usuario_id = u.id) AS cuantos
            FROM alojamiento_anfitrion af2
            JOIN usuario u ON u.id = af2.usuario_id
-          WHERE af2.alojamiento_id = ? LIMIT 1`,
-        [legacyId],
+          WHERE af2.alojamiento_id = ? OR af2.alojamiento_id = ? LIMIT 1`,
+        [id, legacyId ?? -1],
       );
       const h = af[0];
       if (h) {

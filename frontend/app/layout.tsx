@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { getCurrentUser } from "@/lib/auth.server";
 import BuscadorCabecera from "@/components/buscador-cabecera";
 import Vitales from "@/components/vitales";
+import MarcaLogo from "@/components/marca-logo";
 import { DM_Sans, Manrope } from "next/font/google";
 
 /**
@@ -941,7 +942,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <div className="wrap pie">
             <div className="pie-cols">
               <div>
-                <p className="pie-marca">hestiat</p>
+                <p className="pie-marca"><MarcaLogo /></p>
                 <p className="pie-nota">
                   Alojamientos, experiencias y servicios de toda España, con datos reales y sin
                   inventar precios.

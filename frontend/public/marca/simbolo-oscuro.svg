@@ -1,13 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hestiat">
-  <defs><linearGradient id="oro" x1="0.1" y1="0" x2="0.9" y2="1">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Hestiat"><defs><linearGradient id="oro" x1="0.1" y1="0" x2="0.9" y2="1">
     <stop offset="0" stop-color="#F2E3B4"/><stop offset="0.35" stop-color="#C8A858"/>
     <stop offset="0.72" stop-color="#A8832C"/><stop offset="1" stop-color="#6E5220"/></linearGradient></defs>
-  <rect width="512" height="512" fill="#0A1435"/><circle cx="256" cy="256" r="199" fill="none" stroke="#F7EFD8" stroke-width="3" opacity=".55"/>
+  <rect width="512" height="512" fill="#FFFFFF"/>
   <circle cx="256" cy="256" r="196" fill="url(#oro)"/>
   <circle cx="256" cy="256" r="172" fill="#0A1435"/>
   <circle cx="256" cy="256" r="169" fill="none" stroke="#C8A858" stroke-width="2"/>
   <circle cx="256" cy="256" r="166" fill="#0A1435"/>
-  <g fill="none" stroke="#D0B890" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="#C8A858" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
     <path d="M132 224 L256 130 L380 224"/><path d="M344 198 L344 152 L368 152 L368 216"/>
     <path d="M150 228 L150 358"/><path d="M362 228 L362 358"/></g>
   <path d="M256 330C214 300 209 268 209 262c0-22 17-29 31-25 9 3 14 10 16 16 2-6 7-13 16-16 14-4 31 3 31 25 0 6-5 38-47 68z" fill="#F7EFD8"/></svg>

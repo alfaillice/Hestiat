@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth.server";
 import { googleConfigurado } from "@/lib/auth-google.server";
 import BotonGoogle from "@/components/boton-google";
+import MarcaLogo from "@/components/marca-logo";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Crear cuenta — Hestiat", robots: { index: false } };
@@ -27,7 +28,7 @@ export default async function Registro({
   return (
     <main className="acceso">
       <div className="acceso-tarjeta">
-        <p className="acceso-marca">hestiat</p>
+        <p className="acceso-marca"><MarcaLogo /></p>
         <h1>Crear tu cuenta</h1>
         <p className="acceso-sub">
           Guarda tus favoritos, solicita reservas y gestiona tus alojamientos. Es gratis.

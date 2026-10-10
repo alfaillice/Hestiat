@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth.server";
+import MarcaLogo from "@/components/marca-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
   return (
     <div className="admin">
       <aside className="admin-nav">
-        <p className="admin-marca">Administración</p>
+        <p className="admin-marca"><MarcaLogo /> <span>Administración</span></p>
         <nav>
           {secciones.map(([href, etiqueta]) => (
             <Link key={href} href={href}>

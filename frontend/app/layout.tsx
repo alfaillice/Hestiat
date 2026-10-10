@@ -388,6 +388,7 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .cab-in{display:flex;align-items:center;gap:16px;min-height:72px;padding:8px 18px;flex-wrap:nowrap}
 .marca{font-weight:700;letter-spacing:-.02em;font-size:21px;color:var(--ink);font-family:var(--fuente-titulo);display:flex;align-items:center;gap:7px;white-space:nowrap}
 .marca-logo{height:clamp(22px,4.5vw,30px);width:auto;display:block}
+.marca-logo-mini{height:24px;width:auto;max-width:100%;display:inline-block;vertical-align:middle}
 .marca-casa{font-size:18px}
 .cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
 .cab-nav{display:flex;gap:8px;align-items:center;flex:0 0 auto}

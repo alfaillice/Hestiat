@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth.server";
 import { googleConfigurado, retornoValido } from "@/lib/auth-google.server";
 import BotonGoogle from "@/components/boton-google";
+import MarcaLogo from "@/components/marca-logo";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Entrar — Hestiat", robots: { index: false } };
@@ -42,7 +43,7 @@ export default async function Login({
   return (
     <main className="acceso">
       <div className="acceso-tarjeta">
-        <p className="acceso-marca">hestiat</p>
+        <p className="acceso-marca"><MarcaLogo /></p>
         <h1>Bienvenido a Hestiat</h1>
         <p className="acceso-sub">Entra para gestionar tus reservas, tus favoritos y tus alojamientos.</p>
 

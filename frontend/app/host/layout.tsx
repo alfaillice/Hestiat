@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireHost } from "@/lib/auth.server";
+import MarcaLogo from "@/components/marca-logo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function HostLayout({ children }: { children: ReactNode }) 
   return (
     <div className="admin">
       <aside className="admin-nav">
-        <p className="admin-marca">Panel del anfitrión</p>
+        <p className="admin-marca"><MarcaLogo /> <span>Panel del anfitrión</span></p>
         <nav>
           <Link href="/host">Mis alojamientos</Link>
           <Link href="/host/reservas">Reservas</Link>

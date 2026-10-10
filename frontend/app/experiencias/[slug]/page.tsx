@@ -135,6 +135,8 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
       {/* Imagen de cabecera: de referencia, y se dice. */}
       <div className="exp-portada">
         <ImagenSegura src={e.imagen} alt={`${e.nombre}: ${textoDeImagen(e.imagenEtiqueta).toLowerCase()}`} fondo="exp-portada-vacia" />
+        {/* Mismo corazón que en los alojamientos, con el tipo de este elemento. */}
+        <Corazon tipo="experiencia" itemId={Number(e.id)} guardadoInicial={guardadoFicha} haySesion={Boolean(sesionFicha)} volverA={`/experiencias/${e.slug}`} />
         {e.imagen ? (
           <span className="exp-portada-pie">
             {textoDeImagen(e.imagenEtiqueta)}

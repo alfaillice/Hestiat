@@ -32,9 +32,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const s = await cargar(slug);
   if (!s) notFound();
 
-  /* Favoritos: la sesión y si ESTE elemento está guardado, con el mismo ayudante que el resto. */
-  const sesionFicha = await getCurrentUser();
-  const guardadoFicha = sesionFicha ? await estaGuardado(Number(sesionFicha.id), "servicio", Number(s.id)) : false;
 
   const lugar = [s.municipio, s.provincia].filter(Boolean).join(", ");
   const descripcion = (s.resumen ?? "").replace(/\s+/g, " ").slice(0, 155);
@@ -75,6 +72,11 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
   const { slug } = await params;
   const s = await cargar(slug);
   if (!s) notFound();
+
+  /* Favoritos: la sesión y si ESTE elemento está guardado, con el mismo ayudante que el resto. */
+  const sesionFicha = await getCurrentUser();
+  const guardadoFicha = sesionFicha ? await estaGuardado(Number(sesionFicha.id), "servicio", Number(s.id)) : false;
+
 
   const lugar = [s.municipio, s.provincia].filter(Boolean).join(", ") || "España";
   const [similares, cercanos] = await Promise.all([
@@ -127,6 +129,8 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
 
       <div className="exp-portada">
         <ImagenSegura src={s.imagen} alt={`${s.nombre}: ${textoDeImagen(s.imagenEtiqueta).toLowerCase()}`} fondo="exp-portada-vacia" />
+        {/* Mismo corazón que en los alojamientos, con el tipo de este elemento. */}
+        <Corazon tipo="servicio" itemId={Number(s.id)} guardadoInicial={guardadoFicha} haySesion={Boolean(sesionFicha)} volverA={`/servicios/${s.slug}`} />
         {s.imagen ? (
           <span className="exp-portada-pie">
             {textoDeImagen(s.imagenEtiqueta)}

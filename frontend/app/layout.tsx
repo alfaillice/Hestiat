@@ -643,6 +643,10 @@ footer a:hover{color:var(--hestiat-primary-texto)}
    --hestiat-primary-hover  el mismo tono un poco más profundo, solo al pasar el ratón.
    --hestiat-primary-texto  el mismo tono oscuro, para enlaces y estados activos (contraste). */
 :root{--hestiat-primary:#eb7fc9; --hestiat-primary-hover:#dd66b6; --hestiat-primary-texto:#7b0052}
+/* Identidad de marca tomada del logo del canal: emblema circular con casa y corazón.
+   Se AÑADEN; los tokens de acción de arriba se conservan tal cual para no alterar ningún flujo. */
+:root{--marca-marino:#0A1435; --marca-oro:#C8A858; --marca-oro-claro:#F2E3B4; --marca-oro-oscuro:#6E5220;
+      --marca-arena:#D0B890; --marca-crema:#F7EFD8}
 /* Los accesorios se ven antes de leerse: cada uno con su icono, que viene del diccionario de
    servicios (su campo de icono), no de una lista metida en el código. */
 .servicio-icono{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radio-pill);background:var(--fucsia-soft);font-size:17px;flex:0 0 auto}

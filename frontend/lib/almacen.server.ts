@@ -11,6 +11,7 @@
  *    ni se devuelve un éxito falso.
  *  - Antes de borrar un objeto se comprueba que no lo use nadie más.
  */
+import { createRequire } from "node:module";
 import { borrarObjeto, clavePorContenido, configR2, subirObjeto } from "./r2.server";
 import { optimizarImagen } from "./optimizar.server";
 import { query } from "./db-legacy.server";
@@ -202,4 +203,74 @@ export async function asegurarColumnasMedios(): Promise<void> {
     })().catch(() => undefined);
   }
   await esquemaMedios;
+}
+
+
+/* ---------------------------------------------------------- avatares optimizados -- */
+
+/**
+ * OPTIMIZACIÓN DE AVATARES.
+ *
+ * Se usa `sharp`, que YA está en el entorno de producción como parte de las dependencias del
+ * framework, y se carga de forma diferida con `createRequire` (el mismo patrón que usa el cargador del
+ * códec WebP del proyecto): así no se empaqueta en el build, no añade dependencias nuevas y, si no
+ * estuviera, el fallo se ve y se informa en vez de romper la compilación.
+ *
+ * Se limita a los avatares: las fotos de los alojamientos y las imágenes compartidas no pasan por
+ * aquí.
+ *
+ * Del original NO se conserva copia: un avatar no la necesita (se muestra como mucho a 240 px) y
+ * guardarla sería ocupar espacio sin uso. Solo se guarda la versión reducida y recomprimida.
+ */
+const ANCHO_AVATAR = 512;
+
+let sharpCache: { modulo: unknown } | null | undefined = undefined;
+let sharpDiagnostico: { cargado: boolean; ruta: string | null; errores: string[] } = { cargado: false, ruta: null, errores: [] };
+
+function cargarSharp(): unknown | null {
+  if (sharpCache !== undefined) return sharpCache ? sharpCache.modulo : null;
+  const errores: string[] = [];
+  try {
+    const requerir = createRequire(import.meta.url);
+    const modulo = requerir("sharp");
+    sharpCache = { modulo };
+    sharpDiagnostico = { cargado: true, ruta: "node_modules/sharp", errores: [] };
+    return modulo;
+  } catch (e) {
+    errores.push((e as Error).message.slice(0, 160));
+    sharpCache = null;
+    sharpDiagnostico = { cargado: false, ruta: null, errores };
+    return null;
+  }
+}
+
+/** Estado del optimizador de avatares, para diagnóstico. */
+export function estadoSharp() {
+  cargarSharp();
+  return sharpDiagnostico;
+}
+
+/**
+ * Guarda un avatar reducido y recomprimido a WebP. Devuelve null si no se puede optimizar: en ese caso
+ * NO se guarda nada y quien llama conserva la foto anterior y avisa del error.
+ */
+export async function guardarAvatarOptimizado(
+  datos: Uint8Array,
+): Promise<ImagenGuardada | null> {
+  const sharp = cargarSharp() as any;
+  if (!sharp) return null;
+  try {
+    const salida = await sharp(Buffer.from(datos))
+      .rotate() // respeta la orientación de la foto si viene girada
+      .resize({ width: ANCHO_AVATAR, height: ANCHO_AVATAR, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 82 })
+      .toBuffer();
+    if (!salida || salida.length === 0) return null;
+    const bytes = new Uint8Array(salida);
+    const clave = `${CARPETA_AVATARES}/${clavePorContenido(bytes, "webp")}`;
+    const r = await subirObjeto(clave, bytes, "image/webp");
+    return { url: r.url, clave: r.clave, bytes: r.bytes };
+  } catch {
+    return null;
+  }
 }

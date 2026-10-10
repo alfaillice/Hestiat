@@ -15,7 +15,7 @@
  *  · Todas las escrituras son parametrizadas y todas las lecturas de perfil salen del usuario de la
  *    sesión, nunca de un identificador que venga en la petición.
  */
-import { CARPETA_AVATARES, borrarImagen, esUrlNuestra, guardarImagenOptimizada, urlsDeVariantes } from "@/lib/almacen.server";
+import { borrarImagen, esUrlNuestra, guardarAvatarOptimizado, urlsDeVariantes } from "@/lib/almacen.server";
 import { poolLegacy } from "@/lib/db";
 import { hashPassword, verificarPassword, createSession, setSessionCookie, type Rol } from "@/lib/auth.server";
 
@@ -199,12 +199,15 @@ export async function guardarAvatar(usuarioId: number, formulario: FormData): Pr
     return { ok: false, error: "El archivo no es una imagen JPG, PNG o WebP de verdad." };
   }
 
-  // Se sube primero: si esto falla, la foto que ya tenía sigue intacta.
-  let guardada;
-  try {
-    guardada = await guardarImagenOptimizada(datos, formato.ext, CARPETA_AVATARES);
-  } catch {
-    return { ok: false, error: "No se ha podido guardar la imagen. Inténtalo de nuevo en un momento." };
+  // Se reducida y recomprime ANTES de tocar nada: si la optimización no se puede hacer, la foto que ya
+  // tenía se queda como estaba y se avisa con un mensaje claro. No se guarda el original: un avatar no
+  // lo necesita.
+  const guardada = await guardarAvatarOptimizado(datos);
+  if (!guardada) {
+    return {
+      ok: false,
+      error: "No se ha podido optimizar la imagen, así que no se ha cambiado nada. Prueba con otra foto (JPG, PNG o WebP).",
+    };
   }
 
   const [filas] = await poolLegacy.query<any[]>(`SELECT avatar_url FROM usuario WHERE id = ? LIMIT 1`, [usuarioId]);
@@ -212,11 +215,11 @@ export async function guardarAvatar(usuarioId: number, formulario: FormData): Pr
 
   await poolLegacy.query(
     `UPDATE usuario SET avatar_url = ?, avatar_original = ? WHERE id = ?`,
-    [guardada.principal.url, JSON.stringify(guardada.variantes.map((v) => v.url)), usuarioId],
+    [guardada.url, null, usuarioId],
   );
 
   // La anterior solo se borra si es nuestra y no la usa nadie más: lo comprueba `borrarImagen`.
-  if (anterior && anterior !== guardada.principal.url && esUrlNuestra(anterior)) {
+  if (anterior && anterior !== guardada.url && esUrlNuestra(anterior)) {
     try {
       await borrarImagen(anterior);
     } catch {

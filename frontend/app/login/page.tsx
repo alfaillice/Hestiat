@@ -18,6 +18,7 @@ const AVISOS: Record<string, { texto: string; tipo: "error" | "aviso" }> = {
   state: { texto: "El intento de acceso no se ha podido verificar. Vuelve a intentarlo.", tipo: "error" },
   "state-caducado": { texto: "El intento de acceso ha caducado. Vuelve a intentarlo.", tipo: "error" },
   error: { texto: "No se ha podido completar el acceso con Google.", tipo: "error" },
+  recuperado: { texto: "Tu contraseña se ha cambiado. Entra con la nueva.", tipo: "aviso" },
 };
 
 /**
@@ -29,7 +30,7 @@ const AVISOS: Record<string, { texto: string; tipo: "error" | "aviso" }> = {
 export default async function Login({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; redirect?: string; volver?: string; google?: string; motivo?: string }>;
+  searchParams: Promise<{ error?: string; redirect?: string; volver?: string; google?: string; motivo?: string; recuperado?: string }>;
 }) {
   const sp = await searchParams;
   const ya = await getCurrentUser();
@@ -73,6 +74,12 @@ export default async function Login({
             <span className="etq">Contraseña</span>
             <input name="password" type="password" autoComplete="current-password" required />
           </label>
+          {sp.recuperado && (
+            <p className="aviso aviso-ok" role="status">
+              Tu contraseña se ha cambiado. Entra con la nueva.
+            </p>
+          )}
+
           {sp.error && (
             <p className="aviso" style={{ borderColor: "var(--destructive)", color: "var(--destructive)" }}>
               {sp.error}
@@ -80,6 +87,11 @@ export default async function Login({
           )}
           <button className="f-aplicar" type="submit">Iniciar sesión</button>
         </form>
+
+          <p className="ficha-texto" style={{ marginTop: 10 }}>
+            <Link href="/recuperar">He olvidado mi contraseña</Link>
+          </p>
+
 
         <p className="acceso-pie">
           ¿Has olvidado la contraseña? Todavía no hay recuperación automática por correo: pide ayuda a

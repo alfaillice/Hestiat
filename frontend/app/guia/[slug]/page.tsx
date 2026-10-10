@@ -20,16 +20,48 @@ async function cargar(slug: string) {
   return filas[0] ?? null;
 }
 
+/**
+ * La imagen de referencia de la LOCALIDAD de la guía, solo si el catálogo la tiene.
+ * Se busca por el nombre exacto del destino: no se usa la cadena de respaldo de provincia ni de país,
+ * porque una imagen de España no es una imagen de Santiago. Se usa en la cabecera y en Open Graph.
+ */
+async function referenciaDeGuia(destino: unknown): Promise<{ url: string; fuente: string | null } | null> {
+  if (!destino) return null;
+  try {
+    const [filas] = await pool.query<any[]>(
+      `SELECT url, fuente FROM localidad_imagen WHERE tipo = 'ciudad' AND clave = ? AND url IS NOT NULL LIMIT 1`,
+      [String(destino).toLowerCase()],
+    );
+    return filas[0]?.url
+      ? { url: String(filas[0].url), fuente: filas[0].fuente ? String(filas[0].fuente) : null }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const g = await cargar(slug);
   if (!g || String(g.estado) !== "publicada") notFound();
+  // La guía aporta su propia imagen al compartirse: la de referencia de su localidad, etiquetada
+  // como tal, y si no existe, la tarjeta de marca. Sin esto, al declarar openGraph aquí se perdería
+  // la imagen heredada del layout.
+  const ref = await referenciaDeGuia(g.destino);
   return {
     title: `${g.titulo} — Guía de Hestiat`,
     description: (g.resumen ?? "").slice(0, 160) || `${g.titulo}: guía de destino de Hestiat.`,
     alternates: { canonical: `/guia/${g.slug}` },
     robots: { index: true, follow: true },
-    openGraph: { title: g.titulo, type: "article" },
+    openGraph: {
+      title: g.titulo,
+      type: "article",
+      images: [
+        ref
+          ? { url: ref.url, alt: `${g.destino ?? "Destino"}: imagen de referencia de la localidad` }
+          : { url: "/og/og-1200x630.png", width: 1200, height: 630, alt: "Hestiat" },
+      ],
+    },
   };
 }
 
@@ -42,21 +74,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
   // Se busca por el nombre exacto del destino (no se usa la cadena de respaldo de
   // provincia ni de país: una imagen de España no es una imagen de Santiago). Si no
   // existe, no se muestra ninguna fotografía y no se genera nada que lo sustituya.
-  let referencia: { url: string; fuente: string | null } | null = null;
-  if (g.destino) {
-    try {
-      const [filas] = await pool.query<any[]>(
-        `SELECT url, fuente FROM localidad_imagen
-          WHERE tipo = 'ciudad' AND clave = ? AND url IS NOT NULL LIMIT 1`,
-        [String(g.destino).toLowerCase()],
-      );
-      referencia = filas[0]?.url
-        ? { url: String(filas[0].url), fuente: filas[0].fuente ? String(filas[0].fuente) : null }
-        : null;
-    } catch {
-      referencia = null;
-    }
-  }
+  const referencia = await referenciaDeGuia(g.destino);
 
   // El cuerpo se sirve como trozos: las direcciones, como enlaces; el texto, intacto.
   const partes = trozosDelCuerpo(String(g.cuerpo ?? ""));

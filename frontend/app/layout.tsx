@@ -487,7 +487,9 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .serv-txt{display:flex;flex-direction:column;gap:3px;padding:11px 12px 13px}
 .serv-txt b{font-family:var(--fuente-titulo);font-size:14.5px;color:var(--ink);line-height:1.25}
 .serv-txt .m{font-size:12.5px;color:var(--muted-fg)}
-.serv-fuente{font-size:11px;color:var(--muted-fg);opacity:.85;margin-top:2px}
+/* Sin opacidad parcial: al 85 % el texto de 11 px caía a 4,04:1 de contraste. Con el
+   token a plena intensidad queda en 5,58:1, por encima del mínimo AA de 4,5. */
+.serv-fuente{font-size:11px;color:var(--muted-fg);margin-top:2px}
 @media(max-width:1280px){.cab-busca{max-width:460px}}
 @media(max-width:900px){
   /* Por debajo de 900 px la cabecera ya no tiene sitio para las tres píldoras y la cuenta: pasan al

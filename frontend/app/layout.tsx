@@ -81,7 +81,9 @@ a{color:inherit;text-decoration:none} img{display:block;max-width:100%}
 .estilo .velo{position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(12,30,36,.75) 100%)}
 .estilo .txt{position:absolute;left:14px;bottom:12px;color:#fff}
 .estilo .txt b{font-family:var(--fuente-titulo);font-size:16.5px;display:block}
-.estilo .txt span{font-size:12.5px;opacity:.85}
+/* Sin opacidad parcial, por el mismo motivo que .serv-fuente: al 85 % el texto pequeño
+   no llega al mínimo de contraste AA. */
+.estilo .txt span{font-size:12.5px}
 /* destinos */
 /* 200px: con 1360 de contenedor, 6 columnas de 210 se quedaban a 6px de entrar. */
 .destinos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}

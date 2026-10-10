@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { poolLegacy } from "@/lib/db";
 import { hashPassword } from "@/lib/auth.server";
 
@@ -20,12 +20,15 @@ import { hashPassword } from "@/lib/auth.server";
  *    segunda forma de guardar contraseñas en el proyecto.
  */
 
-/** Minutos de validez del enlace. */
-export const MINUTOS_VALIDEZ = 60;
-/** Longitud mínima de la contraseña nueva. */
-export const LARGO_MINIMO_PASSWORD = 8;
-/** Enlaces que se pueden pedir para un mismo correo por hora. */
-export const MAX_SOLICITUDES_POR_HORA = 3;
+export {
+  MINUTOS_VALIDEZ,
+  LARGO_MINIMO_PASSWORD,
+  MAX_SOLICITUDES_POR_HORA,
+  huellaDelToken,
+  tokenPlausible,
+  revisarPasswordNueva,
+} from "@/lib/recuperacion-reglas";
+import { huellaDelToken, MINUTOS_VALIDEZ, tokenPlausible } from "@/lib/recuperacion-reglas";
 
 let tablaLista: Promise<void> | null = null;
 
@@ -56,28 +59,9 @@ async function asegurarTabla(): Promise<void> {
   return tablaLista;
 }
 
-/** Huella del testigo. Lo que se guarda y con lo que se busca. */
-export function huellaDelToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
-
 /** El testigo que viaja en el correo. 64 caracteres hexadecimales. */
 function tokenNuevo(): string {
   return randomBytes(32).toString("hex");
-}
-
-/** ¿Parece un testigo de los nuestros? Se comprueba antes de tocar la base. */
-export function tokenPlausible(token: string): boolean {
-  return /^[0-9a-f]{64}$/.test(token);
-}
-
-/** Reglas de la contraseña nueva, en un solo sitio. Devuelve el motivo o null si está bien. */
-export function revisarPasswordNueva(a: string, b: string): string | null {
-  if (!a || a.length < LARGO_MINIMO_PASSWORD) {
-    return `La contraseña debe tener al menos ${LARGO_MINIMO_PASSWORD} caracteres.`;
-  }
-  if (a !== b) return "Las dos contraseñas no coinciden.";
-  return null;
 }
 
 export async function buscarUsuarioPorEmail(email: string): Promise<{ id: number; email: string; nombre: string | null } | null> {

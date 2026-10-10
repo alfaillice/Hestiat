@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { poolLegacy } from "@/lib/db";
 import { requireHost } from "@/lib/auth.server";
+import { fotosDeMisAnuncios } from "@/lib/fotos-anuncios.server";
+import AvisoFotos from "@/components/aviso-fotos";
 import { Aviso } from "@/components/estados";
 
 export const dynamic = "force-dynamic";
@@ -36,6 +38,9 @@ export default async function HostAlojamientos({
     [host.id],
   );
 
+  // Cuántos de sus anuncios publicados no tienen ninguna foto propia: se le dice, con su número.
+  const fotos = await fotosDeMisAnuncios(host.id);
+
   return (
     <>
       <header className="admin-cab">
@@ -43,6 +48,7 @@ export default async function HostAlojamientos({
         <p className="m" style={{ color: "var(--muted-fg)" }}>
           {filas.length} {filas.length === 1 ? "alojamiento" : "alojamientos"} a tu nombre
         </p>
+        <AvisoFotos total={fotos.total} sinFotos={fotos.sinFotos} />
         <p style={{ marginTop: 12 }}>
           <Link className="f-aplicar" href="/nuevo">Añadir alojamiento</Link>
         </p>

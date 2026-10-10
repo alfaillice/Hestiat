@@ -388,7 +388,9 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .cab{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40}
 .cab-in{display:flex;align-items:center;gap:16px;min-height:72px;padding:8px 18px;flex-wrap:nowrap}
 .marca{font-weight:700;letter-spacing:-.02em;font-size:21px;color:var(--ink);font-family:var(--fuente-titulo);display:flex;align-items:center;gap:7px;white-space:nowrap}
-.marca-logo{height:clamp(26px,6vw,32px);width:auto;display:block}
+/* En móvil el mínimo son 30 px, para que el nombre se lea sin forzar la vista. El máximo
+   sigue en 32 px, de modo que la cabecera de escritorio no cambia. */
+.marca-logo{height:clamp(30px,6vw,32px);width:auto;display:block}
 .marca-logo-mini{height:24px;width:auto;max-width:100%;display:inline-block;vertical-align:middle}
 .marca-casa{font-size:18px}
 .cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
@@ -856,7 +858,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   palabra en crema: si el móvil estaba en modo oscuro, el navegador servía letras crema
                   sobre la cabecera blanca y el nombre era ilegible. Se ha retirado esa variante. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="85" height="32" />
+              <img src="/marca/logotipo-web.svg" alt="Hestiat" className="marca-logo" width="80" height="30" />
             </a>
 
             {/* LA BÚSQUEDA GENERAL VIVE AQUÍ: un destino y la lupa, en el mismo bloque. Está en todas

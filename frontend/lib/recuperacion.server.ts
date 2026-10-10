@@ -28,7 +28,7 @@ export {
   tokenPlausible,
   revisarPasswordNueva,
 } from "@/lib/recuperacion-reglas";
-import { huellaDelToken, MINUTOS_VALIDEZ, tokenPlausible } from "@/lib/recuperacion-reglas";
+import { huellaDelToken, MINUTOS_VALIDEZ, MAX_SOLICITUDES_POR_HORA, tokenPlausible } from "@/lib/recuperacion-reglas";
 
 let tablaLista: Promise<void> | null = null;
 

@@ -11,6 +11,7 @@ import ReservaCaja from "@/components/reserva-caja";
 import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
 import Corazon from "@/components/corazon";
+import AvatarAnfitrion from "@/components/avatar-anfitrion";
 import { guardadosEntre } from "@/lib/favoritos.server";
 
 export const dynamic = "force-dynamic";
@@ -406,12 +407,7 @@ export default async function Ficha({
             <section className="ficha-seccion">
               <h2>Conoce a tu anfitrión</h2>
               <div className="anfitrion">
-                {anfitrion.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={anfitrion.avatar} alt={anfitrion.nombre} className="anfitrion-foto" />
-                ) : (
-                  <span className="anfitrion-inicial" aria-hidden="true">{anfitrion.nombre.slice(0, 1).toUpperCase()}</span>
-                )}
+                <AvatarAnfitrion url={anfitrion.avatar} nombre={anfitrion.nombre} />
                 <div>
                   <p className="anfitrion-nombre">{anfitrion.nombre}</p>
                   <p className="m" style={{ color: "var(--muted-fg)", fontSize: 13 }}>

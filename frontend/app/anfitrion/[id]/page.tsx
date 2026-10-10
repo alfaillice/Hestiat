@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import AvatarAnfitrion from "@/components/avatar-anfitrion";
 import type { Metadata } from "next";
 import { pool, poolLegacy } from "@/lib/db";
 
@@ -74,12 +75,7 @@ export default async function PerfilAnfitrion({ params }: { params: Promise<{ id
       </nav>
 
       <section className="anfitrion-cabecera">
-        {u.avatar_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={u.avatar_url} alt={nombre} className="anfitrion-foto anfitrion-foto-grande" />
-        ) : (
-          <span className="anfitrion-inicial anfitrion-inicial-grande" aria-hidden="true">{nombre.slice(0, 1).toUpperCase()}</span>
-        )}
+        <AvatarAnfitrion url={u.avatar_url ?? null} nombre={nombre} grande />
         <div>
           <h1>{nombre}</h1>
           <p className="meta">

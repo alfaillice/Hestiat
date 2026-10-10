@@ -30,17 +30,40 @@ export async function POST(request: Request) {
   const excedido = limitar(request, "/api/reservas", 15, 60);
   if (excedido) return excedido;
 
-  const formulario = await request.formData();
+  // Leer el formulario va DENTRO de una protección. Si la petición no trae un formulario (un JSON,
+  // un cuerpo cortado…) esto lanzaba una excepción que salía como error 500 del servidor.
+  let formulario: FormData;
+  try {
+    formulario = await request.formData();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "La solicitud no tiene el formato esperado." },
+      { status: 400 },
+    );
+  }
+
   const slug = String(formulario.get("slug") ?? "");
   const desde = String(formulario.get("desde") ?? "");
   const hasta = String(formulario.get("hasta") ?? "");
   const huespedes = Number(formulario.get("huespedes") ?? 1);
+  const accommodationId = Number(formulario.get("accommodationId"));
   const base = `/reservar/${encodeURIComponent(slug)}`;
+
+  // Sin un alojamiento válido no se sigue: antes se llegaba a la consulta con un valor no numérico.
+  if (!Number.isInteger(accommodationId) || accommodationId <= 0) {
+    const p = new URLSearchParams({
+      desde,
+      hasta,
+      huespedes: String(huespedes),
+      error: "Solicitud no válida.",
+    });
+    return redirigir(`${base}?${p}`);
+  }
 
   try {
     const usuario = await getCurrentUser();
     const r = await crearSolicitud({
-      accommodationId: Number(formulario.get("accommodationId")),
+      accommodationId,
       desde,
       hasta,
       huespedes,

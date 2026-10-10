@@ -24,7 +24,26 @@ export async function GET(request: Request) {
   if (excedido) return excedido;
 
   const p = new URL(request.url).searchParams;
-  const tipo = p.get("tipo") === "service" ? "service" : "experience";
+  // El tipo se acepta en inglés y en español. Antes cualquier valor que no fuese exactamente
+  // «service» caía en experiencias SIN avisar: un tipo mal escrito devolvía datos equivocados con
+  // respuesta correcta. Ahora un valor no reconocido es un error explícito.
+  const tipoCrudo = (p.get("tipo") ?? "").trim().toLowerCase();
+  const TIPOS_VALIDOS: Record<string, "service" | "experience"> = {
+    service: "service",
+    servicio: "service",
+    servicios: "service",
+    servicio_turistico: "service",
+    experience: "experience",
+    experiencia: "experience",
+    experiencias: "experience",
+  };
+  const tipo = tipoCrudo === "" ? "experience" : TIPOS_VALIDOS[tipoCrudo];
+  if (!tipo) {
+    return NextResponse.json(
+      { ok: false, error: "Tipo de catálogo no válido. Usa «experiencia» o «servicio»." },
+      { status: 400 },
+    );
+  }
   const tras = Math.max(0, Number(p.get("tras") ?? 0) || 0);
   const limite = Math.min(Math.max(Number(p.get("limite") ?? 24) || 24, 1), LIMITE_MAX);
   const q = (p.get("q") ?? "").trim();

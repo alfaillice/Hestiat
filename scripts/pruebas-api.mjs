@@ -66,6 +66,13 @@ const casos = [
   { nombre: "auth/registro · sin sesión y datos incompletos → negativa limpia", ruta: "/api/auth/registro", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "nombre=&email=&password=&password2=", espera: [303] },
   { nombre: "host/reservas · sin sesión y cuerpo válido → redirección", ruta: "/api/host/reservas", metodo: "POST", cabeceras: FORM_HEADERS, cuerpo: "id=1&estado=confirmada", espera: [303, 307], contiene: "login" },
 
+  // --- Enlaces de fichas de catálogo: la forma antigua en singular debe llegar a la ficha, no a la lista ---
+  { nombre: "enlace · experiencia en singular conserva el identificador", ruta: "/experiencia/museu-de-la-mar-26751679", espera: [308, 301], contiene: "/experiencias/museu-de-la-mar-26751679" },
+  { nombre: "enlace · servicio en singular conserva el identificador", ruta: "/servicio/go-karting-260812441", espera: [308, 301], contiene: "/servicios/go-karting-260812441" },
+  { nombre: "ficha · experiencia en plural abre", ruta: "/experiencias/museu-de-la-mar-26751679", espera: [200] },
+  { nombre: "ficha · servicio en plural abre", ruta: "/servicios/go-karting-260812441", espera: [200] },
+  { nombre: "ficha · experiencia que no existe → 404", ruta: "/experiencias/no-existe-esta-experiencia-xyz", espera: [404] },
+
   // --- Lecturas públicas ---
   { nombre: "buscar · responde", ruta: "/api/buscar?q=granada", espera: [200], json: (d) => d.ok === true && d.total > 0 },
   { nombre: "sugerencias · responde", ruta: "/api/sugerencias?q=madr", espera: [200], json: (d) => Array.isArray(d.sugerencias) },

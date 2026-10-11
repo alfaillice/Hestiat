@@ -40,10 +40,13 @@ const nextConfig = {
       { source: "/buscar", destination: "/search", permanent: true },
       // OJO: aquí había tres reglas que mandaban /servicios y /servicio/:slug a /search. Se pusieron
       // cuando el apartado de servicios todavía no existía; ahora SÍ existe, y un 308 permanente las
-      // convertía en un portero que impedía ver la página real. Se quedan solo las que siguen
-      // teniendo sentido: la forma antigua en singular lleva al apartado nuevo.
-      { source: "/servicio/:slug", destination: "/servicios", permanent: true },
-      { source: "/experiencia/:slug", destination: "/experiencias", permanent: true },
+      // convertía en un portero que impedía ver la página real.
+      // Y estas dos últimas MANDABAN A LA LISTA SIN CONSERVAR EL IDENTIFICADOR: cualquier enlace
+      // antiguo en singular (de la web anterior, de un enlace compartido o del índice de un buscador)
+      // acababa en el listado en vez de abrir la ficha. Ahora conservan el identificador y llegan a la
+      // ficha correcta. Las direcciones buenas que ya existen (/experiencias/<slug>) no se tocan.
+      { source: "/servicio/:slug", destination: "/servicios/:slug", permanent: true },
+      { source: "/experiencia/:slug", destination: "/experiencias/:slug", permanent: true },
       { source: "/accesibilidad", destination: "/", permanent: true },
     ];
   },

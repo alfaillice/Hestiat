@@ -18,6 +18,11 @@
  * error del servidor de correo se censuran antes de registrarse, por si el servidor los reflejara.
  */
 import type { Transporter } from "nodemailer";
+// IMPORT ESTÁTICO, A PROPÓSITO. Antes se cargaba con un import dinámico dentro de un try, para no
+// arrastrar el paquete donde no hiciera falta. El efecto era grave: el empaquetado no lo detectaba y
+// la release salía SIN el paquete, así que en producción el import fallaba, se capturaba en silencio
+// y ningún correo llegaba a salir. Con el import estático el paquete viaja dentro del servidor.
+import { createTransport } from "nodemailer";
 
 export interface ConfigSmtp {
   host: string;
@@ -135,7 +140,6 @@ export async function enviarCorreo(entrada: {
 
   let transporte: Transporter | null = null;
   try {
-    const { createTransport } = await import("nodemailer");
     transporte = createTransport({
       host: cfg.host,
       port: cfg.port,

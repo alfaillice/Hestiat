@@ -99,5 +99,9 @@ export default function MapaFicha({
     );
   }
 
-  return <div ref={contenedor} className="mapa-ficha" role="img" aria-label={`Mapa de ${titulo}`} />;
+  // SIN role="img": el contenedor declara una imagen pero dentro lleva controles que se pueden
+  // enfocar (acercar, alejar y el marcador), y eso es un error serio de accesibilidad
+  // (nested-interactive). Un div sin rol no aporta nada malo; el mapa conserva su texto alternativo,
+  // que es lo que leen los lectores de pantalla para saber de qué alojamiento es.
+  return <div ref={contenedor} className="mapa-ficha" aria-label={`Mapa de ${titulo}`} />;
 }

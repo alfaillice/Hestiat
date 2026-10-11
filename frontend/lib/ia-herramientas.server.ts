@@ -509,6 +509,8 @@ export async function ejecutarHerramienta(
       accion: "herramienta_inexistente",
       usuarioId: ctx.usuarioId,
       usuarioEmail: ctx.usuarioEmail,
+      entidad: "ia_herramienta",
+      entidadId: nombre,
       detalle: { herramienta: nombre, canal: ctx.canal },
     });
     return { ok: false, herramienta: nombre, error: `No existe la herramienta «${nombre}».`, nivel: 1 };

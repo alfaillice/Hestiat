@@ -15,6 +15,8 @@
  * herramienta, los argumentos acotados y el resultado en una línea, no conversaciones enteras.
  */
 import { pool, poolLegacy } from "@/lib/db";
+import { prepararFilaAuditoria, type DatosAuditoria } from "@/lib/ia-auditoria-fila";
+export { prepararFilaAuditoria };
 
 export type Nivel = 1 | 2 | 3;
 
@@ -41,26 +43,13 @@ export function costeEstimado(modelo: string, tokensEntrada: number, tokensSalid
 }
 
 /** Registra una acción del agente en la auditoría común. */
-export async function registrarAccion(datos: {
-  accion: string;
-  usuarioId?: number | null;
-  usuarioEmail?: string | null;
-  entidad?: string | null;
-  entidadId?: string | number | null;
-  detalle?: Record<string, unknown>;
-}): Promise<void> {
+export async function registrarAccion(datos: DatosAuditoria): Promise<void> {
   try {
+    const fila = prepararFilaAuditoria(datos);
     await poolLegacy.query(
       `INSERT INTO admin_auditoria (usuario_id, usuario_email, accion, entidad, entidad_id, detalle)
        VALUES (?,?,?,?,?,?)`,
-      [
-        datos.usuarioId ?? null,
-        datos.usuarioEmail ?? "sistema:agente-ia",
-        `ia:${datos.accion}`.slice(0, 80),
-        (datos.entidad ?? null)?.toString().slice(0, 60) ?? null,
-        datos.entidadId != null ? String(datos.entidadId).slice(0, 60) : null,
-        JSON.stringify(datos.detalle ?? {}).slice(0, 4000),
-      ],
+      [fila.usuarioId, fila.usuarioEmail, fila.accion, fila.entidad, fila.entidadId, fila.detalle],
     );
   } catch (error) {
     // Que falle el registro no puede tumbar la acción, pero tiene que quedar rastro en el log.

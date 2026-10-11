@@ -20,6 +20,11 @@
  */
 
 export interface Plantilla {
+  /**
+   * Clase de lead para la que sirve esta plantilla: 'A' (no está en Hestiat, objetivo publicar) o
+   * 'B/C' (ya tiene ficha, objetivo reclamarla). Es opcional: las plantillas antiguas no la llevan.
+   */
+  clase?: "A" | "B/C";
   id: string;
   /** A quién va dirigida. */
   destinatario: string;
@@ -165,6 +170,64 @@ Más información: https://hestiat.com/hazte-anfitrion
 
 Si prefieres que no volvamos a escribirte, responde con la palabra BAJA.
 
+${PIE}`,
+  },
+  {
+    id: "captacion_a_publicar",
+    clase: "A",
+    destinatario: "Propietarios y gestores de alojamientos que todavía no están en Hestiat",
+    motivo: "Negocio localizado que NO tiene ficha en Hestiat. Objetivo: nueva publicación.",
+    asunto: "Publica tu alojamiento en Hestiat, gratis y sin comisión por reserva",
+    cuerpo: `Hola:
+
+Te escribimos desde Hestiat, una plataforma española donde se encuentran alojamientos, experiencias y
+servicios de toda España.
+
+Publicar tu alojamiento es GRATUITO y Hestiat NO cobra comisión por las reservas que se hagan: no hay
+cuota de alta ni cuota mensual.
+
+Si te interesa, puedes darlo de alta aquí: https://hestiat.com/hazte-anfitrion
+
+Antes de decidir, dos cosas para que no haya sorpresas:
+
+· Integraciones: hoy están disponibles únicamente las que la web documenta como operativas. NO
+  sincronizamos automáticamente con Airbnb, Booking.com ni otros canales; si en el futuro se habilita
+  alguna, se publicará con sus condiciones exactas.
+· Datos: solo tratamos los que nos facilites tú. Puedes pedir acceso, corrección o supresión
+  escribiendo a hola@hestiat.com.
+
+Para cualquier duda, responde a este mensaje.
+
+Hestiat · JM TRIVINO · NIF 22009686C · Partida Carrus P1-137, Alicante
+${PIE}`,
+  },
+  {
+    id: "captacion_bc_reclamar",
+    clase: "B/C",
+    destinatario: "Propietarios y gestores de alojamientos que ya tienen ficha en Hestiat",
+    motivo: "La ficha ya existe en Hestiat. Objetivo: que el propietario la reclame y complete sus datos.",
+    asunto: "Tu alojamiento ya aparece en Hestiat — puedes reclamar su ficha",
+    cuerpo: `Hola:
+
+Te escribimos desde Hestiat, una plataforma española donde se encuentran alojamientos, experiencias y
+servicios de toda España.
+
+Al revisar nuestro catálogo hemos visto que tu alojamiento YA tiene ficha en Hestiat. No tienes que darlo
+de alta otra vez: puedes reclamarla y completar tus datos de contacto en un minuto:
+
+· Reclamar la ficha: https://hestiat.com/reclamar
+
+Publicar y mantener tu ficha es GRATUITO, y Hestiat NO cobra comisión por las reservas que se hagan.
+
+Y si prefieres no aparecer, también es tu derecho: en el mismo formulario puedes solicitar la retirada y
+desaparecerá de la plataforma.
+
+Sobre las integraciones: están disponibles solo las que la web documenta como operativas. NO prometemos
+sincronización con Airbnb, Booking.com ni otros canales.
+
+Para cualquier duda, responde a este mensaje.
+
+Hestiat · JM TRIVINO · NIF 22009686C · Partida Carrus P1-137, Alicante
 ${PIE}`,
   },
 ];

@@ -12,12 +12,60 @@ export const dynamic = "force-dynamic";
  *   · la cola de correos, con el motivo de selección y la base jurídica a la vista, para que una
  *     persona decida: aprobar, editar, rechazar o dejarlo como borrador. Nada sale solo.
  */
+/**
+ * Provincias de cada comunidad autónoma, para poder filtrar por comunidad sin ninguna columna
+ * nueva: la provincia ya está en cada fila de `lead`, y esto solo la agrupa.
+ */
+const PROVINCIAS: Record<string, string[]> = {
+  Andalucía: ["Almería","Cádiz","Córdoba","Granada","Huelva","Jaén","Málaga","Sevilla"],
+  Aragón: ["Huesca","Teruel","Zaragoza"],
+  Asturias: ["Asturias"],
+  "Illes Balears": ["Illes Balears"],
+  Canarias: ["Las Palmas","Santa Cruz de Tenerife"],
+  Cantabria: ["Cantabria"],
+  "Castilla y León": ["Ávila","Burgos","León","Palencia","Salamanca","Segovia","Soria","Valladolid","Zamora"],
+  "Castilla-La Mancha": ["Albacete","Ciudad Real","Cuenca","Guadalajara","Toledo"],
+  Cataluña: ["Barcelona","Girona","Lleida","Tarragona"],
+  Extremadura: ["Badajoz","Cáceres"],
+  Galicia: ["A Coruña","Lugo","Ourense","Pontevedra"],
+  "La Rioja": ["La Rioja"],
+  Madrid: ["Madrid"],
+  Murcia: ["Murcia"],
+  Navarra: ["Navarra"],
+  "País Vasco": ["Araba/Álava","Bizkaia/Vizcaya","Gipuzkoa/Guipúzcoa"],
+  "Comunitat Valenciana": ["Alacant/Alicante","Castelló/Castellón","València/Valencia"],
+  Ceuta: ["Ceuta"], Melilla: ["Melilla"],
+};
+
 export default async function PanelCaptacion({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const texto = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
   const aviso = texto(sp.aviso);
   const ok = texto(sp.ok) === "1";
   const idDetalle = Number(texto(sp.id)) || 0;
+
+  // FILTROS Y VISTA DE LOTES. Llegan por la dirección (GET), así que funcionan sin JavaScript y
+  // se pueden compartir. La clase A-E se calcula con los campos que ya existen: no hay columna nueva.
+  const clase = texto(sp.clase).toUpperCase();
+  const provincia = texto(sp.provincia);
+  const comunidad = texto(sp.comunidad);
+  const lote = texto(sp.lote);
+  const CLASE_SQL = `CASE
+      WHEN l.excluido = 1 OR l.estado = 'OPT_OUT' THEN 'E'
+      WHEN l.objetivo = 'reclamar_ficha' AND l.estado = 'NEEDS_REVIEW' THEN 'B'
+      WHEN l.objetivo = 'reclamar_ficha' THEN 'C'
+      WHEN l.estado = 'NEEDS_REVIEW' THEN 'B'
+      ELSE 'A' END`;
+  const filtros: string[] = [];
+  const valores: any[] = [];
+  if (provincia) { filtros.push("l.provincia = ?"); valores.push(provincia); }
+  if (lote) { filtros.push("l.responsable = ?"); valores.push(lote); }
+  if (comunidad && PROVINCIAS[comunidad]) {
+    filtros.push(`l.provincia IN (${PROVINCIAS[comunidad].map(() => "?").join(",")})`);
+    valores.push(...PROVINCIAS[comunidad]);
+  }
+  if (clase) { filtros.push(`${CLASE_SQL} = ?`); valores.push(clase); }
+  const donde = filtros.length ? " AND " + filtros.join(" AND ") : "";
 
   const metricas = await metricasCaptacion();
 
@@ -31,11 +79,29 @@ export default async function PanelCaptacion({ searchParams }: { searchParams: P
   );
 
   const [leads] = await pool.query<any[]>(
-    `SELECT l.id, l.empresa, l.tipo_negocio, l.localidad, l.email, l.web, l.fuente, l.estado, l.objetivo,
+    `SELECT l.id, l.empresa, l.tipo_negocio, l.localidad, l.provincia, l.email, l.web, l.fuente, l.estado, l.objetivo, ${CLASE_SQL} AS clase,
             l.verificacion, l.confianza, l.excluido, l.publicacion_id, l.actualizado_en,
             (SELECT COUNT(*) FROM lead_contacto c WHERE c.lead_id = l.id) AS contactos,
             (SELECT COUNT(*) FROM email_respuesta r WHERE r.lead_id = l.id) AS respuestas
-       FROM \`lead\` l WHERE l.empresa NOT LIKE 'PRUEBA%' ORDER BY l.actualizado_en DESC LIMIT 60`,
+       FROM \`lead\` l WHERE l.empresa NOT LIKE 'PRUEBA%'${donde} ORDER BY l.actualizado_en DESC LIMIT 60`,
+    valores,
+  );
+
+  // Lotes de recopilación: se agrupan por el responsable, que es donde va la marca del lote.
+  const [lotes] = await pool.query<any[]>(
+    `SELECT l.responsable AS lote, COUNT(*) AS total,
+            SUM(${CLASE_SQL} = 'A') AS clase_a, SUM(${CLASE_SQL} = 'B') AS clase_b,
+            SUM(${CLASE_SQL} = 'C') AS clase_c, SUM(${CLASE_SQL} = 'E') AS clase_e,
+            SUM(l.estado IN ('APPROVED','CONTACT_READY','CONTACTED','REPLIED','INTERESTED','REGISTERED','PUBLISHED')) AS autorizados,
+            SUM(l.estado IN ('DETECTED','RESEARCHED','NEEDS_REVIEW')) AS investigados,
+            SUM(COALESCE(l.email,'') <> '') AS con_correo, MIN(l.comprobado_en) AS desde, MAX(l.comprobado_en) AS hasta
+       FROM \`lead\` l WHERE l.empresa NOT LIKE 'PRUEBA%' GROUP BY l.responsable ORDER BY total DESC LIMIT 40`,
+  );
+  const [porClase] = await pool.query<any[]>(
+    `SELECT ${CLASE_SQL} AS clase, COUNT(*) AS n, SUM(COALESCE(l.email,'') <> '') AS con_correo FROM \`lead\` l WHERE l.empresa NOT LIKE 'PRUEBA%' GROUP BY clase ORDER BY clase`,
+  );
+  const [porProvincia] = await pool.query<any[]>(
+    `SELECT COALESCE(l.provincia,'(sin provincia)') AS provincia, COUNT(*) AS n FROM \`lead\` l WHERE l.empresa NOT LIKE 'PRUEBA%' GROUP BY provincia ORDER BY n DESC LIMIT 25`,
   );
 
   const [historial] = await pool.query<any[]>(
@@ -331,6 +397,89 @@ export default async function PanelCaptacion({ searchParams }: { searchParams: P
             </tbody>
           </table>
         )}
+      </section>
+
+      <section className="admin-bloque">
+        <h2>Lotes de recopilación, clases y filtros</h2>
+        <p style={{ fontSize: 13, color: "var(--muted-fg)" }}>
+          Los lotes se agrupan por el responsable con el que se incorporaron (por ejemplo
+          <code> agente-captacion-lote-…-teruel-catalogo</code>). La clase se calcula con los campos que ya
+          existen: <b>A</b> no está en Hestiat (nueva publicación), <b>B</b> posiblemente existente o pendiente de
+          revisar, <b>C</b> ficha existente por reclamar, <b>E</b> pidió no aparecer. Y «autorizados» son los que
+          tienen un estado que habilita comunicarles; «investigados», los que solo están localizados.
+        </p>
+
+        <form method="get" className="ia-fila" style={{ flexWrap: "wrap", marginBottom: 12 }}>
+          <select name="clase" defaultValue={clase}>
+            <option value="">Todas las clases</option>
+            <option value="A">A · no está en Hestiat</option>
+            <option value="B">B · posiblemente existente, a revisar</option>
+            <option value="C">C · ficha por reclamar</option>
+            <option value="E">E · pidió no aparecer</option>
+          </select>
+          <select name="comunidad" defaultValue={comunidad}>
+            <option value="">Todas las comunidades</option>
+            {Object.keys(PROVINCIAS).map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <input name="provincia" placeholder="Provincia (texto)" defaultValue={provincia} style={{ minWidth: 180 }} />
+          <input name="lote" placeholder="Lote (responsable)" defaultValue={lote} style={{ minWidth: 220 }} />
+          <button className="f-aplicar" type="submit">Filtrar</button>
+          <Link className="f-limpiar" href="/admin/captacion">Quitar filtros</Link>
+        </form>
+
+        <h3>Resumen por clase</h3>
+        <table className="admin-tabla">
+          <thead><tr><th>Clase</th><th>Leads</th><th>Con correo autorizado</th></tr></thead>
+          <tbody>
+            {porClase.map((c) => (
+              <tr key={c.clase}>
+                <td><b>{c.clase}</b></td>
+                <td>{Number(c.n)}</td>
+                <td>{Number(c.con_correo)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3 style={{ marginTop: 14 }}>Lotes ({lotes.length})</h3>
+        <table className="admin-tabla">
+          <thead><tr><th>Lote</th><th>Total</th><th>A</th><th>B</th><th>C</th><th>E</th><th>Autorizados</th><th>Investigados</th><th>Con correo</th><th>Comprobado</th></tr></thead>
+          <tbody>
+            {lotes.map((l) => (
+              <tr key={l.lote ?? "sin-lote"}>
+                <td>{l.lote ?? "—"}</td>
+                <td><b>{Number(l.total)}</b></td>
+                <td>{Number(l.clase_a)}</td><td>{Number(l.clase_b)}</td><td>{Number(l.clase_c)}</td><td>{Number(l.clase_e)}</td>
+                <td>{Number(l.autorizados)}</td><td>{Number(l.investigados)}</td><td>{Number(l.con_correo)}</td>
+                <td style={{ whiteSpace: "nowrap" }}>{String(l.desde ?? "").slice(0, 10)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <h3 style={{ marginTop: 14 }}>Leads por provincia ({porProvincia.length})</h3>
+        <ul className="ia-lista">
+          {porProvincia.map((p) => <li key={p.provincia}><b>{p.provincia}</b>: {Number(p.n)}</li>)}
+        </ul>
+
+        <h3 style={{ marginTop: 14 }}>Leads filtrados ({leads.length}), con su fuente</h3>
+        <table className="admin-tabla">
+          <thead><tr><th>Empresa</th><th>Clase</th><th>Localidad</th><th>Provincia</th><th>Fuente</th><th>Estado</th><th>Verificación</th><th>Ficha</th></tr></thead>
+          <tbody>
+            {leads.map((l) => (
+              <tr key={l.id}>
+                <td><Link href={`/admin/captacion?id=${l.id}`}>{l.empresa}</Link></td>
+                <td><b>{l.clase ?? "—"}</b></td>
+                <td>{l.localidad ?? "—"}</td>
+                <td>{l.provincia ?? "—"}</td>
+                <td>{l.fuente ?? "—"}</td>
+                <td>{l.estado}{Number(l.excluido) === 1 ? " · EXCLUIDO" : ""}</td>
+                <td>{l.verificacion ?? "—"} · {l.confianza ?? "—"}</td>
+                <td>{l.publicacion_id ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
     </>
   );

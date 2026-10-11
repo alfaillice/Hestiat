@@ -95,9 +95,8 @@ export default async function Login({
 
 
         <p className="acceso-pie">
-          ¿Has olvidado la contraseña? Todavía no hay recuperación automática por correo: pide ayuda a
-          la administración de Hestiat y te la restablecen.
-        </p>
+          Escribe tu correo y te enviamos un enlace para poner una contraseña nueva.
+          Si no te llega, revisa la carpeta de correo no deseado o escríbenos a hola@hestiat.com.</p>
         <p className="acceso-pie">
           ¿No tienes una cuenta? <Link href="/registro">Crear cuenta</Link>
         </p>

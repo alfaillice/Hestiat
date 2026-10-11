@@ -12,6 +12,7 @@ import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
 import Corazon from "@/components/corazon";
 import AvatarAnfitrion from "@/components/avatar-anfitrion";
+import BotonWhatsapp from "@/components/boton-whatsapp";
 import { guardadosEntre } from "@/lib/favoritos.server";
 
 export const dynamic = "force-dynamic";
@@ -114,7 +115,7 @@ export default async function Ficha({
   const permiso = await permisoDeFicha(datos, vistaDe(sp));
   if (permiso === "no") notFound();
 
-  const { alojamiento: a, fotos, servicios, nochesBloqueadas, anfitrion, similares, resenas } = datos;
+  const { alojamiento: a, fotos, servicios, nochesBloqueadas, anfitrion, similares, resenas, whatsapp } = datos;
 
   /*
    * FAVORITOS EN LA FICHA.
@@ -415,6 +416,9 @@ export default async function Ficha({
                     {anfitrion.alojamientos > 0 ? ` · ${anfitrion.alojamientos} ${anfitrion.alojamientos === 1 ? "alojamiento" : "alojamientos"}` : ""}
                   </p>
                   {anfitrion.bio && <p className="ficha-texto" style={{ marginTop: 6 }}>{anfitrion.bio}</p>}
+                  {/* El contacto por WhatsApp vive aquí, junto al anfitrión, no en la caja de reserva:
+                      así no interfiere con el flujo de reserva ni con ningún otro elemento. */}
+                  <BotonWhatsapp numero={whatsapp} titulo={String(a.title)} enlaceFicha={`https://hestiat.com/alojamiento/${a.slug}`} />
                   <p style={{ marginTop: 8 }}>
                     <Link className="f-limpiar" href={`/anfitrion/${anfitrion.id}`}>Ver perfil</Link>
                   </p>

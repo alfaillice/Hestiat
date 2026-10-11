@@ -75,6 +75,8 @@ export interface DatosFicha {
   servicios: { id: number; slug: string | null; nombre: string; icono: string | null }[];
   nochesBloqueadas: NocheBloqueada[];
   anfitrion: AnfitrionFicha | null;
+  /** Número de WhatsApp que el alojamiento tiene publicado como contacto, si lo hay. */
+  whatsapp: string | null;
   similares: SimilarFicha[];
   resenas: ResenaFicha[];
   experiencias: { id: number; nombre: string; categoria: string | null; web: string | null }[];
@@ -250,8 +252,21 @@ export async function datosDeFicha(slug: string): Promise<DatosFicha | null> {
     }
   }
 
+  // El WhatsApp del alojamiento: se lee del campo que YA existe para este uso. Si está vacío, la
+  // ficha lo dirá en vez de enseñar un botón que llevaría a un contacto equivocado.
+  let whatsapp: string | null = null;
+  if (legacyId) {
+    try {
+      const [fila] = await poolLegacy.query<any[]>(`SELECT contact_whatsapp FROM alojamiento WHERE id = ? LIMIT 1`, [legacyId]);
+      whatsapp = fila[0]?.contact_whatsapp ? String(fila[0].contact_whatsapp) : null;
+    } catch {
+      whatsapp = null;
+    }
+  }
+
   return {
     alojamiento: a,
+    whatsapp,
     fotos,
     todasReferenciales: fotos.length > 0 && fotos.every((f) => !f.propia),
     servicios: serviciosFilas.map((s) => ({

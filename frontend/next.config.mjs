@@ -19,6 +19,12 @@ const nextConfig = {
   // secundario era grave: el empaquetado no lo detectaba y NO lo copiaba a la release, así que en
   // producción el import fallaba, se capturaba en silencio y NINGÚN correo salía. Declarándolo aquí,
   // Next lo trata como dependencia externa y lo incluye en la release.
+  serverExternalPackages: ["nodemailer"],
+  // EL CORREO SE CARGA EN TIEMPO DE EJECUCIÓN, NO EMPAQUETADO.
+  // `lib/correo.server.ts` carga el paquete con un import dinámico dentro de un try. El efecto
+  // secundario era grave: el empaquetado no lo detectaba y NO lo copiaba a la release, así que en
+  // producción el import fallaba, se capturaba en silencio y NINGÚN correo salía. Declarándolo aquí,
+  // Next lo trata como dependencia externa y lo incluye en la release.
   output: "standalone",
   reactStrictMode: true,
   poweredByHeader: false,

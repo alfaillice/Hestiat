@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth.server";
 import BuscadorCabecera from "@/components/buscador-cabecera";
 import Vitales from "@/components/vitales";
 import MarcaLogo from "@/components/marca-logo";
+import AvisoCookies, { BotonConfigurarCookies } from "@/components/aviso-cookies";
 import { DM_Sans, Manrope } from "next/font/google";
 
 /**
@@ -970,6 +971,13 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <div className="pie-cols">
               <div>
                 <p className="pie-marca"><MarcaLogo /></p>
+                <p className="m" style={{ fontSize: 12.5, marginTop: 6 }}>
+                  <BotonConfigurarCookies />
+                </p>
+                {/* EL AVISO DE COOKIES. Pide permiso antes de que se cargue ninguna publicidad y
+                    permite retirarlo desde el enlace de arriba. Va aquí porque es un elemento fijo:
+                    no ocupa sitio en el flujo de la página. */}
+                <AvisoCookies />
                 <p className="pie-nota">
                   Alojamientos, experiencias y servicios de toda España, con datos reales y sin
                   inventar precios.

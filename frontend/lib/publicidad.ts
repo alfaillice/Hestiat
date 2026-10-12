@@ -125,6 +125,13 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     slotAdsense: "5085417706",
   },
   {
+    id: "portada-tras-video",
+    ubicacion: "Portada, justo después del vídeo de portada y antes de «Destinos para ti»",
+    formato: "horizontal",
+    alto: 110,
+    slotAdsense: "5085417706",
+  },
+  {
     id: "destino-encabezado",
     ubicacion: "Ficha de destino, debajo de la cabecera, antes del título",
     formato: "horizontal",

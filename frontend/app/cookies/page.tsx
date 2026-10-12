@@ -128,11 +128,17 @@ export default function Cookies() {
           del Espacio Económico Europeo, amparada en sus propias garantías.
         </p>
         <p style={{ lineHeight: 1.7 }}>
-          <b>El mensaje de consentimiento.</b> Al entrar verás un aviso de cookies (el sistema de
-          consentimiento de Google) donde puedes aceptar o rechazar la publicidad. Si rechazas, no se
-          cargan las cookies publicitarias: el sitio sigue funcionando igual, con anuncios no
-          personalizados o sin ellos. Puedes cambiar tu elección cuando quieras desde el enlace de
-          configuración de cookies del propio aviso.
+          <b>El aviso de consentimiento.</b> Al entrar verás un aviso de cookies propio, con dos
+          botones del mismo tamaño: <b>aceptar</b> o <b>rechazar</b> la publicidad. Mientras no
+          aceptes, no se carga nada de publicidad: ni el bloque de anuncio ni las cookies de Google.
+          Si rechazas, el sitio sigue funcionando exactamente igual. Y si cambias de opinión, el
+          enlace <b>«Configurar cookies»</b> del pie de página reabre el aviso para retirar o dar el
+          permiso cuando quieras.
+        </p>
+        <p style={{ lineHeight: 1.7 }}>
+          Además, Google publica su propio mensaje de consentimiento (su sistema CMP) cuando el sitio
+          sirve publicidad personalizada en el Espacio Económico Europeo, y es el que recoge el
+          consentimiento que Google exige para su publicidad.
         </p>
       </section>
 

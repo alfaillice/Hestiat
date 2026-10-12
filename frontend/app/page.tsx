@@ -131,6 +131,9 @@ export default async function Portada({
       />
 
       <div className="wrap">
+        {/* Segundo anuncio de la portada: justo después del vídeo, al arrancar el contenido, dentro
+            del ancho de la página. Etiquetado y sin ocupar nada mientras no haya anuncio. */}
+        <EspacioPublicidad hueco="portada-tras-video" />
         <SeccionHome
           titulo="Destinos para ti"
           sub="Ciudades del catálogo con alojamientos publicados, con su recuento real"

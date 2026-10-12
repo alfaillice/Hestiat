@@ -839,6 +839,20 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         ) : null}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0A1435" />
+        {/* GOOGLE ADSENSE — código de verificación del sitio, tal cual lo entrega Google.
+            Va en el <head> del documento raíz (app/layout.tsx), así que aparece en TODAS las
+            páginas: cada página de Hestiat hereda esta cabecera. El identificador de editor es
+            público (viaja en la propia dirección del script), no es un secreto.
+
+            PENDIENTE DEL PROPIETARIO: este script carga cookies de Google en todas las visitas.
+            En España eso exige consentimiento previo, así que hay que activar el mensaje de
+            consentimiento (CMP) en el panel de AdSense, en «Privacidad y mensajería». La
+            verificación funciona sin ese paso, pero el consentimiento no queda cubierto. */ }
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8207026302114375"
+          crossOrigin="anonymous"
+        />
         <style dangerouslySetInnerHTML={{ __html: estilos }} />
       </head>
       <body>

@@ -22,7 +22,7 @@ export default function Privacidad() {
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40, maxWidth: "76ch" }}>
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 8 }}>Política de privacidad</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 22 }}>
-        Última actualización: 8 de octubre de 2026.
+        Última actualización: 12 de octubre de 2026.
       </p>
 
       <section className="seccion-home">
@@ -72,8 +72,11 @@ export default function Privacidad() {
           </li>
         </ul>
         <p className="m" style={{ color: "var(--muted-fg)", fontSize: 13.5 }}>
-          <b>No se usan cookies de analítica, publicidad ni seguimiento</b>, ni se elabora ningún perfil
-          publicitario con tus datos.
+          <b>No se usan herramientas de analítica ni píxeles de redes sociales</b>, y Hestiat no
+          elabora ningún perfil publicitario con tus datos. La publicidad que se muestra es de Google
+          (AdSense), se sirve con las cookies propias de Google y <b>solo después de que lo aceptes</b>{" "}
+          en el aviso de cookies. El detalle está en la{" "}
+          <Link href="/cookies">política de cookies</Link>.
         </p>
       </section>
 
@@ -106,8 +109,17 @@ export default function Privacidad() {
             encargados del tratamiento y solo acceden a lo necesario para prestar el servicio.
           </li>
           <li>
-            <b>Nadie más.</b> No se venden ni se ceden datos a terceros con fines publicitarios ni se
-            elaboran perfiles comerciales.
+            <b>Google, por la publicidad (AdSense).</b> El sitio muestra anuncios de Google, que actúa
+            como responsable independiente del tratamiento de las cookies y datos técnicos que genera esa
+            publicidad: mostrarla, medirla, limitar las repeticiones y, solo si lo aceptas,
+            personalizarla. La base jurídica es <b>tu consentimiento</b> (art. 6.1.a RGPD), que das o
+            rechazas en el aviso de cookies. Google puede tratar estos datos fuera del Espacio Económico
+            Europeo, amparándose en sus propias garantías. Puedes consultar su política de privacidad y
+            gestionar la personalización en los ajustes de anuncios de Google.
+          </li>
+          <li>
+            <b>Nadie más.</b> Los datos de tu cuenta y de tus reservas <b>no se venden</b> ni se ceden a
+            nadie con fines publicitarios, y Hestiat no elabora perfiles comerciales.
           </li>
         </ul>
       </section>

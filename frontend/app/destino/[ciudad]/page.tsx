@@ -5,6 +5,7 @@ import { pool } from "@/lib/db";
 import { aTarjeta } from "@/lib/tarjetas";
 import TarjetaAlojamiento from "@/components/tarjeta-alojamiento";
 import { ciudadesDestacadas, datosCiudad, imagenDeReferencia, localidadPorSlug, slugCiudad } from "@/lib/seo.server";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 
 export const dynamic = "force-dynamic";
 
@@ -208,6 +209,7 @@ export default async function PaginaCiudad({ params }: { params: Promise<{ ciuda
           Si tienes un negocio aquí, puedes <Link href="/hazte-anfitrion">publicarlo gratis</Link> o{" "}
           <Link href="/reclamar">reclamar tu ficha</Link> si ya aparece.
         </p>
+        <EspacioPublicidad hueco="destino-final" />
       </main>
     </>
   );

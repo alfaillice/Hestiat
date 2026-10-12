@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { pool } from "@/lib/db";
 import { esTituloDeSeccion, fechaISO, trozosDelCuerpo } from "@/lib/guia-render";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 
 export const dynamic = "force-dynamic";
 
@@ -170,6 +171,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
           </>
         ) : null}
       </p>
+      <EspacioPublicidad hueco="guia-final" />
     </main>
   );
 }

@@ -11,6 +11,7 @@ import { estaGuardado } from "@/lib/favoritos.server";
 import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import { experienciaPorSlug, experienciasSimilares, experienciasCercanasA, type ExpTarjeta } from "@/lib/experiencias.server";
 
 export const dynamic = "force-dynamic";
@@ -261,6 +262,7 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
           ))}
         </SeccionHome>
       ) : null}
+      <EspacioPublicidad hueco="experiencia-final" />
     </main>
   );
 }

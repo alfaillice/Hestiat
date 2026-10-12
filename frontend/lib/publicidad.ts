@@ -1,24 +1,33 @@
 /**
- * PUBLICIDAD — ESTRUCTURA PREPARADA Y NADA ACTIVADO.
+ * PUBLICIDAD — ESTRUCTURA PREPARADA, CON ADENSE CONECTADO Y APAGADO TODAVÍA.
  *
- * Hoy Hestiat es 100 % gratuito y no gana dinero: no hay comisión, no hay cuota, no hay publicidad.
- * Este fichero existe para que el día que haya tráfico suficiente se pueda incorporar publicidad
- * sin rehacer nada, y para dejar claro qué se cobraría y qué no.
+ * ── HISTORIA DE ESTE FICHERO ────────────────────────────────────────────────────────────────────
+ * Nació cuando Hestiat era 100 % gratuito y sin publicidad, para dejar los huecos localizados. Hoy
+ * el propietario ha autorizado Google AdSense, así que aquí vive ya el identificador de editor y el
+ * identificador de cada bloque.
  *
- * MIENTRAS ESTÉ EN `false` NO PASA NADA:
- *   · no se carga ningún script de terceros (ni AdSense ni nada parecido);
+ * ── MIENTRAS `PUBLICIDAD_ACTIVA` ESTÉ EN `false` NO PASA NADA ───────────────────────────────────
  *   · no se reserva espacio vacío que empuje el contenido hacia abajo;
- *   · el hueco no pinta ni un solo píxel, así que no afecta al LCP ni al peso de la página.
+ *   · el hueco no pinta ni un solo píxel, así que no afecta al LCP ni al peso de la página;
+ *   · y como ningún bloque tiene todavía su identificador, aunque se encendiera no se mostraría un
+ *     hueco vacío: sin `slotAdsense` no se dibuja nada.
  *
- * CUANDO SE ACTIVE, HAY QUE HACER DOS COSAS MÁS, Y SON OBLIGATORIAS:
- *   1. Revisar la política de cookies y la de privacidad: un proveedor de publicidad como AdSense
- *      instala cookies de terceros y hay que declararlo antes de encenderlo.
- *   2. Cargar el script del proveedor DESPUÉS del primer pintado (nunca en el `<head>`), para que
- *      el LCP siga siendo del póster y no de la publicidad.
+ * ── LO QUE FALTA PARA ENCENDERLO, Y NO DEPENDE DE MÍ ────────────────────────────────────────────
+ *   1. Crear en el panel de AdSense cada bloque de anuncio y copiar aquí su `data-ad-slot`.
+ *   2. Poner `PUBLICIDAD_ACTIVA = true`.
+ *   3. Tener publicado el mensaje de consentimiento (CMP) en AdSense: es obligatorio antes de servir
+ *      publicidad a visitantes de España.
  *
- * LOS HUECOS ESTÁN LOCALIZADOS, NO INVENTADOS: son los cuatro sitios de la web donde un anuncio
- * encaja sin tapar contenido ni romper la estética.
+ * ── DOS NOTAS HONESTAS ──────────────────────────────────────────────────────────────────────────
+ *   · La política de cookies y la de privacidad YA están actualizadas (12-10-2026) para declarar
+ *     AdSense y sus cookies: era la primera condición obligatoria de este fichero, y está hecha.
+ *   · Aquí se decía que el script del proveedor no debía ir nunca en el `<head>`, para no competir
+ *     con el primer pintado. El código de VERIFICACIÓN de AdSense que pidió el propietario va en el
+ *     `<head>` porque Google lo exige así para verificar el sitio (va con `async`, no bloquea el
+ *     pintado). Los BLOQUES de anuncio, que son los que sí pesan, se cargan solo cuando este
+ *     interruptor esté encendido.
  */
+
 export type FormatoAnuncio = "horizontal" | "cuadrado";
 
 export interface HuecoPublicidad {
@@ -27,13 +36,21 @@ export interface HuecoPublicidad {
   formato: FormatoAnuncio;
   /** Alto reservado cuando se active, en píxeles. Nunca se reserva hoy. */
   alto: number;
+  /**
+   * Identificador del bloque de AdSense (`data-ad-slot`). VACÍO = ese hueco no muestra nada.
+   * Se copia del código que entrega Google para cada bloque.
+   */
+  slotAdsense: string;
 }
 
-/** Interruptor general. Hoy, apagado. */
+/** Identificador de editor de AdSense. Es público: viaja en la dirección del script. */
+export const ADSENSE_CLIENTE = "ca-pub-8207026302114375";
+
+/** Interruptor general. Hoy, apagado: sin bloques creados y sin consentimiento publicado. */
 export const PUBLICIDAD_ACTIVA = false;
 
-/** Proveedor previsto. Se elige al encenderlo; hoy no hay ninguno cargado. */
-export const PROVEEDOR_PUBLICIDAD: null | string = null;
+/** Proveedor conectado. */
+export const PROVEEDOR_PUBLICIDAD: null | string = "google-adsense";
 
 export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
   {
@@ -41,24 +58,51 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     ubicacion: "Portada, entre «Destinos para ti» y «Servicios populares»",
     formato: "horizontal",
     alto: 90,
+    slotAdsense: "",
   },
   {
     id: "listado-costado",
     ubicacion: "Listado de alojamientos, en la columna del mapa (solo escritorio)",
     formato: "cuadrado",
     alto: 250,
+    slotAdsense: "",
   },
   {
     id: "ficha-tras-galeria",
     ubicacion: "Ficha de alojamiento, después de la galería y antes del mapa",
     formato: "horizontal",
     alto: 90,
+    slotAdsense: "",
   },
   {
     id: "experiencias-tras-filtros",
     ubicacion: "Listado de experiencias, después de los filtros",
     formato: "horizontal",
     alto: 90,
+    slotAdsense: "",
+  },
+  /* ── Huecos pedidos para las páginas de más tráfico, todos al final del contenido, donde un
+        anuncio no interrumpe la lectura ni tapa nada. ── */
+  {
+    id: "experiencia-final",
+    ubicacion: "Ficha de experiencia, al final, después de «Experiencias cerca de aquí»",
+    formato: "horizontal",
+    alto: 250,
+    slotAdsense: "",
+  },
+  {
+    id: "destino-final",
+    ubicacion: "Ficha de destino /destino/<ciudad>, al final del contenido",
+    formato: "horizontal",
+    alto: 250,
+    slotAdsense: "",
+  },
+  {
+    id: "guia-final",
+    ubicacion: "Guía de destino /guia/<ciudad>, al final del texto, antes del pie",
+    formato: "horizontal",
+    alto: 250,
+    slotAdsense: "",
   },
 ];
 

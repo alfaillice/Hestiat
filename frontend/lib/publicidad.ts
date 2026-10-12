@@ -111,6 +111,33 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     alto: 280,
     slotAdsense: "5085417706",
   },
+  /* ── SEGUNDO ANUNCIO POR PÁGINA (decisión del propietario, 12-10-2026) ──────────────────────────
+     Debajo de la cabecera, en el arranque del contenido. Van ETIQUETADOS como publicidad: no se
+     camuflan como artículo porque eso incumple la política de Google (y haría perder la cuenta) y
+     porque la política de cookies publicada en el sitio dice que los anuncios van identificados.
+     Se usa el mismo bloque porque es el único que existe; lo suyo es crear en AdSense un bloque
+     aparte para estos tres y pegar aquí su identificador. ── */
+  {
+    id: "experiencia-encabezado",
+    ubicacion: "Ficha de experiencia, debajo de la cabecera, antes del título",
+    formato: "horizontal",
+    alto: 110,
+    slotAdsense: "5085417706",
+  },
+  {
+    id: "destino-encabezado",
+    ubicacion: "Ficha de destino, debajo de la cabecera, antes del título",
+    formato: "horizontal",
+    alto: 110,
+    slotAdsense: "5085417706",
+  },
+  {
+    id: "guia-encabezado",
+    ubicacion: "Guía de destino, debajo de la cabecera, antes del título",
+    formato: "horizontal",
+    alto: 110,
+    slotAdsense: "5085417706",
+  },
 ];
 
 export function huecoDe(id: string): HuecoPublicidad | null {

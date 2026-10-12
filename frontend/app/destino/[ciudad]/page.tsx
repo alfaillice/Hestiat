@@ -134,6 +134,7 @@ export default async function PaginaCiudad({ params }: { params: Promise<{ ciuda
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="wrap" style={{ paddingTop: 18 }}>
+      <EspacioPublicidad hueco="destino-encabezado" />
         <nav aria-label="Migas de pan" className="migas">
           <Link href="/">Hestiat</Link> / <Link href="/destinos">Destinos</Link> / <span>{ciudad}</span>
         </nav>

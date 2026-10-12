@@ -113,6 +113,7 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
 
   return (
     <main className="wrap" style={{ paddingTop: 20 }}>
+      <EspacioPublicidad hueco="guia-encabezado" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav aria-label="Migas de pan" className="migas">
         <Link href="/">Hestiat</Link> / <Link href="/guia">Guías</Link> / <span>{g.titulo}</span>

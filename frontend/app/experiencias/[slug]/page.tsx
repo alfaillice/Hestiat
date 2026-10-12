@@ -119,6 +119,9 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
 
   return (
     <main className="wrap" style={{ paddingBottom: 40 }}>
+      {/* Segundo anuncio de la página: debajo de la cabecera. Etiquetado y sin reservar espacio
+          cuando no hay anuncio que mostrar. */}
+      <EspacioPublicidad hueco="experiencia-encabezado" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav className="migas" aria-label="Migas de pan">

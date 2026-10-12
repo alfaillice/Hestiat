@@ -7,6 +7,8 @@ import { getCurrentUser } from "@/lib/auth.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
 import ListaCatalogo from "@/components/lista-catalogo";
 import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
+import TarjetaCategoria from "@/components/tarjeta-categoria";
+import { categoryImageMap } from "@/lib/imagenes-home";
 import {
   buscarExperiencias,
   categoriasConDatos,
@@ -148,16 +150,21 @@ export default async function Experiencias({
 
       {/* Categorías reales (solo las que tienen experiencias). */}
       <SeccionHome titulo="Explora por categoría" sub="Las categorías de Hestiat, con sus experiencias reales" verTodos="/experiencias" verTodosTexto="Ver todo">
+        {/* Se usa el componente de tarjeta de categoría que ya existe: pinta la imagen real de la
+            categoría, con su cadena de respaldo, y nunca deja un hueco roto. Antes se dibujaba aquí
+            una tarjeta propia que mostraba un emoji en lugar de la imagen. */}
         {categoriasConDatosYFiltro.map((c) => (
-          <Link className="tcat" key={c.slug} href={`/experiencias?categoria=${encodeURIComponent(c.slug)}`}>
-            <span className="tcat-media" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, background: "var(--fucsia-soft)" }}>
-              <span aria-hidden="true">{c.icono ?? "🎫"}</span>
-            </span>
-            <span className="tcat-txt">
-              <b>{c.nombre}</b>
-              <span>{c.total.toLocaleString("es-ES")} experiencias</span>
-            </span>
-          </Link>
+          <TarjetaCategoria
+            key={c.slug}
+            pie="experiencias"
+            categoria={{
+              valor: c.slug,
+              nombre: c.nombre,
+              total: c.total,
+              imagenes: categoryImageMap("experiencia", c.slug),
+              href: `/experiencias?categoria=${encodeURIComponent(c.slug)}`,
+            }}
+          />
         ))}
       </SeccionHome>
 

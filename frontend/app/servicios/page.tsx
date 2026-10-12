@@ -6,6 +6,8 @@ import { getCurrentUser } from "@/lib/auth.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
 import ListaCatalogo from "@/components/lista-catalogo";
 import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
+import TarjetaCategoria from "@/components/tarjeta-categoria";
+import { categoryImageMap } from "@/lib/imagenes-home";
 import {
   buscarServicios,
   categoriasServicioConDatos,
@@ -127,16 +129,20 @@ export default async function Servicios({
       </form>
 
       <SeccionHome titulo="Explora por categoría" sub="Las categorías de Hestiat, con sus servicios reales" verTodos="/servicios" verTodosTexto="Ver todo">
+        {/* Mismo componente de tarjeta de categoría que en Experiencias: la imagen real de la
+            categoría, no un emoji. */}
         {categorias.map((c) => (
-          <Link className="tcat" key={c.slug} href={`/servicios?categoria=${encodeURIComponent(c.slug)}`}>
-            <span className="tcat-media" style={{ display: "flex", alignItems: "center", justifyContent: "center", fontSize: 44, background: "var(--fucsia-soft)" }}>
-              <span aria-hidden="true">{c.icono ?? "🛎"}</span>
-            </span>
-            <span className="tcat-txt">
-              <b>{c.nombre}</b>
-              <span>{c.total.toLocaleString("es-ES")} servicios</span>
-            </span>
-          </Link>
+          <TarjetaCategoria
+            key={c.slug}
+            pie="servicios"
+            categoria={{
+              valor: c.slug,
+              nombre: c.nombre,
+              total: c.total,
+              imagenes: categoryImageMap("servicio", c.slug),
+              href: `/servicios?categoria=${encodeURIComponent(c.slug)}`,
+            }}
+          />
         ))}
       </SeccionHome>
 

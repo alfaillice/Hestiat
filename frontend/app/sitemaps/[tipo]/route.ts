@@ -8,6 +8,8 @@ import {
   urlsExperiencias,
   urlsServicios,
 } from "@/lib/seo.server";
+import { categoriasConDatos } from "@/lib/experiencias.server";
+import { categoriasServicioConDatos } from "@/lib/servicios.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -39,8 +41,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tip
     priority = "0.7";
   } else if (tipo === "experiencias") {
     urls = await urlsExperiencias();
+    // PÁGINAS DE CATEGORÍA (12-10-2026): tienen canónica propia, título propio con el nombre y el
+    // recuento REALES de su categoría, y están permitidas en robots.txt. Se declaran aquí para que
+    // Google las descubra sin esperar a que las encuentre rastreando. La lista sale de la MISMA
+    // función que usa la propia página: no hay dos listas que se puedan desincronizar.
+    urls = [...urls, ...(await categoriasConDatos()).map((c) => `${BASE}/experiencias?categoria=${encodeURIComponent(c.slug)}`)];
   } else if (tipo === "servicios") {
     urls = await urlsServicios();
+    urls = [...urls, ...(await categoriasServicioConDatos()).map((c) => `${BASE}/servicios?categoria=${encodeURIComponent(c.slug)}`)];
   } else if (tipo === "guias") {
     try {
       const [filas] = await pool.query<any[]>(

@@ -388,9 +388,10 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .cab{background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:40}
 .cab-in{display:flex;align-items:center;gap:16px;min-height:72px;padding:8px 18px;flex-wrap:nowrap}
 .marca{font-weight:700;letter-spacing:-.02em;font-size:21px;color:var(--ink);font-family:var(--fuente-titulo);display:flex;align-items:center;gap:7px;white-space:nowrap}
-/* En móvil el mínimo son 30 px, para que el nombre se lea sin forzar la vista. El máximo
-   sigue en 32 px, de modo que la cabecera de escritorio no cambia. */
-.marca-logo{height:clamp(30px,6vw,32px);width:auto;display:block}
+/* El alto se ajusta al logotipo nuevo: la palabra dibujada es mucho más ancha que la anterior
+   (relación 5,3:1 frente a 2,6:1), así que a 32 px se saldría de su sitio en la cabecera. Con este
+   alto el logotipo se ve entero, grande y legible, sin empujar el buscador ni la navegación. */
+.marca-logo{height:clamp(19px,3.6vw,22px);width:auto;display:block}
 .marca-logo-mini{height:24px;width:auto;max-width:100%;display:inline-block;vertical-align:middle}
 .marca-casa{font-size:18px}
 .cab-busca{flex:1 1 auto;max-width:620px;min-width:0}
@@ -661,14 +662,18 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 @media(prefers-reduced-motion:reduce){.hero-cine{height:auto}}
 /* ---------- ficha divertida: iconos ilustrativos y acento fucsia ---------- */
 /* Los tres tokens conservan su nombre por compatibilidad con las reglas que ya los usan, pero su
-   valor es ahora el de la marca tomada del logo del canal: oro, crema y marino. Así la interfaz entera
-   (botones, enlaces, destacados, cabecera y pie) cambia de una vez sin tocar ni una regla. */
-:root{--fucsia:#C8A858; --fucsia-soft:#F7EFD8; --fucsia-tinta:#0A1435}
+   valor cambia aquí y con él cambia la interfaz entera (botones, enlaces, destacados, cabecera y
+   pie) sin tocar ni una regla.
+   DECISIÓN DEL PROPIETARIO (12-10-2026): los botones vuelven al TURQUESA. El turquesa elegido
+   mantiene un contraste alto con la tinta marina del texto de los botones (relación aproximada de
+   9:1, muy por encima del 4.5:1 que exige la norma de accesibilidad), así que no se pierde
+   legibilidad al cambiar de color. */
+:root{--fucsia:#2EC4B6; --fucsia-soft:#E6F5F3; --fucsia-tinta:#0A1435}
 /* Color primario oficial de acción, tomado de la ficha (ver la explicación junto a .f-aplicar).
    --hestiat-primary        relleno de los botones principales: el pastel que se ve en la ficha.
    --hestiat-primary-hover  el mismo tono un poco más profundo, solo al pasar el ratón.
    --hestiat-primary-texto  el mismo tono oscuro, para enlaces y estados activos (contraste). */
-:root{--hestiat-primary:#C8A858; --hestiat-primary-hover:#B8963F; --hestiat-primary-texto:#0A1435}
+:root{--hestiat-primary:#2EC4B6; --hestiat-primary-hover:#25A99D; --hestiat-primary-texto:#0A1435}
 /* Identidad de marca tomada del logo del canal: emblema circular con casa y corazón.
    Se AÑADEN; los tokens de acción de arriba se conservan tal cual para no alterar ningún flujo. */
 :root{--marca-oro-texto:#8A6A1E; --marca-marino:#0A1435; --marca-oro:#C8A858; --marca-oro-claro:#F2E3B4; --marca-oro-oscuro:#6E5220;

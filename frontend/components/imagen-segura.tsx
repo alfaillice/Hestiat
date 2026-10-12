@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { urlPropia } from "@/lib/imagen-propia";
 
 /**
  * Una imagen que NUNCA se ve rota.
@@ -34,7 +35,14 @@ export default function ImagenSegura({
   /** Clase del fondo que se muestra si no hay imagen o si fallan todas. */
   fondo?: string;
 }) {
-  const lista = (Array.isArray(src) ? src : src ? [src] : []).filter(Boolean);
+  /**
+   * Las direcciones de terceros (Wikimedia) se pintan pasando por nuestra casa, para que el
+   * navegador no tenga que hablar con un servidor ajeno que además limita las peticiones. Las
+   * nuestras (R2, CloudFront) se quedan tal cual.
+   */
+  const lista = (Array.isArray(src) ? src : src ? [src] : [])
+    .filter(Boolean)
+    .map((u) => urlPropia(u, ancho));
   const [indice, setIndice] = useState(0);
   const actual = lista[indice] ?? null;
   if (!actual) return <span className={fondo} aria-hidden="true" />;

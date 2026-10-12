@@ -17,12 +17,48 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Servicios — Hestiat",
-  description:
-    "Servicios reales en toda España: peluquerías, bienestar, gimnasios, veterinarios, transporte, lavanderías, fotografía y más, con su ubicación y su precio cuando está publicado.",
-  alternates: { canonical: "/servicios" },
-};
+/**
+ * TÍTULO Y CANÓNICA DE CADA PÁGINA, SEGÚN SU CATEGORÍA.
+ *
+ * Una página de categoría no es un duplicado del listado: tiene su propio contenido (solo esa
+ * categoría), su propio título y su propio enlace. Por eso se declara CANÓNICA A SÍ MISMA, con su
+ * parámetro incluido. Antes declaraba `/servicios` como canónica, así que Google la habría tratado
+ * como duplicado del listado y no la habría indexado nunca, aunque se le permitiera rastrearla.
+ *
+ * Los demás filtros (provincia, búsqueda, paginación) siguen declarando el listado: no se indexan.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  const categoria = typeof sp.categoria === "string" ? sp.categoria : "";
+  if (!categoria) {
+    return {
+      title: "Servicios — Hestiat",
+      description:
+        "Servicios reales en toda España: peluquerías, bienestar, gimnasios, veterinarios, transporte, lavanderías, fotografía y más, con su ubicación y su precio cuando está publicado.",
+      alternates: { canonical: "/servicios" },
+    };
+  }
+
+  // El nombre y el recuento salen del catálogo real: nada inventado.
+  const categorias = await categoriasServicioConDatos();
+  const c = categorias.find((x) => x.slug === categoria);
+  const nombre = c?.nombre ?? categoria.replace(/-/g, " ");
+  const total = c?.total ?? 0;
+  const ruta = `/servicios?categoria=${encodeURIComponent(categoria)}`;
+
+  return {
+    title: total
+      ? `${nombre}: ${total.toLocaleString("es-ES")} servicios en Hestiat`
+      : `${nombre}: servicios en Hestiat`,
+    description: `Servicios de ${nombre.toLowerCase()} publicados en Hestiat, con su ubicación real y su contacto cuando está disponible.`,
+    alternates: { canonical: ruta },
+    robots: { index: true, follow: true },
+  };
+}
 
 const POR_PAGINA = 24;
 

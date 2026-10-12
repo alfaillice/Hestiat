@@ -11,8 +11,16 @@ import { Vacio } from "@/components/estados";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * PÁGINA PERSONAL: NO SE INDEXA.
+ *
+ * `noindex, nofollow` para que Google no la meta en su índice (es distinto para cada persona y no
+ * tiene ningún interés público) y su URL canónica propia, para que ninguna otra página pueda
+ * reclamarla como suya por error.
+ */
 export const metadata: Metadata = {
   title: "Mis favoritos — Hestiat",
+  alternates: { canonical: "/favoritos" },
   robots: { index: false, follow: false },
 };
 

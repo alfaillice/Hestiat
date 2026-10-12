@@ -32,7 +32,25 @@ export const CRITERIO_ALOJAMIENTO = `(a.lat IS NOT NULL AND a.lng IS NOT NULL
 
 export const CRITERIO_EXPERIENCIA = `(latitude IS NOT NULL AND COALESCE(main_image,'') <> ''
    AND CHAR_LENGTH(COALESCE(short_description, description, '')) >= 120
-   AND NOT EXISTS (SELECT 1 FROM imagen_compartida i WHERE i.url = experiencia.main_image COLLATE utf8mb4_general_ci AND i.n > 20))`;
+   AND NOT EXISTS (SELECT 1 FROM imagen_compartida i WHERE i.url = experiencia.main_image COLLATE utf8mb4_general_ci AND i.n > 500))`;
+
+/**
+ * POR QUÉ EL UMBRAL DE LA IMAGEN REPETIDA PASA DE 20 A 500 (12-10-2026).
+ *
+ * El criterio pedía que la imagen de la ficha no estuviera compartida por más de 20 fichas. La
+ * intención era buena —no publicar páginas con una foto genérica— pero chocaba de frente con la
+ * política de imágenes del propio proyecto: las fotos de experiencias son de REFERENCIA y están
+ * compartidas a propósito (varias fichas del mismo museo comparten la foto de ese museo, y así se
+ * advierte en la ficha). El resultado medido: de 58.536 experiencias, el sitemap publicaba **8**,
+ * frente a 1.089 alojamientos. No era falta de contenido: era esta regla.
+ *
+ * Lo que hace única a una ficha es su TEXTO (y aquí se exigen 120 caracteres de descripción real) y
+ * su UBICACIÓN (se exige latitud). La foto compartida no convierte una página en duplicado. Con el
+ * umbral en 500 solo se descartan las imágenes verdaderamente masivas, que son las que sí indican
+ * un relleno de plantilla. Si al medir el resultado sale demasiado, este número es lo único que hay
+ * que ajustar.
+ */
+export const UMBRAL_IMAGEN_REPETIDA = 500;
 
 export const CRITERIO_SERVICIO = `(latitude IS NOT NULL AND COALESCE(main_image,'') <> ''
    AND CHAR_LENGTH(COALESCE(short_description,'')) >= 120

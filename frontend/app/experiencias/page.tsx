@@ -19,12 +19,39 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Experiencias — Hestiat",
-  description:
-    "Qué hacer y qué visitar en toda España: planes reales del catálogo de Hestiat, con su ubicación, su categoría y su precio cuando está publicado.",
-  alternates: { canonical: "/experiencias" },
-};
+/** Igual que en servicios: cada categoría se declara canónica a sí misma, con su título propio. */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}): Promise<Metadata> {
+  const sp = await searchParams;
+  const categoria = typeof sp.categoria === "string" ? sp.categoria : "";
+
+  if (!categoria) {
+    return {
+      title: "Experiencias — Hestiat",
+      description:
+        "Qué hacer y qué visitar en toda España: planes reales del catálogo de Hestiat, con su ubicación, su categoría y su precio cuando está publicado.",
+      alternates: { canonical: "/experiencias" },
+    };
+  }
+
+  const categorias = await categoriasConDatos();
+  const c = categorias.find((x) => x.slug === categoria);
+  const nombre = c?.nombre ?? categoria.replace(/-/g, " ");
+  const total = c?.total ?? 0;
+  const ruta = `/experiencias?categoria=${encodeURIComponent(categoria)}`;
+
+  return {
+    title: total
+      ? `${nombre}: ${total.toLocaleString("es-ES")} experiencias en Hestiat`
+      : `${nombre}: experiencias en Hestiat`,
+    description: `Experiencias de ${nombre.toLowerCase()} en toda España, con su ubicación real y su precio cuando está publicado.`,
+    alternates: { canonical: ruta },
+    robots: { index: true, follow: true },
+  };
+}
 
 const POR_PAGINA = 24;
 

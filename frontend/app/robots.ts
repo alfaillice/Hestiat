@@ -14,7 +14,11 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
+        // EXCEPCIÓN DE CATEGORÍA (12-10-2026, decisión del propietario): las páginas de categoría
+        // tienen contenido propio, enlace propio y título propio, así que se permite rastrearlas.
+        // En robots.txt gana la regla más específica, así que «/*?categoria=» se impone al
+        // «/*?» de abajo sin desproteger nada más: el resto de combinaciones de filtros sigue fuera.
+        allow: ["/", "/*?categoria="],
         disallow: [
           // Zonas privadas: nunca se indexan.
           "/admin",

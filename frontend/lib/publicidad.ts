@@ -46,8 +46,15 @@ export interface HuecoPublicidad {
 /** Identificador de editor de AdSense. Es público: viaja en la dirección del script. */
 export const ADSENSE_CLIENTE = "ca-pub-8207026302114375";
 
-/** Interruptor general. Hoy, apagado: sin bloques creados y sin consentimiento publicado. */
-export const PUBLICIDAD_ACTIVA = false;
+/**
+ * Interruptor general. ENCENDIDO desde el 12-10-2026, cuando el propietario entregó el
+ * identificador del bloque de anuncio.
+ *
+ * AVISO QUE SIGUE VIVO: el mensaje de consentimiento (CMP) de AdSense todavía NO está publicado.
+ * Mientras no lo esté, la política de cookies publicada (que dice que las cookies publicitarias
+ * solo se cargan si las aceptas) no se corresponde con la realidad. Es el paso que falta.
+ */
+export const PUBLICIDAD_ACTIVA = true;
 
 /** Proveedor conectado. */
 export const PROVEEDOR_PUBLICIDAD: null | string = "google-adsense";
@@ -57,8 +64,8 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     id: "portada-tras-destinos",
     ubicacion: "Portada, entre «Destinos para ti» y «Servicios populares»",
     formato: "horizontal",
-    alto: 90,
-    slotAdsense: "",
+    alto: 110,
+    slotAdsense: "5085417706",
   },
   {
     id: "listado-costado",
@@ -87,22 +94,22 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     id: "experiencia-final",
     ubicacion: "Ficha de experiencia, al final, después de «Experiencias cerca de aquí»",
     formato: "horizontal",
-    alto: 250,
-    slotAdsense: "",
+    alto: 280,
+    slotAdsense: "5085417706",
   },
   {
     id: "destino-final",
     ubicacion: "Ficha de destino /destino/<ciudad>, al final del contenido",
     formato: "horizontal",
-    alto: 250,
-    slotAdsense: "",
+    alto: 280,
+    slotAdsense: "5085417706",
   },
   {
     id: "guia-final",
     ubicacion: "Guía de destino /guia/<ciudad>, al final del texto, antes del pie",
     formato: "horizontal",
-    alto: 250,
-    slotAdsense: "",
+    alto: 280,
+    slotAdsense: "5085417706",
   },
 ];
 

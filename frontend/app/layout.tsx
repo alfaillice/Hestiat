@@ -147,6 +147,11 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .publica-cta:hover{background:var(--hestiat-primary-hover)}
 .publica-otros{display:flex;gap:14px;flex-wrap:wrap;font-size:13.5px}
 .publica-otros a{color:var(--hestiat-primary-texto);font-weight:600}
+/* HUECO DE PUBLICIDAD. Va etiquetado y separado del contenido por una línea, para que nadie lo
+   confunda con contenido propio de Hestiat: es lo que exige la política de Google y lo que evita
+   que el anuncio parezca parte de la página. Sin bordes ni cajas: no rompe el diseño. */
+.publi{display:block;margin:26px 0;padding-top:12px;border-top:1px solid var(--border);min-width:0}
+.publi-etq{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-fg);margin-bottom:8px}
 @media(max-width:760px){
   .publica{padding:20px 18px;gap:16px;margin:22px 0 6px}
   .publica-acciones{width:100%}

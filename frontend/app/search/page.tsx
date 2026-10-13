@@ -6,6 +6,7 @@ import Mapa from "@/components/mapa";
 import BuscadorExplorar from "@/components/buscador-explorar";
 import { opcionesDeFiltros, puntosDelMapa } from "@/lib/db";
 import type { FiltrosBusqueda } from "@/lib/db";
+import { sugerenciasGenerales } from "@/lib/sugerencias.server";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +77,22 @@ export default async function Explorar({
   const uno = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
   const pagina = Math.max(1, Number(uno(sp.p) ?? 1) || 1);
   const filtros = leerFiltros(sp);
+  /**
+   * BLOQUE DE EXPERIENCIAS Y SERVICIOS.
+   *
+   * Reutiliza LA MISMA consulta que ya usa el buscador de la cabecera
+   * (`sugerenciasGenerales`, la que se acaba de corregir para que cada sugerencia lleve su ficha).
+   * No hay una segunda forma de buscar experiencias y servicios: si un día cambia la de la
+   * cabecera, esta cambia con ella.
+   *
+   * Solo se calcula cuando el visitante ha escrito algo, y NO toca nada del bloque de alojamientos:
+   * se añade como una sección aparte, con enlaces, sin imágenes y sin precios.
+   */
+  const otros = filtros.q
+    ? (await sugerenciasGenerales(filtros.q, 6).catch(() => [])).filter(
+        (s) => s.tipo === "experiencia" || s.tipo === "servicio",
+      )
+    : [];
   const verMapa = uno(sp.vista) === "mapa";
 
   const [opciones, puntos] = await Promise.all([
@@ -155,7 +172,31 @@ export default async function Explorar({
           </p>
         </section>
       ) : (
+        <>
+        {otros.length > 0 ? (
+          <section className="seccion-home" aria-label="También en experiencias y servicios">
+            <h2 style={{ fontSize: "clamp(18px,2.2vw,22px)", marginBottom: 6 }}>
+              También en experiencias y servicios
+            </h2>
+            <p className="m" style={{ marginBottom: 12 }}>
+              {otros.length === 1 ? "Coincide 1 ficha" : `Coinciden ${otros.length} fichas`} del
+              catálogo con «{filtros.q}».
+            </p>
+            <ul style={{ display: "flex", flexWrap: "wrap", gap: "10px 18px", listStyle: "none", padding: 0, margin: 0 }}>
+              {otros.map((s) => (
+                <li key={s.href}>
+                  <Link href={s.href} style={{ fontWeight: 600 }}>
+                    {s.texto}
+                  </Link>
+                  <span className="m"> · {s.tipo === "experiencia" ? "experiencia" : "servicio"}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
         <Resultados q={filtros.q ?? ""} pagina={pagina} basePath="/search" filtros={filtros} />
+        </>
       )}
     </main>
   );

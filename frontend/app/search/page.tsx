@@ -7,6 +7,7 @@ import BuscadorExplorar from "@/components/buscador-explorar";
 import { opcionesDeFiltros, puntosDelMapa } from "@/lib/db";
 import type { FiltrosBusqueda } from "@/lib/db";
 import { sugerenciasGenerales } from "@/lib/sugerencias.server";
+import SeccionHome from "@/components/seccion-home";
 
 export const dynamic = "force-dynamic";
 
@@ -173,26 +174,52 @@ export default async function Explorar({
         </section>
       ) : (
         <>
+        {/*
+          ESTILO: se usa el MISMO componente de sección que el resto de la web (`SeccionHome`), que
+          ya trae el título de sección, la línea de subtítulo, el enlace «Ver todas →» y el carrusel
+          con su espaciado. No se copia el estilo: se reutiliza. Así este bloque no puede
+          desviarse del diseño, porque no tiene diseño propio.
+
+          ICONOS: uno por tipo, como ya hace el sitio con las categorías. La forma es la misma para
+          los dos tipos; solo cambia el dibujo.
+        */}
         {otros.length > 0 ? (
-          <section className="seccion-home" aria-label="También en experiencias y servicios">
-            <h2 style={{ fontSize: "clamp(18px,2.2vw,22px)", marginBottom: 6 }}>
-              También en experiencias y servicios
-            </h2>
-            <p className="m" style={{ marginBottom: 12 }}>
-              {otros.length === 1 ? "Coincide 1 ficha" : `Coinciden ${otros.length} fichas`} del
-              catálogo con «{filtros.q}».
-            </p>
-            <ul style={{ display: "flex", flexWrap: "wrap", gap: "10px 18px", listStyle: "none", padding: 0, margin: 0 }}>
-              {otros.map((s) => (
-                <li key={s.href}>
-                  <Link href={s.href} style={{ fontWeight: 600 }}>
-                    {s.texto}
-                  </Link>
-                  <span className="m"> · {s.tipo === "experiencia" ? "experiencia" : "servicio"}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <SeccionHome
+            titulo="También en experiencias y servicios"
+            sub={
+              otros.length === 1
+                ? `1 ficha del catálogo coincide con «${filtros.q}»`
+                : `${otros.length} fichas del catálogo coinciden con «${filtros.q}»`
+            }
+            verTodos="/experiencias"
+            verTodosTexto="Ver todas"
+          >
+            {otros.map((s) => (
+              <Link
+                key={s.href}
+                href={s.href}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 9,
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "var(--radio-pill)",
+                  padding: "11px 18px",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 17 }}>
+                  {s.tipo === "experiencia" ? "🎟️" : "🛎️"}
+                </span>
+                {s.texto}
+                <span className="m" style={{ fontWeight: 400, fontSize: 12.5 }}>
+                  {s.tipo === "experiencia" ? "experiencia" : "servicio"}
+                </span>
+              </Link>
+            ))}
+          </SeccionHome>
         ) : null}
 
         <Resultados q={filtros.q ?? ""} pagina={pagina} basePath="/search" filtros={filtros} />

@@ -34,7 +34,7 @@ async function alojamientosDeCiudad(ciudad: string, limite = 24) {
               (SELECT COALESCE(p.origin_url, p.storage_key) FROM accommodation_photo p
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
-              li.url, lp.url, lg.url) AS portada,
+              li.url) AS portada,
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
        LEFT JOIN localidad_imagen li ON li.tipo='ciudad' AND li.clave = LOWER(a.city)

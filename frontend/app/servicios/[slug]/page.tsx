@@ -11,6 +11,8 @@ import { estaGuardado } from "@/lib/favoritos.server";
 import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
+import BotonesContacto from "@/components/botones-contacto";
+import { contactoDe } from "@/lib/contacto.server";
 import { servicioPorSlug, serviciosSimilares, serviciosCercanosA, type ServTarjeta } from "@/lib/servicios.server";
 
 export const dynamic = "force-dynamic";
@@ -71,6 +73,8 @@ function TarjetaServ({ s }: { s: ServTarjeta }) {
 export default async function FichaServicio({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const s = await cargar(slug);
+  // Igual que en experiencias: por tipo e identificador, y solo se publica lo verificado.
+  const contacto = s ? await contactoDe("servicio", Number(s.id)) : null;
   if (!s) notFound();
 
   /* Favoritos: la sesión y si ESTE elemento está guardado, con el mismo ayudante que el resto. */
@@ -193,6 +197,14 @@ export default async function FichaServicio({ params }: { params: Promise<{ slug
             ) : null}
           </p>
 
+          {/* El contacto va APARTE del mapa: se muestra siempre, tenga coordenadas o no. */}
+          {contacto ? (
+            <BotonesContacto
+              contacto={contacto}
+              nombre={s.nombre}
+              urlPublica={`https://hestiat.com/servicios/${s.slug}`}
+            />
+          ) : null}
           {s.lat !== null && s.lng !== null ? (
             <section style={{ marginTop: 26 }}>
               <h2 style={{ fontSize: 20, marginBottom: 10 }}>¿Dónde está?</h2>

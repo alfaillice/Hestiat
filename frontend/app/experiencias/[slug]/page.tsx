@@ -11,6 +11,8 @@ import { estaGuardado } from "@/lib/favoritos.server";
 import { textoDeImagen } from "@/components/tarjeta-catalogo";
 import MapaFicha from "@/components/mapa-ficha";
 import BotonEditarAdmin from "@/components/boton-editar-admin";
+import BotonesContacto from "@/components/botones-contacto";
+import { contactoDe } from "@/lib/contacto.server";
 import EspacioPublicidad from "@/components/espacio-publicidad";
 import { experienciaPorSlug, experienciasSimilares, experienciasCercanasA, type ExpTarjeta } from "@/lib/experiencias.server";
 
@@ -72,6 +74,9 @@ function TarjetaExp({ e }: { e: ExpTarjeta }) {
 export default async function FichaExperiencia({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const e = await cargar(slug);
+  // CONTACTO: se lee por tipo e identificador, sin tocar la consulta de la ficha. Solo devuelve lo
+  // publicable; si no hay nada, el bloque no se pinta.
+  const contacto = e ? await contactoDe("experiencia", Number(e.id)) : null;
   if (!e) notFound();
 
   /* Favoritos: la sesión y si ESTE elemento está guardado, con el mismo ayudante que el resto. */
@@ -199,6 +204,14 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
             </p>
           ) : null}
 
+          {/* El contacto va APARTE del mapa: se muestra siempre, tenga coordenadas o no. */}
+          {contacto ? (
+            <BotonesContacto
+              contacto={contacto}
+              nombre={e.nombre}
+              urlPublica={`https://hestiat.com/experiencias/${e.slug}`}
+            />
+          ) : null}
           {e.lat !== null && e.lng !== null ? (
             <section style={{ marginTop: 26 }}>
               <h2 style={{ fontSize: 20, marginBottom: 10 }}>¿Dónde está?</h2>

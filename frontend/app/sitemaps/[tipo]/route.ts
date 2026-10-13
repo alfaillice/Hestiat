@@ -44,11 +44,26 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tip
     // PÁGINAS DE CATEGORÍA (12-10-2026): tienen canónica propia, título propio con el nombre y el
     // recuento REALES de su categoría, y están permitidas en robots.txt. Se declaran aquí para que
     // Google las descubra sin esperar a que las encuentre rastreando. La lista sale de la MISMA
-    // función que usa la propia página: no hay dos listas que se puedan desincronizar.
-    urls = [...urls, ...(await categoriasConDatos()).map((c) => `${BASE}/experiencias?categoria=${encodeURIComponent(c.slug)}`)];
+    // función que usa la propia página.
+    //
+    // Va en su propio try/catch a propósito: si algún día la lectura de categorías falla, el sitemap
+    // tiene que seguir sirviendo las fichas en vez de devolver un error al buscador.
+    try {
+      const cats = await categoriasConDatos();
+      console.log(`[sitemap] experiencias: ${urls.length} fichas + ${cats.length} categorias`);
+      urls = [...urls, ...cats.map((c) => `${BASE}/experiencias?categoria=${encodeURIComponent(String(c.slug))}`)];
+    } catch (error) {
+      console.error("[sitemap] categorias de experiencias:", error instanceof Error ? error.message : error);
+    }
   } else if (tipo === "servicios") {
     urls = await urlsServicios();
-    urls = [...urls, ...(await categoriasServicioConDatos()).map((c) => `${BASE}/servicios?categoria=${encodeURIComponent(c.slug)}`)];
+    try {
+      const cats = await categoriasServicioConDatos();
+      console.log(`[sitemap] servicios: ${urls.length} fichas + ${cats.length} categorias`);
+      urls = [...urls, ...cats.map((c) => `${BASE}/servicios?categoria=${encodeURIComponent(String(c.slug))}`)];
+    } catch (error) {
+      console.error("[sitemap] categorias de servicios:", error instanceof Error ? error.message : error);
+    }
   } else if (tipo === "guias") {
     try {
       const [filas] = await pool.query<any[]>(

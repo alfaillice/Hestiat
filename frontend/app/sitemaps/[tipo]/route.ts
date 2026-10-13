@@ -81,8 +81,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tip
 
   if (urls.length === 0) return new NextResponse("Sin URLs que declarar.", { status: 404 });
 
-  // Solo URLs canónicas de nuestro dominio y sin parámetros: nada de duplicados ni de filtros.
-  const limpias = [...new Set(urls.filter((u) => u.startsWith(`${BASE}/`) && !u.includes("?")))];
+  // Solo URLs canónicas de nuestro dominio. La regla original descartaba CUALQUIER dirección con
+  // parámetros («nada de filtros»), y eso es lo que hacía desaparecer las páginas de categoría: se
+  // añadían a la lista y se borraban aquí mismo. Ahora se admite UNA excepción, la categoría, que es
+  // la única que tiene canónica propia, título propio y permiso en robots.txt. Cualquier otra
+  // combinación de parámetros (provincia, búsqueda, paginación, o categoría con algo más) sigue
+  // quedándose fuera: el sitemap no declara páginas que no deben indexarse.
+  const esCategoria = (u: string) => /[?&]categoria=[^&]+$/.test(u);
+  const limpias = [...new Set(urls.filter((u) => u.startsWith(`${BASE}/`) && (!u.includes("?") || esCategoria(u))))];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

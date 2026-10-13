@@ -256,7 +256,7 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC
                 LIMIT 1),
-              li.url) AS portada,
+              li.url, lp.url, lg.url) AS portada,
             -- Si la ficha no tiene foto propia, la que se enseña es de REFERENCIA (de su localidad, de
             -- su provincia o del respaldo general) y la tarjeta lo dice. Nunca se hace pasar por foto
             -- de la propiedad.
@@ -547,7 +547,7 @@ export async function destacados(limite = 8): Promise<AlojamientoTarjeta[]> {
                  FROM accommodation_photo p
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
-              li.url) AS portada,
+              li.url, lp.url, lg.url) AS portada,
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
        LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
@@ -580,7 +580,7 @@ export async function porIds(ids: number[]): Promise<AlojamientoTarjeta[]> {
                  FROM accommodation_photo p
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
-              li.url) AS portada,
+              li.url, lp.url, lg.url) AS portada,
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
        LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)

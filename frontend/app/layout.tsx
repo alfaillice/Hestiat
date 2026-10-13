@@ -161,12 +161,12 @@ footer a:hover{color:var(--hestiat-primary-texto)}
 .mapa-nota{color:var(--muted-fg)}
 /* DEFINITIVO: LA TARJETA ES LA REFERENCIA DEL ENLACE.
    La tarjeta de experiencias y servicios lleva un enlace invisible que la hace clicable entera
-   (`.serv-enlace{position:absolute;inset:0}`). Un elemento absoluto se pega a su contenedor
-   POSICIONADO más cercano; como la tarjeta no lo estaba, el enlace se estiraba hasta mucho más
-   arriba y se tragaba el buscador, los selectores, «Quitar filtros», «Ver todo», el carrusel de
-   categorías, la lista de destinos y los huecos vacíos: toda esa zona actuaba como un solo botón.
-   Con `position:relative` aquí, el enlace ocupa EXACTAMENTE su tarjeta. No cambia ningún tamaño,
-   color, imagen, tipografía ni distribución: el enlace es invisible, solo deja de salirse. */
+   (la regla .serv-enlace, con position:absolute e inset:0). Un elemento absoluto se pega a su
+   contenedor POSICIONADO más cercano; como la tarjeta no lo estaba, el enlace se estiraba hasta
+   mucho más arriba y se tragaba el buscador, los selectores, Quitar filtros, Ver todo, el carrusel
+   de categorías, la lista de destinos y los huecos vacíos: toda esa zona actuaba como un solo
+   botón. Con position:relative aquí, el enlace ocupa EXACTAMENTE su tarjeta. No cambia ningún
+   tamaño, color, imagen, tipografía ni distribución: el enlace es invisible, solo deja de salirse. */
 article.serv-card{position:relative}
 @media(max-width:760px){
   .publica{padding:20px 18px;gap:16px;margin:22px 0 6px}

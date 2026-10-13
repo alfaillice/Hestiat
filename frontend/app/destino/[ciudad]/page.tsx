@@ -34,7 +34,14 @@ async function alojamientosDeCiudad(ciudad: string, limite = 24) {
               (SELECT COALESCE(p.origin_url, p.storage_key) FROM accommodation_photo p
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
-              li.url, lp.url, lg.url) AS portada,
+              -- LA CASCADA PARA EN LA CIUDAD (13-10-2026, decisión del propietario). Antes seguía a
+              -- la provincia y al país, y como la imagen de país existe siempre, NINGUNA tarjeta
+              -- quedaba sin imagen: las que no tenían foto propia mostraban una genérica de España o
+              -- de su provincia sin advertir de nada. Ahora, si no hay foto propia ni imagen de su
+              -- ciudad, la portada queda vacía y la tarjeta enseña la imagen «SIN FOTO». Son 57
+              -- alojamientos de 17.609; los 17.406 que SÍ tienen imagen de su municipio la conservan,
+              -- porque es una foto orientativa y el propietario pidió no tocarla.
+              li.url) AS portada,
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
        LEFT JOIN localidad_imagen li ON li.tipo='ciudad' AND li.clave = LOWER(a.city)

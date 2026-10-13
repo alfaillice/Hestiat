@@ -99,6 +99,15 @@ export default function BuscadorCabecera() {
     setTexto(s.texto);
     setAbierto(false);
     setResaltado(-1);
+    // SI LA SUGERENCIA TIENE DESTINO PROPIO, SE VA A ÉL. Antes se lanzaba siempre una búsqueda, así
+    // que pulsar una experiencia o un servicio acababa en el buscador de alojamientos: no había
+    // forma de llegar a su ficha. Una ciudad o un alojamiento siguen yendo a su búsqueda, que es lo
+    // correcto para ellos.
+    const destino = (s as { href?: string }).href;
+    if (destino) {
+      window.location.assign(destino);
+      return;
+    }
     setTimeout(enviar, 0);
   };
 

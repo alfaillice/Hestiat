@@ -17,12 +17,18 @@ export interface SugerenciaGeneral {
   tipo: "ciudad" | "provincia" | "alojamiento" | "experiencia" | "servicio";
   texto: string;
   total: number;
+  /**
+   * A DÓNDE LLEVA LA SUGERENCIA. Faltaba, y era el fallo: al pulsar una de experiencias o
+   * servicios, el desplegable no tenía ficha a la que ir y acababa lanzando una búsqueda, que en
+   * esta web es la de alojamientos. Por eso buscar una experiencia te dejaba en alojamientos.
+   */
+  href: string;
 }
 
 async function deExperiencias(q: string, limite: number): Promise<SugerenciaGeneral[]> {
   const like = `%${q}%`;
   const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT name AS texto, COUNT(*) AS total
+    `SELECT name AS texto, MIN(slug) AS slug, COUNT(*) AS total
        FROM experiencia
       WHERE is_active = 1 AND name LIKE ?
       GROUP BY name
@@ -30,13 +36,20 @@ async function deExperiencias(q: string, limite: number): Promise<SugerenciaGene
       LIMIT ?`,
     [like, `${q}%`, limite],
   );
-  return filas.map((f) => ({ tipo: "experiencia" as const, texto: String(f.texto), total: Number(f.total) }));
+  return filas
+    .filter((f) => String(f.slug ?? "") !== "")
+    .map((f) => ({
+      tipo: "experiencia" as const,
+      texto: String(f.texto),
+      total: Number(f.total),
+      href: `/experiencias/${encodeURIComponent(String(f.slug))}`,
+    }));
 }
 
 async function deServicios(q: string, limite: number): Promise<SugerenciaGeneral[]> {
   const like = `%${q}%`;
   const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT name AS texto, COUNT(*) AS total
+    `SELECT name AS texto, MIN(slug) AS slug, COUNT(*) AS total
        FROM servicio_turistico
       WHERE is_active = 1 AND name LIKE ?
       GROUP BY name
@@ -44,7 +57,14 @@ async function deServicios(q: string, limite: number): Promise<SugerenciaGeneral
       LIMIT ?`,
     [like, `${q}%`, limite],
   );
-  return filas.map((f) => ({ tipo: "servicio" as const, texto: String(f.texto), total: Number(f.total) }));
+  return filas
+    .filter((f) => String(f.slug ?? "") !== "")
+    .map((f) => ({
+      tipo: "servicio" as const,
+      texto: String(f.texto),
+      total: Number(f.total),
+      href: `/servicios/${encodeURIComponent(String(f.slug))}`,
+    }));
 }
 
 export async function sugerenciasGenerales(q: string, limite = 8): Promise<SugerenciaGeneral[]> {
@@ -58,7 +78,12 @@ export async function sugerenciasGenerales(q: string, limite = 8): Promise<Suger
     deServicios(consulta, 3).catch(() => []),
   ]);
 
-  const destinosTipados = destinos as SugerenciaGeneral[];
+  // Los destinos y los alojamientos ya funcionaban: su sugerencia es un texto, y al pulsarla se
+  // busca ese texto. Se les da su enlace de búsqueda para que el desplegable tenga SIEMPRE un
+  // destino, sea cual sea el tipo.
+  const destinosTipados: SugerenciaGeneral[] = (destinos as Omit<SugerenciaGeneral, "href">[]).map(
+    (s) => ({ ...s, href: `/search?q=${encodeURIComponent(s.texto)}` }),
+  );
 
   // Se mezclan alternando: primero lo que empieza por lo escrito, y luego el resto, para que la
   // lista no se llene solo de un tipo.

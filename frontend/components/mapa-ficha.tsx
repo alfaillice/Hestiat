@@ -103,5 +103,31 @@ export default function MapaFicha({
   // enfocar (acercar, alejar y el marcador), y eso es un error serio de accesibilidad
   // (nested-interactive). Un div sin rol no aporta nada malo; el mapa conserva su texto alternativo,
   // que es lo que leen los lectores de pantalla para saber de qué alojamiento es.
-  return <div ref={contenedor} className="mapa-ficha" aria-label={`Mapa de ${titulo}`} />;
+  // EL BOTÓN DE CÓMO LLEGAR VA AQUÍ, DEBAJO DEL MAPA, Y EN UN SOLO SITIO: las tres fichas
+  // (alojamiento, experiencia y servicio) usan este mismo componente, así que el botón sale en las
+  // tres sin repetir código ni poder desincronizarse.
+  //
+  // Con ubicación APROXIMADA no se dan indicaciones: llevar a alguien hasta el punto exacto cuando
+  // el anfitrión ha pedido privacidad sería contradecirle. En su lugar se explica por qué.
+  const indicaciones = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+
+  return (
+    <div className="mapa-caja">
+      <div ref={contenedor} className="mapa-ficha" aria-label={`Mapa de ${titulo}`} />
+      {aproximada ? (
+        <p className="m mapa-nota" style={{ fontSize: 13 }}>
+          La ubicación es aproximada: el anfitrión ha pedido no mostrar el punto exacto.
+        </p>
+      ) : (
+        <a
+          className="mapa-como-llegar"
+          href={indicaciones}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Cómo llegar
+        </a>
+      )}
+    </div>
+  );
 }

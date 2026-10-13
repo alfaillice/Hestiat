@@ -153,6 +153,12 @@ footer a:hover{color:var(--hestiat-primary-texto)}
    que el anuncio parezca parte de la página. Sin bordes ni cajas: no rompe el diseño. */
 .publi{display:block;margin:26px 0;padding-top:12px;border-top:1px solid var(--border);min-width:0}
 .publi-etq{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted-fg);margin-bottom:8px}
+/* BOTÓN DE CÓMO LLEGAR, debajo del mapa de las fichas. Mismo lenguaje que el resto de botones
+   (píldora y color de acción) para que no parezca un añadido. */
+.mapa-caja{display:block}
+.mapa-como-llegar{display:inline-block;margin-top:10px;background:var(--hestiat-primary);color:var(--ink);border-radius:var(--radio-pill);padding:11px 22px;font-weight:700;text-decoration:none;transition:background .16s ease}
+.mapa-como-llegar:hover{background:var(--hestiat-primary-hover)}
+.mapa-nota{color:var(--muted-fg)}
 @media(max-width:760px){
   .publica{padding:20px 18px;gap:16px;margin:22px 0 6px}
   .publica-acciones{width:100%}

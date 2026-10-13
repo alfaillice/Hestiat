@@ -129,7 +129,11 @@ export async function categoriasServicio(limite = 8): Promise<CategoriaHome[]> {
     const valor = String(f.valor);
     return {
       valor,
-      nombre: valor,
+      // El nombre que se enseña es el de la categoría («Peluquería»), no su identificador. Antes
+      // ponía `nombre: valor`, así que las tarjetas de la portada titulaban «peluqueria» o
+      // «deporte-fitness». La consulta ya traía el nombre: solo había que usarlo. Es el mismo patrón
+      // que ya seguía, bien, categoriasExperiencia.
+      nombre: String(f.nombre ?? valor),
       total: Number(f.total ?? 0),
       imagenes: categoryImageMap("servicio", valor),
       href: `/servicios?categoria=${encodeURIComponent(valor)}`,

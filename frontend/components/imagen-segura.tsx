@@ -45,7 +45,35 @@ export default function ImagenSegura({
     .map((u) => urlPropia(u, ancho));
   const [indice, setIndice] = useState(0);
   const actual = lista[indice] ?? null;
-  if (!actual) return <span className={fondo} aria-hidden="true" />;
+
+  /**
+   * SIN FOTO: IMAGEN GENÉRICA, NO UN HUECO.
+   *
+   * Antes, cuando no había foto (o cuando fallaban todas), se pintaba un fondo degradado. Cumplía,
+   * pero no advertía de nada y el hueco se quedaba mudo. Ahora se muestra una imagen de reserva de
+   * Hestiat que dice, con todas las letras, que ese alojamiento no tiene foto.
+   *
+   * Es una imagen PROPIA y GENÉRICA: no representa ningún negocio concreto y no se presenta como la
+   * foto de nadie. Por eso el texto alternativo dice «Sin foto disponible» y no el nombre del sitio.
+   *
+   * Se usa una sola vez, aquí, para las cinco tarjetas que comparten este componente: antes había
+   * cuatro fondos distintos según el tipo de tarjeta.
+   */
+  if (!actual) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src="/img/sin-foto.webp"
+        alt="Sin foto disponible"
+        className={className}
+        width={ancho}
+        height={alto}
+        loading="lazy"
+        decoding="async"
+      />
+    );
+  }
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img

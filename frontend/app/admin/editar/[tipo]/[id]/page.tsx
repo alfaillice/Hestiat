@@ -4,6 +4,8 @@ import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth.server";
 
+import GestorFotos from "@/components/gestor-fotos";
+
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -94,6 +96,10 @@ export default async function EditarCatalogo({
           {aviso}
         </p>
       ) : null}
+
+      {/* GESTIÓN DE FOTOGRAFÍAS. Va FUERA del formulario a propósito: lleva su propio selector de
+          archivos y sus propias peticiones, y dentro se enviaría con el formulario de edición. */}
+      <GestorFotos tipo={tipo} itemId={id} />
 
       <form
         method="post"

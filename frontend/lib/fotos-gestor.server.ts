@@ -43,16 +43,9 @@ export interface FotoPublicacion {
   alt: string | null;
 }
 
-/** Tipo de imagen por BYTES DE CABECERA. Devuelve el nombre corto que entiende el almacén. */
-export function tipoPorCabecera(bytes: Uint8Array): string | null {
-  if (bytes.length < 12) return null;
-  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return "jpg";
-  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) return "png";
-  const riff = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3]);
-  const webp = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
-  if (riff === "RIFF" && webp === "WEBP") return "webp";
-  return null;
-}
+/** Tipo de imagen por BYTES DE CABECERA. Una sola implementación, en un módulo puro y probado. */
+export { tipoPorCabecera } from "@/lib/fotos-tipos";
+import { tipoPorCabecera } from "@/lib/fotos-tipos";
 
 /** Crea la tabla si no existe. Aditiva e idempotente: no cambia nada de lo anterior. */
 let tablaAsegurada = false;

@@ -8,7 +8,7 @@
 // duplicar la lógica de WhatsApp / llamada / correo / web. El filtro de qué es
 // publicable lo aplica ese componente con publicables(), no este.
 
-import { BotonesContacto } from "@/components/botones-contacto";
+import BotonesContacto from "@/components/botones-contacto";
 import type { ContactoPublicacion } from "@/lib/contacto.server";
 
 export type CanalDirectorio = {
@@ -40,6 +40,13 @@ export function contactoDesdeDirectorio(c: CanalDirectorio): ContactoPublicacion
     email: limpio(c.email),
     web: limpio(c.web),
     direccion: null,
+    enlace: null,
+    // El piloto comprobó técnicamente estas webs y canales antes de crear el borrador,
+    // así que el contacto entra como verificado. Un canal sin comprobar no se publica.
+    estado: "verified",
+    confianza: "high",
+    verificadoEn: null,
+    nota: null,
   };
 }
 

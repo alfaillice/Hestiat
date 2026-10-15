@@ -70,7 +70,7 @@ export function ContactarEstablecimiento({ ficha }: { ficha: FichaDirectorioVist
         <BotonesContacto
           contacto={contactoDesdeDirectorio(canales)}
           nombre={ficha.nombre}
-          urlPublica={ficha.urlPublica ?? undefined}
+          urlPublica={ficha.urlPublica ?? "https://hestiat.com"}
         />
       ) : (
         <p className="ficha-directorio-sin-canal">

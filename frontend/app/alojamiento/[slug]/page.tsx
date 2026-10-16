@@ -443,6 +443,8 @@ export default async function Ficha({
               contacto={contacto}
               nombre={String(a.title ?? a.slug)}
               urlPublica={`https://hestiat.com/alojamiento/${a.slug}`}
+              titulo="Contactar con el alojamiento"
+              avisoSinContacto
             />
           ) : null}
 

@@ -21,6 +21,7 @@ export default function BotonesContacto({
   urlPublica,
   telefonoEtiqueta = "Llamar",
   titulo = "Contactar con el establecimiento",
+  avisoSinContacto = false,
 }: {
   contacto: ContactoPublicacion;
   /** Nombre de la publicación, para el mensaje de WhatsApp y el texto alternativo. */
@@ -29,13 +30,40 @@ export default function BotonesContacto({
   urlPublica?: string;
   telefonoEtiqueta?: string;
   titulo?: string;
+  /**
+   * Aviso discreto cuando no hay ningún canal publicable.
+   *
+   * Se activa SOLO donde el visitante espera encontrar contacto (fichas de alojamiento). En
+   * Experiencias y Servicios se deja en falso: allí una ficha sin contacto es normal y su
+   * instrucción es no mostrar nada vacío. No inventa datos ni presenta contactos sin verificar.
+   */
+  avisoSinContacto?: boolean;
 }) {
   const p = publicables(contacto);
   const url = urlPublica ?? "https://hestiat.com";
   const ws = p.whatsapp ? enlaceWhatsApp(p.whatsapp, nombre, url) : null;
 
   const hayAlguno = Boolean(ws || p.telefono || p.email || p.web);
-  if (!hayAlguno) return null;
+  if (!hayAlguno) {
+    if (!avisoSinContacto) return null;
+    return (
+      <div className="cc-bloque">
+        <style>{`
+          .cc-aviso{margin:22px 0;padding:14px 18px;border:1px dashed var(--border);
+            border-radius:calc(var(--radio) + 4px);background:var(--card)}
+          .cc-aviso p{margin:0;font-size:14px;color:var(--muted-fg)}
+          .cc-aviso strong{color:var(--ink)}
+        `}</style>
+        <div className="cc-aviso">
+          <p>
+            <strong>Sin contacto directo verificado.</strong> Todavía no disponemos de teléfono,
+            correo ni web de este alojamiento comprobados por Hestiat. No mostramos datos sin
+            verificar para no publicar información que no sea del establecimiento.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="cc-bloque">

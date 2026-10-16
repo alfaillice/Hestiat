@@ -15,6 +15,7 @@ import AvatarAnfitrion from "@/components/avatar-anfitrion";
 import BotonWhatsapp from "@/components/boton-whatsapp";
 import BotonesContacto from "@/components/botones-contacto";
 import { contactoDe } from "@/lib/contacto.server";
+import { contactosPublicadosDeAlojamiento } from "@/lib/perfil-contactos.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
 
 export const dynamic = "force-dynamic";
@@ -123,6 +124,14 @@ export default async function Ficha({
      Se lee con el ayudante compartido, que solo devuelve lo publicable. El alojamiento vive en la
      base antigua, así que la lectura va por el identificador legacy que usa esa tabla. */
   const contacto = await contactoDe("alojamiento", Number(a.legacy_id ?? a.id));
+
+  /* CONTACTOS PÚBLICOS AUTORIZADOS.
+     Resuelve, con las prioridades acordadas, qué canales puede ver el visitante:
+       1. contacto propio del alojamiento  2. contacto del anfitrión CON su autorización
+     Un canal del anfitrión solo aparece si él lo ha activado en su perfil. El teléfono privado
+     de registro NO se publica solo, y el correo de acceso nunca se usa. */
+  const canalesPublicos = await contactosPublicadosDeAlojamiento(Number(a.legacy_id ?? a.id));
+  const tieneAlgunCanal = Boolean(contacto) || canalesPublicos.length > 0;
 
   /*
    * FAVORITOS EN LA FICHA.
@@ -434,19 +443,48 @@ export default async function Ficha({
             </section>
           )}
 
-          {/* CONTACTO DIRECTO DEL ESTABLECIMIENTO.
-              Va DEBAJO del bloque del anfitrión y FUERA de la caja de reserva: no toca reservas,
-              calendarios, precios ni mensajes. El bloque del anfitrión se conserva íntegro.
-              Si no hay ningún canal válido, el componente no pinta nada (no hay botones ficticios). */}
+          {/* AVISO CORREGIDO: solo se dice que no hay contacto si REALMENTE no hay ningún canal
+              público autorizado. Antes el aviso aparecía siempre que el estado no fuese «verified»,
+              aunque el anfitrión tuviera canales autorizados: eso inducía a pensar que era
+              imposible contactar. Los datos del anfitrión se etiquetan como «publicado por el
+              anfitrión», nunca como verificados por Hestiat. */}
+          {!tieneAlgunCanal && (
+            <p className="ficha-texto" style={{ marginTop: 18, color: "var(--muted-fg)" }}>
+              Sin contacto público disponible. Este alojamiento todavía no ha habilitado ningún
+              canal de contacto directo.
+            </p>
+          )}
+
           {contacto ? (
             <BotonesContacto
               contacto={contacto}
               nombre={String(a.title ?? a.slug)}
               urlPublica={`https://hestiat.com/alojamiento/${a.slug}`}
               titulo="Contactar con el alojamiento"
-              avisoSinContacto
             />
           ) : null}
+
+          {/* Canales que el anfitrión ha autorizado desde su perfil, con su origen visible. */}
+          {canalesPublicos.length > 0 && (
+            <BotonesContacto
+              contacto={{
+                nombre: null,
+                telefono: canalesPublicos.find((c) => c.canal === "telefono")?.valor ?? null,
+                whatsapp: canalesPublicos.find((c) => c.canal === "whatsapp")?.valor ?? null,
+                email: canalesPublicos.find((c) => c.canal === "email")?.valor ?? null,
+                web: canalesPublicos.find((c) => c.canal === "web")?.valor ?? null,
+                direccion: null,
+                enlace: null,
+                estado: "verified",
+                confianza: "high",
+                verificadoEn: null,
+                nota: "Publicado por el anfitrión",
+              }}
+              nombre={String(a.title ?? a.slug)}
+              urlPublica={`https://hestiat.com/alojamiento/${a.slug}`}
+              titulo="Contacto publicado por el anfitrión"
+            />
+          )}
 
           <section className="ficha-seccion">
             <h2>Valoraciones</h2>

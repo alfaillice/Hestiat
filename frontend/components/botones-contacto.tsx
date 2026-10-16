@@ -15,6 +15,43 @@ import { publicables, enlaceWhatsApp, type ContactoPublicacion } from "@/lib/con
  * NO se tocan los colores globales de la web: todo se pinta con tokens ya existentes.
  */
 
+/**
+ * VALIDACIÓN DEL FORMULARIO DE CONTACTO.
+ *
+ * Solo se publica una URL de formulario si cumple TODO:
+ *   · es http(s) y absoluta;
+ *   · NO es la portada del sitio (debe tener ruta: una portada no es un formulario);
+ *   · la ruta sugiere contacto (contact, contacto, contactar, contact-us, kontakt, formulario…);
+ *   · el host pertenece al establecimiento, o es un proveedor de formularios conocido
+ *     (Google Forms, Typeform, Jotform) cuya vinculación es explícita.
+ * Si hay cualquier duda, devuelve null y el botón NO se pinta. Nunca se inventa una URL.
+ */
+const PROVEEDORES_FORMULARIO = ["docs.google.com", "forms.gle", "form.typeform.com", "typeform.com", "form.jotform.com", "jotform.com"];
+const RUTA_CONTACTO = /(contact|contacto|contactar|contacte|contactez|kontakt|formulario|form|consulta|mensaje|message)/i;
+
+export function validarUrlFormulario(crudo: string | null | undefined, webOficial?: string | null): string | null {
+  const u = String(crudo ?? "").trim();
+  if (!u || !/^https?:\/\//i.test(u)) return null;
+  let url: URL;
+  try { url = new URL(u); } catch { return null; }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+  const ruta = `${url.pathname}${url.search}`.replace(/^\/+$/, "");
+  // Una portada no es un formulario.
+  if (!ruta || ruta === "" || ruta === "/") return null;
+  const proveedor = PROVEEDORES_FORMULARIO.some((p) => url.hostname === p || url.hostname.endsWith(`.${p}`));
+  const propio = (() => {
+    const w = String(webOficial ?? "").trim();
+    if (!w) return false;
+    try {
+      const hostWeb = new URL(/^https?:\/\//i.test(w) ? w : `https://${w}`).hostname.replace(/^www\./, "");
+      return url.hostname.replace(/^www\./, "") === hostWeb;
+    } catch { return false; }
+  })();
+  if (!proveedor && !propio) return null;          // dominio ajeno y no es proveedor acreditado
+  if (!RUTA_CONTACTO.test(ruta)) return null;      // la ruta no es de contacto
+  return url.toString();
+}
+
 export default function BotonesContacto({
   contacto,
   nombre,
@@ -22,6 +59,8 @@ export default function BotonesContacto({
   telefonoEtiqueta = "Llamar",
   titulo = "Contactar con el establecimiento",
   avisoSinContacto = false,
+  formulario = null,
+  formularioEtiqueta = "Formulario de contacto",
 }: {
   contacto: ContactoPublicacion;
   /** Nombre de la publicación, para el mensaje de WhatsApp y el texto alternativo. */
@@ -38,12 +77,24 @@ export default function BotonesContacto({
    * instrucción es no mostrar nada vacío. No inventa datos ni presenta contactos sin verificar.
    */
   avisoSinContacto?: boolean;
+  /**
+   * URL del FORMULARIO OFICIAL de contacto. Cadena suelta a propósito: no obliga a tocar el tipo
+   * compartido ContactoPublicacion ni la función publicables(), que siguen intactos.
+   * Solo se pinta si supera validarUrlFormulario().
+   */
+  formulario?: string | null;
+  formularioEtiqueta?: string;
 }) {
   const p = publicables(contacto);
   const url = urlPublica ?? "https://hestiat.com";
   const ws = p.whatsapp ? enlaceWhatsApp(p.whatsapp, nombre, url) : null;
+  // La URL del formulario llega por dos vías, sin duplicar estructuras:
+  //   1. la prop explícita `formulario` (para quien quiera pasarla desde su consulta);
+  //   2. el campo `enlace` del contacto compartido, que YA existe y usa el formulario de contacto.
+  // El validador decide en ambos casos: si no es un formulario legítimo, no se pinta.
+  const form = validarUrlFormulario(formulario ?? contacto.enlace, p.web);
 
-  const hayAlguno = Boolean(ws || p.telefono || p.email || p.web);
+  const hayAlguno = Boolean(ws || p.telefono || p.email || p.web || form);
   if (!hayAlguno) {
     if (!avisoSinContacto) return null;
     return (
@@ -87,6 +138,9 @@ export default function BotonesContacto({
         .cc-tel{background:var(--fucsia-soft);border-color:var(--hestiat-primary)}
         .cc-mail{background:var(--fucsia-soft);border-color:var(--hestiat-primary)}
         .cc-web{background:var(--card);border-color:var(--hestiat-primary)}
+        /* Formulario de contacto: mismo lenguaje visual que el resto, con acento propio. */
+        .cc-form{background:var(--fucsia-soft);border-color:var(--hestiat-primary)}
+        .cc-form:hover{background:var(--card)}
         .cc-etq{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
         @media (max-width:520px){
           .cc-rejilla{grid-template-columns:1fr}
@@ -137,6 +191,17 @@ export default function BotonesContacto({
               <path d="M2.8 12h18.4M12 2.8c2.4 2.6 3.6 5.6 3.6 9.2s-1.2 6.6-3.6 9.2c-2.4-2.6-3.6-5.6-3.6-9.2s1.2-6.6 3.6-9.2z"/>
             </svg>
             <span className="cc-etq">Web oficial</span>
+          </a>
+        )}
+
+        {form && (
+          <a className="cc-btn cc-form" href={form} target="_blank" rel="noopener noreferrer"
+             aria-label={`Abrir el formulario de contacto de ${nombre}`}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.6 9.6 0 0 1-2.9-.4L4 21l1.4-4.1A8.3 8.3 0 0 1 3 11.5 8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5z"/>
+              <path d="M8.5 10.5h7M8.5 13.8h4.5"/>
+            </svg>
+            <span className="cc-etq">{formularioEtiqueta}</span>
           </a>
         )}
       </div>

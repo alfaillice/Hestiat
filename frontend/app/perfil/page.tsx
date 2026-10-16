@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth.server";
 import { datosPerfil } from "@/lib/cuenta.server";
 import { reservasDeHuesped } from "@/lib/reservas.server";
+import FormularioContactosPerfil from "@/components/formulario-contactos-perfil";
+import { leerContactosPerfil } from "@/lib/perfil-contactos.server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Mi perfil — Hestiat", robots: { index: false } };
@@ -27,6 +29,12 @@ export default async function Perfil({
 }) {
   const sesion = await getCurrentUser();
   if (!sesion) redirect("/login?redirect=/perfil");
+
+  /* CONTACTOS PÚBLICOS DEL PERFIL.
+     Se leen en el servidor con el identificador de la SESIÓN, nunca con un parámetro de la URL.
+     Los cuatro interruptores vienen a 0 si el usuario no los ha activado nunca: nada se publica
+     solo, y el teléfono privado de registro no sale a la ficha sin autorización expresa. */
+  const contactosPerfil = await leerContactosPerfil(Number(sesion.id));
 
   const sp = await searchParams;
   const perfil = await datosPerfil(sesion.id);
@@ -92,6 +100,26 @@ export default async function Perfil({
         <label className="f-campo"><span className="etq">Sobre mí</span><textarea name="bio" rows={3} defaultValue={perfil.bio ?? ""} maxLength={400} /></label>
         <div className="f-acciones"><button className="f-aplicar" type="submit">Guardar cambios</button></div>
       </form>
+
+      {/* SECCIÓN DE CONTACTO PÚBLICO.
+          Va fuera del formulario de datos personales a propósito: tiene su propia API
+          (/api/perfil/contactos) y sus propios permisos, y no debe mezclarse con el guardado
+          del nombre, la ciudad o la biografía. Los datos privados del formulario anterior
+          no se tocan. */}
+      {contactosPerfil && (
+        <FormularioContactosPerfil
+          inicial={{
+            telefono: contactosPerfil.telefono,
+            whatsapp: contactosPerfil.whatsapp,
+            emailPublico: contactosPerfil.emailPublico,
+            webPublica: contactosPerfil.webPublica,
+            mostrarTelefono: contactosPerfil.mostrarTelefono,
+            mostrarWhatsapp: contactosPerfil.mostrarWhatsapp,
+            mostrarEmail: contactosPerfil.mostrarEmail,
+            mostrarWeb: contactosPerfil.mostrarWeb,
+          }}
+        />
+      )}
 
         </div>
         <div>

@@ -21,6 +21,16 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     ["/admin", "Resumen"],
     ["/admin/alojamientos", "Alojamientos"],
     ["/admin/usuarios", "Usuarios"],
+    /* LAS TRES ENTRADAS QUE FALTABAN.
+       Las páginas YA existían y respondían 307 desde fuera, pero no había ningún enlace en el
+       menú que llevara a ellas: por eso el panel parecía haber perdido estas funciones.
+       Se reutilizan las rutas existentes, sin crear ninguna nueva:
+         · /admin/publicaciones → listado unificado con pestañas por ?tipo= (alojamiento,
+           experiencia, servicio). Es la vía para buscar y abrir el editor de cada fila.
+         · el editor se alcanza desde cada fila: /admin/editar/<tipo>/<id>, que ya existía. */
+    ["/admin/publicaciones?tipo=servicio", "Servicios"],
+    ["/admin/publicaciones?tipo=experiencia", "Experiencias"],
+    ["/admin/publicaciones", "Publicaciones"],
     ["/admin/reservas", "Reservas"],
     ["/admin/reclamaciones", "Reclamaciones"],
     ["/admin/revision", "Propuestas de enriquecimiento"],

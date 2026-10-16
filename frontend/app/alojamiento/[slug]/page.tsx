@@ -140,11 +140,12 @@ export default async function Ficha({
        · los del carril antiguo SOLO si están verificados y tienen valor.
      Cero canales → aviso. Uno o más → botones y sin aviso. Si la consulta falla, el resolvedor
      devuelve [] y se muestra el aviso: nunca se afirma que se haya verificado la ausencia. */
-  const hayLegacyPublicable =
-    Boolean(contacto) &&
-    String((contacto as { estado?: string }).estado ?? "") === "verified" &&
-    [contacto.telefono, contacto.whatsapp, contacto.email, contacto.web]
+  const hayLegacyPublicable = (() => {
+    if (!contacto) return false;                                   // narrower para TypeScript
+    if (String((contacto as { estado?: string }).estado ?? "") !== "verified") return false;
+    return [contacto.telefono, contacto.whatsapp, contacto.email, contacto.web]
       .some((v) => v != null && String(v).trim() !== "");
+  })();
   const tieneAlgunCanal = canalesPublicos.length > 0 || hayLegacyPublicable;
 
   /*

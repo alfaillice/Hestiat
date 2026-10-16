@@ -188,8 +188,30 @@ export type CanalPublicado = {
  */
 export async function contactosPublicadosDeAlojamiento(legacyId: number): Promise<CanalPublicado[]> {
   if (!Number.isFinite(legacyId) || legacyId <= 0) return [];
+  /* PROTECCIÓN CONTRA EL 500.
+     Esta función es una MEJORA, no un requisito para pintar la ficha. Si la consulta falla por
+     cualquier motivo —una columna que no existe, un permiso, un cruce entre bases— la ficha debe
+     seguir cargando sin contactos públicos, nunca devolver un error al visitante.
+     El error se registra en el servidor y NO se expone: ni SQL, ni datos, ni detalles internos.
+     Un fallo de consulta NO convierte ningún canal en verificado: simplemente no se muestra nada. */
+  try {
+    return await resolverCanales(legacyId);
+  } catch (error) {
+    console.error(
+      "[contactos-publicos] fallo al resolver canales del alojamiento",
+      legacyId,
+      error instanceof Error ? error.message : error,
+    );
+    return [];
+  }
+}
+
+async function resolverCanales(legacyId: number): Promise<CanalPublicado[]> {
   const [fl] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT t.telefono, t.email, t.web, t.whatsapp,
+    /* COLUMNAS REALES de hestiat.alojamiento. `whatsapp` NO existe en esta tabla: provocaba
+       «Unknown column 't.whatsapp'» y tumbaba la ficha con un 500. Los canales propios del
+       alojamiento son telefono, email, web y, en la capa de enriquecimiento, contact_whatsapp. */
+    `SELECT t.telefono, t.email, t.web, t.contact_whatsapp AS whatsapp,
             u.telefono AS u_tel, u.whatsapp AS u_wa, u.email_publico AS u_mail, u.web_publica AS u_web,
             COALESCE(p.mostrar_telefono,0) AS m_tel, COALESCE(p.mostrar_whatsapp,0) AS m_wa,
             COALESCE(p.mostrar_email,0) AS m_mail, COALESCE(p.mostrar_web,0) AS m_web

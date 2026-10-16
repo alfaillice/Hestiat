@@ -13,6 +13,8 @@ import BotonEditarAdmin from "@/components/boton-editar-admin";
 import Corazon from "@/components/corazon";
 import AvatarAnfitrion from "@/components/avatar-anfitrion";
 import BotonWhatsapp from "@/components/boton-whatsapp";
+import BotonesContacto from "@/components/botones-contacto";
+import { contactoDe } from "@/lib/contacto.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
 
 export const dynamic = "force-dynamic";
@@ -116,6 +118,11 @@ export default async function Ficha({
   if (permiso === "no") notFound();
 
   const { alojamiento: a, fotos, servicios, nochesBloqueadas, anfitrion, similares, resenas, whatsapp } = datos;
+
+  /* CONTACTO DIRECTO DEL ESTABLECIMIENTO (mismo componente que Experiencias y Servicios).
+     Se lee con el ayudante compartido, que solo devuelve lo publicable. El alojamiento vive en la
+     base antigua, así que la lectura va por el identificador legacy que usa esa tabla. */
+  const contacto = await contactoDe("alojamiento", Number(a.legacy_id ?? a.id));
 
   /*
    * FAVORITOS EN LA FICHA.
@@ -426,6 +433,18 @@ export default async function Ficha({
               </div>
             </section>
           )}
+
+          {/* CONTACTO DIRECTO DEL ESTABLECIMIENTO.
+              Va DEBAJO del bloque del anfitrión y FUERA de la caja de reserva: no toca reservas,
+              calendarios, precios ni mensajes. El bloque del anfitrión se conserva íntegro.
+              Si no hay ningún canal válido, el componente no pinta nada (no hay botones ficticios). */}
+          {contacto ? (
+            <BotonesContacto
+              contacto={contacto}
+              nombre={String(a.title ?? a.slug)}
+              urlPublica={`https://hestiat.com/alojamiento/${a.slug}`}
+            />
+          ) : null}
 
           <section className="ficha-seccion">
             <h2>Valoraciones</h2>

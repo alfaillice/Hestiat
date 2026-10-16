@@ -131,7 +131,21 @@ export default async function Ficha({
      Un canal del anfitrión solo aparece si él lo ha activado en su perfil. El teléfono privado
      de registro NO se publica solo, y el correo de acceso nunca se usa. */
   const canalesPublicos = await contactosPublicadosDeAlojamiento(Number(a.legacy_id ?? a.id));
-  const tieneAlgunCanal = Boolean(contacto) || canalesPublicos.length > 0;
+  /* CONDICIÓN CORREGIDA DEL AVISO.
+     Antes era `Boolean(contacto) || …`, y `contacto` devuelve la FILA del alojamiento casi siempre,
+     aunque no tenga ningún canal publicable. Eso hacía desaparecer el aviso en fichas sin ningún
+     contacto: el visitante no veía ni botones ni explicación. Ahora la condición cuenta CANALES
+     REALMENTE PUBLICABLES:
+       · los resueltos con autorización del anfitrión o propios del alojamiento, y
+       · los del carril antiguo SOLO si están verificados y tienen valor.
+     Cero canales → aviso. Uno o más → botones y sin aviso. Si la consulta falla, el resolvedor
+     devuelve [] y se muestra el aviso: nunca se afirma que se haya verificado la ausencia. */
+  const hayLegacyPublicable =
+    Boolean(contacto) &&
+    String((contacto as { estado?: string }).estado ?? "") === "verified" &&
+    [contacto.telefono, contacto.whatsapp, contacto.email, contacto.web]
+      .some((v) => v != null && String(v).trim() !== "");
+  const tieneAlgunCanal = canalesPublicos.length > 0 || hayLegacyPublicable;
 
   /*
    * FAVORITOS EN LA FICHA.

@@ -130,7 +130,15 @@ export default function BotonesContacto({
           transition:transform .15s ease, box-shadow .15s ease, background .15s ease}
         .cc-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,0,0,.10)}
         .cc-btn:focus-visible{outline:3px solid var(--hestiat-primary);outline-offset:2px}
-        .cc-btn svg{flex:0 0 20px;width:20px;height:20px}
+        /* ICONOS: tamaño, color y display EXPLÍCITOS.
+           Antes los SVG usaban stroke="currentColor" y heredaban el color del contenedor; si ese
+           color coincidía con el fondo, el trazo quedaba invisible aunque el icono estuviera ahí
+           (el botón se veía, el dibujo no). Ahora el color se fija en la regla y cada botón lo
+           sobreescribe donde toca, así que nunca puede heredar un valor transparente. */
+        .cc-btn svg{flex:0 0 20px;width:20px;height:20px;display:block;color:var(--ink);
+          stroke:currentColor;fill:none;stroke-width:1.9}
+        .cc-btn.cc-wa svg{color:#04301A}
+        .cc-btn.cc-tel svg,.cc-btn.cc-mail svg,.cc-btn.cc-web svg,.cc-btn.cc-form svg{color:var(--hestiat-primary-texto)}
         /* WhatsApp: verde característico, con contraste suficiente */
         .cc-wa{background:#25D366;border-color:#1EBE5A;color:#04301A;font-weight:700}
         .cc-wa:hover{background:#1EBE5A}

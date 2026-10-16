@@ -18,7 +18,57 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   images: { unoptimized: true },
-  experimental: { optimizePackageImports: ["mysql2"] },
+  experimental: {
+    optimizePackageImports: ["mysql2"],
+
+    /**
+     * CACHÉ DEL ROUTER DEL CLIENTE (la que provocaba ver menús antiguos).
+     *
+     * Next.js guarda en el navegador los árboles de componentes de las páginas ya visitadas y
+     * los reutiliza al navegar con clics dentro de la aplicación. Tras un despliegue, esa copia
+     * puede seguir sirviendo la versión anterior del menú del panel AUNQUE las cabeceras HTTP
+     * sean correctas, porque no hubo petición al servidor. Es exactamente lo que se comprobó:
+     * el código y el bundle desplegado tenían la entrada, y una ventana de incógnito la mostraba.
+     *
+     * `staleTimes.dynamic = 0` desactiva esa reutilización para las páginas dinámicas. El panel
+     * administrativo se sirve con `force-dynamic`, así que tras un despliegue se pide al servidor
+     * y el usuario ve el menú actualizado sin recargar a mano.
+     *
+     * Coste: una navegación interna del panel vuelve a pedir los datos. Es el precio correcto en
+     * un panel de administración, donde la frescura importa más que ahorrar una petición. Las
+     * páginas públicas mantienen su comportamiento de caché habitual.
+     */
+    staleTimes: { dynamic: 0, static: 180 },
+  },
+
+  /**
+   * CABECERAS DE LOS RECURSOS ESTÁTICOS PROPIOS.
+   *
+   * `/img/*` y `/marca/*` se servían con `Cache-Control: public, max-age=0`: el navegador tenía
+   * que REVALIDAR cada imagen en cada visita, lo que añade peticiones sin ninguna ventaja.
+   * Los recursos de `/_next/static/*` ya van con `max-age=31536000, immutable` (llevan hash de
+   * versión en el nombre, así que son seguros), pero estos dos directorios NO llevan hash.
+   *
+   * Por eso NO se les pone `immutable`: un fichero sin hash cacheado un año sería una trampa
+   * (un cambio de imagen no se vería). Se usa 1 día de validez + `stale-while-revalidate` de una
+   * semana: el navegador sirve la copia al instante y la revalida en segundo plano, así que un
+   * cambio aparece solo, sin que el visitante tenga que forzar nada.
+   *
+   * Esto se hace en Next.js y NO en NGINX: así la configuración viaja con el código, se versiona
+   * y no se toca la configuración del servidor que sirve las páginas públicas.
+   */
+  async headers() {
+    return [
+      {
+        source: "/img/:ruta*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
+      {
+        source: "/marca/:ruta*",
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      },
+    ];
+  },
 
   /**
    * MAPA DE REDIRECCIONES — imprescindible para no perder el posicionamiento.

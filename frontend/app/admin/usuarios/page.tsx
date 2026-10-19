@@ -1,4 +1,5 @@
 import { poolLegacy } from "@/lib/db";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,7 @@ export default async function AdminUsuarios({
               <th>Alojamientos</th>
               <th>Alta</th>
               <th>Estado</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -75,6 +77,12 @@ export default async function AdminUsuarios({
                 <td>{u.rol}</td>
                 <td className="num">{u.alojamientos}</td>
                 <td>{u.creado_en ? String(u.creado_en).slice(0, 10) : "—"}</td>
+                {/* BOTÓN EDITAR: lleva a la ficha editable del usuario (/admin/usuarios/<id>),
+                    que es el equivalente administrativo de «Mi perfil» para OTRA cuenta.
+                    La protección real está en el servidor de esa página, no en este enlace. */}
+                <td>
+                  <Link className="f-limpiar" href={`/admin/usuarios/${u.id}`}>Editar</Link>
+                </td>
                 <td>
                   <span className={Number(u.activo) === 1 ? "punto punto-ok" : "punto punto-off"} />
                   {Number(u.activo) === 1 ? "activo" : "desactivado"}

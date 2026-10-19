@@ -22,14 +22,22 @@
 
 import { NextResponse } from "next/server";
 import type { RowDataPacket } from "mysql2/promise";
-import { requireAdmin } from "@/lib/auth.server";
+import { requireAdmin, hashPassword } from "@/lib/auth.server";
 import { poolLegacy } from "@/lib/db";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /** Roles admitidos. Se validan contra esta lista: no se escribe lo que llegue sin comprobar. */
-const ROLES = new Set(["admin", "anfitrion", "usuario"]);
+/**
+ * Roles REALES del sistema. El tipo `Rol` de lib/auth.server.ts es
+ * `"admin" | "anfitrion" | "huesped"` — no existe «usuario». Poner aquí un valor inventado
+ * habría dejado el rol en un estado que ninguna consulta reconoce.
+ */
+const ROLES = new Set(["admin", "anfitrion", "huesped"]);
+
+/** Longitud mínima de contraseña, alineada con la que usa el registro de cuentas. */
+const MIN_PASS = 8;
 
 const limpiar = (v: FormDataEntryValue | null, max = 191): string | null => {
   const s = String(v ?? "").trim();
@@ -61,6 +69,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const webPublica = limpiar(form.get("web_publica"), 512);
   const email = limpiar(form.get("email"), 191);
   const rol = limpiar(form.get("rol"), 20);
+  const password = String(form.get("password") ?? "");
+  const password2 = String(form.get("password2") ?? "");
 
   if (email !== null && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) {
     errores.email = "El correo de acceso no tiene un formato válido.";
@@ -69,7 +79,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     errores.email_publico = "El correo público no tiene un formato válido.";
   }
   if (rol !== null && !ROLES.has(rol)) {
-    errores.rol = "Rol no admitido.";
+    errores.rol = "Rol no admitido. Valores válidos: administrador, anfitrión o huésped.";
+  }
+  /* RESTABLECIMIENTO DE CONTRASEÑA.
+     Solo se toca si se envía algo. Se exige longitud mínima y doble escritura, y se guarda con
+     `hashPassword()`, el MISMO ayudante que usan el registro, el cambio de contraseña propio y la
+     recuperación por correo. Reutilizarlo es lo que garantiza que el usuario pueda seguir entrando:
+     el formato `scrypt$sal$hash` es idéntico al de la aplicación antigua. */
+  if (password !== "" || password2 !== "") {
+    if (password.length < MIN_PASS) {
+      errores.password = `La contraseña debe tener al menos ${MIN_PASS} caracteres.`;
+    }
+    if (password !== password2) {
+      errores.password2 = "Las dos contraseñas no coinciden.";
+    }
   }
   // Salvaguarda: un administrador no se quita a sí mismo el rol admin desde aquí. Si se equivoca,
   // se queda sin acceso al panel y sin forma de volver a entrar por la interfaz.
@@ -111,6 +134,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (webPublica !== undefined) pon("web_publica", webPublica);
     if (email !== undefined) pon("email", email);
     if (rol !== undefined) pon("rol", rol);
+    // La contraseña se hashea AQUÍ, nunca llega a la base en claro ni se devuelve en la respuesta.
+    if (password !== "" && password === password2 && password.length >= MIN_PASS) {
+      pon("pass_hash", hashPassword(password));
+    }
 
     if (sets.length === 0) {
       return NextResponse.json({ ok: false, error: "No hay nada que guardar." }, { status: 400 });

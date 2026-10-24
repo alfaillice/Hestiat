@@ -5,6 +5,7 @@ import type { RowDataPacket } from "mysql2/promise";
 import { requireAdmin } from "@/lib/auth.server";
 import { poolLegacy } from "@/lib/db";
 import { leerContactosPerfil } from "@/lib/perfil-contactos.server";
+import FormularioValidado from "@/components/formulario-validado";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Editar usuario — Hestiat", robots: { index: false } };
@@ -73,7 +74,13 @@ export default async function AdminUsuario({ params }: { params: Promise<{ id: s
 
       {/* DATOS ADMINISTRATIVOS. El envío va a la API administrativa, que vuelve a comprobar el
           rol en el servidor: esta página no es la que protege, es solo el formulario. */}
-      <form action={`/api/admin/usuarios/${u.id}`} method="post" className="form-edicion">
+      {/* El formulario va envuelto para validar en cliente ANTES de enviar. Los campos y el POST
+          son los mismos de siempre: si el JavaScript falla, sigue funcionando y la API decide. */}
+      <FormularioValidado
+        action={`/api/admin/usuarios/${u.id}`}
+        rolActual={u.rol}
+        esUnoMismo={Number((admin as { id?: number }).id) === Number(u.id)}
+      >
         <h2 style={{ fontSize: 17, margin: "0 0 12px" }}>Datos de la cuenta</h2>
 
         <div className="f-campo">
@@ -147,7 +154,7 @@ export default async function AdminUsuario({ params }: { params: Promise<{ id: s
         </p>
 
         <div className="f-acciones"><button className="f-aplicar" type="submit">Guardar cambios</button></div>
-      </form>
+      </FormularioValidado>
 
       {/* CONTACTO PÚBLICO DEL USUARIO: se muestra su estado real, sin activarlo en su nombre. */}
       <section style={{ marginTop: 26, borderTop: "1px solid var(--border)", paddingTop: 22 }}>

@@ -105,10 +105,45 @@ export default async function AdminUsuario({ params }: { params: Promise<{ id: s
           <textarea id="bio" name="bio" rows={4} defaultValue={u.bio ?? ""} />
         </div>
 
-        {/* El correo de acceso se muestra pero NO se edita aquí, y no hay campo de contraseña:
-            cambiar credenciales no es una operación de esta pantalla. */}
+        <h2 style={{ fontSize: 17, margin: "22px 0 12px", borderTop: "1px solid var(--border)", paddingTop: 18 }}>
+          Acceso y permisos
+        </h2>
+
+        {/* CORREO DE ACCESO. Distinto del correo público de contacto: este sirve para entrar y es
+            único en la tabla (uq_usuario_email). La API comprueba que no lo tenga otra cuenta. */}
+        <div className="f-campo">
+          <label htmlFor="email">Correo de acceso</label>
+          <input id="email" name="email" type="email" defaultValue={u.email} required />
+        </div>
+
+        {/* ROL. Los valores reales del sistema son admin / anfitrion / huesped: el tipo `Rol` de
+            lib/auth.server.ts no contempla otro. La API valida contra esa misma lista y rechaza
+            que un administrador se retire a sí mismo el rol: si lo hiciera se quedaría sin acceso
+            al panel y sin forma de volver por la interfaz. */}
+        <div className="f-campo">
+          <label htmlFor="rol">Rol</label>
+          <select id="rol" name="rol" defaultValue={u.rol}>
+            <option value="huesped">Huésped (usuario normal)</option>
+            <option value="anfitrion">Anfitrión</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+
+        {/* CONTRASEÑA. Dejar en blanco = no se cambia. Si se rellena, se exige mínimo 8 y doble
+            escritura, y el servidor la guarda con hashPassword() —el mismo ayudante del registro
+            y de la recuperación—, así que el usuario sigue pudiendo entrar con el formato scrypt. */}
+        <div className="f-campo">
+          <label htmlFor="password">Nueva contraseña</label>
+          <input id="password" name="password" type="password" autoComplete="new-password"
+                 minLength={8} placeholder="Dejar en blanco para no cambiarla" />
+        </div>
+        <div className="f-campo">
+          <label htmlFor="password2">Repite la contraseña</label>
+          <input id="password2" name="password2" type="password" autoComplete="new-password" minLength={8} />
+        </div>
         <p style={{ fontSize: 13, color: "var(--muted-fg)", margin: "4px 0 14px" }}>
-          El correo de acceso y la contraseña no se modifican desde aquí.
+          La contraseña solo se cambia si escribes una nueva. Mínimo 8 caracteres. No se guarda en
+          claro ni se muestra nunca.
         </p>
 
         <div className="f-acciones"><button className="f-aplicar" type="submit">Guardar cambios</button></div>

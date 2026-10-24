@@ -13,8 +13,8 @@
  */
 
 import { useRef, useState } from "react";
-import type { FormEvent, ReactNode } from "react";
-import { validarFormularioUsuario, avisoAutoDegradacion } from "@/lib/validacion-usuario";
+import type { FocusEvent, FormEvent, ReactNode } from "react";
+import { validarFormularioUsuario, validarPassword, avisoAutoDegradacion } from "@/lib/validacion-usuario";
 
 export default function FormularioValidado({
   action,
@@ -31,6 +31,56 @@ export default function FormularioValidado({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [errores, setErrores] = useState<Record<string, string>>({});
+
+  /**
+   * VALIDACIÓN AL SALIR DEL CAMPO (onBlur), no solo al enviar.
+   *
+   * Se engancha en el formulario, no en cada input: React propaga el `blur` desde los hijos, así
+   * que un solo manejador cubre todos los campos y no hay que tocar el JSX de los inputs.
+   *
+   * Solo valida el campo que se abandona: si alguien está escribiendo la contraseña, no se le
+   * avisa del correo que aún no ha tocado. Y borra el error en cuanto el valor pasa a ser válido,
+   * para que el mensaje no se quede pegado después de corregirlo.
+   */
+  function alSalirDelCampo(e: FocusEvent<HTMLFormElement>) {
+    // El blur sube desde el campo hasta el formulario: el target real es el input, pero el tipo
+    // del evento lo declara como el formulario. Se convierte por `unknown` porque TypeScript no
+    // considera que ambos tipos se solapen.
+    const objetivo = e.target as unknown as HTMLInputElement | HTMLSelectElement | null;
+    const nombre = objetivo?.name;
+    const form = formRef.current;
+    if (!nombre || !form) return;
+
+    const datos = new FormData(form);
+    setErrores((previos) => {
+      const siguientes = { ...previos };
+
+      if (nombre === "email") {
+        const r = validarFormularioUsuario({ email: String(datos.get("email") ?? "") });
+        if (r.email) siguientes.email = r.email;
+        else delete siguientes.email;
+      }
+
+      if (nombre === "password" || nombre === "password2") {
+        const r = validarPassword(String(datos.get("password") ?? ""), String(datos.get("password2") ?? ""));
+        for (const campo of ["password", "password2"] as const) {
+          if (r[campo]) siguientes[campo] = r[campo];
+          else delete siguientes[campo];
+        }
+      }
+
+      if (nombre === "rol") {
+        const aviso = avisoAutoDegradacion(
+          String(datos.get("rol") ?? ""),
+          esUnoMismo && String(rolActual ?? "") === "admin",
+        );
+        if (aviso) siguientes.rol = aviso;
+        else delete siguientes.rol;
+      }
+
+      return siguientes;
+    });
+  }
 
   function alEnviar(e: FormEvent<HTMLFormElement>) {
     const form = formRef.current;
@@ -71,7 +121,15 @@ export default function FormularioValidado({
     ) : null;
 
   return (
-    <form ref={formRef} action={action} method="post" className="form-edicion" onSubmit={alEnviar} noValidate>
+    <form
+      ref={formRef}
+      action={action}
+      method="post"
+      className="form-edicion"
+      onSubmit={alEnviar}
+      onBlur={alSalirDelCampo}
+      noValidate
+    >
       {children}
       <Error campo="email" />
       <Error campo="password" />

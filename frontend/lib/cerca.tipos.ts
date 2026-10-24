@@ -14,6 +14,8 @@ export interface AlojamientoCerca extends TarjetaGaleria {
 
 export interface ExperienciaCerca {
   id: number;
+  /** Identificador de la ficha pública: sin él no se puede enlazar la experiencia concreta. */
+  slug: string;
   nombre: string;
   categoria: string | null;
   municipio: string | null;

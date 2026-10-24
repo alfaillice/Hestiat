@@ -85,7 +85,7 @@ export async function experienciasCerca(
   opciones: { punto?: PuntoCerca; destino?: string },
   limite = MAXIMO,
 ): Promise<ExperienciaCerca[]> {
-  const campos = `e.id, e.name AS nombre, e.category AS categoria, e.municipality AS municipio,
+  const campos = `e.id, e.slug, e.name AS nombre, e.category AS categoria, e.municipality AS municipio,
                   e.province AS provincia, e.main_image AS imagen, e.price AS precio, e.currency AS moneda`;
   const selec = `SELECT ${campos}${opciones.punto ? `, ${DISTANCIA_EXPERIENCIA} AS distancia_m` : ", NULL AS distancia_m"}`;
 
@@ -114,6 +114,7 @@ export async function experienciasCerca(
 
   return filas.map((f) => ({
     id: Number(f.id),
+    slug: String(f.slug ?? ""),
     nombre: String(f.nombre ?? "").slice(0, 70),
     categoria: f.categoria ?? null,
     municipio: f.municipio ?? null,
@@ -121,6 +122,15 @@ export async function experienciasCerca(
     imagen: f.imagen ?? null,
     precio: f.precio !== null && f.precio !== undefined ? String(f.precio) : null,
     nota: opciones.punto ? distanciaLegible(f.distancia_m) : undefined,
-    href: f.provincia ? `/experiencias?provincia=${encodeURIComponent(String(f.provincia))}` : "/experiencias",
+    /* ENLACE A LA FICHA, no al listado.
+       Antes apuntaba a `/experiencias?provincia=…`: el visitante pinchaba una tarjeta con el nombre
+       de una experiencia y aterrizaba en un listado de miles. Con `e.slug` seleccionado en la
+       consulta, la tarjeta lleva a la experiencia concreta. Si faltara el slug, se cae al listado
+       por provincia en vez de generar un enlace roto. */
+    href: f.slug
+      ? `/experiencias/${encodeURIComponent(String(f.slug))}`
+      : f.provincia
+        ? `/experiencias?provincia=${encodeURIComponent(String(f.provincia))}`
+        : "/experiencias",
   }));
 }

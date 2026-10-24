@@ -17,6 +17,8 @@ import BotonesContacto from "@/components/botones-contacto";
 import { contactoDe } from "@/lib/contacto.server";
 import { contactosPublicadosDeAlojamiento } from "@/lib/perfil-contactos.server";
 import { guardadosEntre } from "@/lib/favoritos.server";
+import { experienciasCerca } from "@/lib/cerca.server";
+import Carrusel from "@/components/carrusel";
 
 export const dynamic = "force-dynamic";
 
@@ -131,6 +133,15 @@ export default async function Ficha({
      Un canal del anfitrión solo aparece si él lo ha activado en su perfil. El teléfono privado
      de registro NO se publica solo, y el correo de acceso nunca se usa. */
   const canalesPublicos = await contactosPublicadosDeAlojamiento(Number(a.legacy_id ?? a.id));
+
+  /* EXPERIENCIAS CERCA DEL ALOJAMIENTO.
+     Se usa la ubicación DEL ALOJAMIENTO, no la del visitante: no se pide permiso de
+     geolocalización y funciona igual para todos. Sin coordenadas no se calcula nada y la
+     sección no se pinta — no se habla de cercanía si no hay un punto real. */
+  const cerca =
+    a.lat && a.lng
+      ? await experienciasCerca({ punto: { lat: Number(a.lat), lng: Number(a.lng) } }, 12)
+      : [];
   /* CONDICIÓN CORREGIDA DEL AVISO.
      Antes era `Boolean(contacto) || …`, y `contacto` devuelve la FILA del alojamiento casi siempre,
      aunque no tenga ningún canal publicable. Eso hacía desaparecer el aviso en fichas sin ningún
@@ -580,6 +591,33 @@ export default async function Ficha({
           tieneFechas
         />
       </div>
+
+      {/* EXPERIENCIAS CERCA. Carrusel horizontal reutilizando el componente de la portada.
+          Cada tarjeta enlaza a SU experiencia (el href ya lleva el slug), no al listado. */}
+      {cerca.length > 0 && (
+        <section className="ficha-seccion" style={{ marginTop: 34 }}>
+          <h2>Experiencias cerca de este alojamiento</h2>
+          <p className="ficha-texto" style={{ color: "var(--muted-fg)", marginBottom: 14 }}>
+            Qué se puede hacer en los alrededores, según nuestro catálogo.
+          </p>
+          <Carrusel etiqueta="Experiencias cerca de este alojamiento">
+            {cerca.map((x) => (
+              <Link key={x.id} href={x.href} className="tarjeta tarjeta-enlace">
+                {x.imagen ? (
+                  <img src={x.imagen} alt={x.nombre} loading="lazy" className="tarjeta-foto" />
+                ) : (
+                  <span className="tarjeta-sinfoto" aria-hidden="true" />
+                )}
+                <p className="tarjeta-titulo">{x.nombre.slice(0, 46)}</p>
+                <p className="m" style={{ color: "var(--muted-fg)", fontSize: 13 }}>
+                  {[x.municipio, x.provincia].filter(Boolean).join(", ") || "—"}
+                  {x.nota ? ` · ${x.nota}` : ""}
+                </p>
+              </Link>
+            ))}
+          </Carrusel>
+        </section>
+      )}
 
       {similares.length > 0 && (
         <section className="ficha-seccion" style={{ marginTop: 34 }}>

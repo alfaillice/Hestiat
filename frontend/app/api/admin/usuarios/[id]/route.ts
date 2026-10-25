@@ -72,7 +72,19 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const password = String(form.get("password") ?? "");
   const password2 = String(form.get("password2") ?? "");
 
-  if (email !== null && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) {
+  /**
+   * ¿VENÍA EL CAMPO EN LA PETICIÓN?
+   *
+   * Esto es lo que distinguía «no lo toques» de «ponlo a NULL», y estaba mal: `limpiar()` devuelve
+   * null cuando el campo falta, y el código comprobaba `!== undefined`, de modo que un campo
+   * ausente se escribía como NULL. Con la contraseña sola, `email` acababa en NULL y la columna es
+   * NOT NULL → excepción → 500. Ahora se pregunta al formulario si el campo existe.
+   */
+  const viene = (campo: string) => form.has(campo);
+
+  if (viene("email") && email === null) {
+    errores.email = "El correo de acceso es obligatorio.";
+  } else if (email !== null && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(email)) {
     errores.email = "El correo de acceso no tiene un formato válido.";
   }
   if (emailPublico !== null && !/^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(emailPublico)) {
@@ -106,7 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   try {
     // El correo de acceso es único: se comprueba antes de intentar el UPDATE para dar un error
     // claro en vez de un fallo de índice duplicado.
-    if (email !== null) {
+    if (viene("email") && email !== null) {
       const [choca] = await poolLegacy.query<(RowDataPacket & { id: number })[]>(
         `SELECT id FROM usuario WHERE email = ? AND id <> ? LIMIT 1`,
         [email, uid],
@@ -122,18 +134,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const sets: string[] = [];
     const vals: unknown[] = [];
     const pon = (campo: string, valor: unknown) => { sets.push(`${campo} = ?`); vals.push(valor); };
-    if (nombre !== undefined) pon("nombre", nombre);
-    if (apellidos !== undefined) pon("apellidos", apellidos);
-    if (telefono !== undefined) pon("telefono", telefono);
-    if (nombreMostrado !== undefined) pon("nombre_mostrado", nombreMostrado);
-    if (ciudad !== undefined) pon("ciudad", ciudad);
-    if (pais !== undefined) pon("pais", pais);
-    if (bio !== undefined) pon("bio", bio);
-    if (whatsapp !== undefined) pon("whatsapp", whatsapp);
-    if (emailPublico !== undefined) pon("email_publico", emailPublico);
-    if (webPublica !== undefined) pon("web_publica", webPublica);
-    if (email !== undefined) pon("email", email);
-    if (rol !== undefined) pon("rol", rol);
+    /* Solo se incluye en el UPDATE lo que VINO en la petición. Un campo ausente no se toca:
+       los datos que el formulario no envía se quedan como estaban. */
+    if (viene("nombre")) pon("nombre", nombre);
+    if (viene("apellidos")) pon("apellidos", apellidos);
+    if (viene("telefono")) pon("telefono", telefono);
+    if (viene("nombre_mostrado")) pon("nombre_mostrado", nombreMostrado);
+    if (viene("ciudad")) pon("ciudad", ciudad);
+    if (viene("pais")) pon("pais", pais);
+    if (viene("bio")) pon("bio", bio);
+    if (viene("whatsapp")) pon("whatsapp", whatsapp);
+    if (viene("email_publico")) pon("email_publico", emailPublico);
+    if (viene("web_publica")) pon("web_publica", webPublica);
+    if (viene("email") && email !== null) pon("email", email);
+    if (viene("rol") && rol !== null) pon("rol", rol);
     // La contraseña se hashea AQUÍ, nunca llega a la base en claro ni se devuelve en la respuesta.
     if (password !== "" && password === password2 && password.length >= MIN_PASS) {
       pon("pass_hash", hashPassword(password));
@@ -151,7 +165,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       [uid],
     );
     const guardado = vuelta[0];
-    if (!guardado || (email !== null && guardado.email !== email) || (rol !== null && guardado.rol !== rol)) {
+    if (
+      !guardado ||
+      (viene("email") && email !== null && guardado.email !== email) ||
+      (viene("rol") && rol !== null && guardado.rol !== rol)
+    ) {
       return NextResponse.json(
         { ok: false, error: "El cambio no se ha podido confirmar en la base de datos." },
         { status: 500 },

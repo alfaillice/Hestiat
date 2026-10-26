@@ -865,23 +865,36 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         ) : null}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#0A1435" />
-        {/* GOOGLE ADSENSE — código de verificación del sitio, tal cual lo entrega Google.
-            Va en el <head> del documento raíz (app/layout.tsx), así que aparece en TODAS las
-            páginas: cada página de Hestiat hereda esta cabecera. El identificador de editor es
-            público (viaja en la propia dirección del script), no es un secreto.
-
-            PENDIENTE DEL PROPIETARIO: este script carga cookies de Google en todas las visitas.
-            En España eso exige consentimiento previo, así que hay que activar el mensaje de
-            consentimiento (CMP) en el panel de AdSense, en «Privacidad y mensajería». La
-            verificación funciona sin ese paso, pero el consentimiento no queda cubierto. */ }
-        <script
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8207026302114375"
-          crossOrigin="anonymous"
-        />
         <style dangerouslySetInnerHTML={{ __html: estilos }} />
       </head>
       <body>
+        {/* GOOGLE ADSENSE — CARGADOR DE LA LIBRERÍA, EN EL BODY.
+            Es la primera mitad del bloque que entrega Google para un anuncio:
+
+              <script async src="…/adsbygoogle.js?client=ca-pub-8207026302114375" crossorigin="anonymous"></script>
+              <ins class="adsbygoogle" data-ad-client="…" data-ad-slot="…" data-ad-format="auto" data-full-width-responsive="true"></ins>
+              <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+
+            Aquí vive solo esa primera línea, una vez por página, para no repetir la misma descarga en
+            cada uno de los ocho bloques. La segunda mitad —el <ins> y el push— la pone
+            components/espacio-publicidad.tsx en su sitio, y el push se hace desde JavaScript porque
+            los bloques aparecen al aceptar el consentimiento, y un <script> insertado por React
+            después de cargar la página no se ejecuta.
+
+            Va renderizado por el servidor, así que el navegador lo descarga en cuanto empieza a leer
+            el documento: `async` evita que frene el primer pintado.
+
+            El identificador de editor es público (viaja en la propia dirección del script).
+            PENDIENTE DEL PROPIETARIO: este script deja cookies de Google en todas las visitas; en
+            España eso exige consentimiento previo, así que hay que publicar el mensaje de
+            consentimiento (CMP) en el panel de AdSense, en «Privacidad y mensajería». */}
+        <div
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html:
+              '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8207026302114375" crossorigin="anonymous"></script>',
+          }}
+        />
         <header className="cab">
           <div className="wrap cab-in">
             {/* EL LOGOTIPO DE LA MARCA. El archivo trae la palabra convertida a trazados, así que no

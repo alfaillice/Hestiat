@@ -22,10 +22,11 @@
  *   · La política de cookies y la de privacidad YA están actualizadas (12-10-2026) para declarar
  *     AdSense y sus cookies: era la primera condición obligatoria de este fichero, y está hecha.
  *   · Aquí se decía que el script del proveedor no debía ir nunca en el `<head>`, para no competir
- *     con el primer pintado. El código de VERIFICACIÓN de AdSense que pidió el propietario va en el
- *     `<head>` porque Google lo exige así para verificar el sitio (va con `async`, no bloquea el
- *     pintado). Los BLOQUES de anuncio, que son los que sí pesan, se cargan solo cuando este
- *     interruptor esté encendido.
+ *     con el primer pintado. Desde el 26-10-2026 el cargador de AdSense vive en el `<body>`
+ *     (app/layout.tsx, lo primero que se lee), tal y como viene en el bloque de anuncio que entrega
+ *     Google: una sola descarga por página, con `async`, y el `<ins>` de cada bloque lo coloca este
+ *     proyecto en su sitio. Los BLOQUES de anuncio, que son los que sí pesan, se cargan solo cuando
+ *     este interruptor esté encendido y el visitante haya aceptado.
  */
 
 export type FormatoAnuncio = "horizontal" | "cuadrado";

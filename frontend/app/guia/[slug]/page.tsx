@@ -113,7 +113,6 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
 
   return (
     <main className="wrap" style={{ paddingTop: 20 }}>
-      <EspacioPublicidad hueco="guia-encabezado" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav aria-label="Migas de pan" className="migas">
         <Link href="/">Hestiat</Link> / <Link href="/guia">Guías</Link> / <span>{g.titulo}</span>
@@ -139,6 +138,12 @@ export default async function PaginaGuia({ params }: { params: Promise<{ slug: s
       ) : null}
       <h1>{g.titulo}</h1>
       {g.resumen ? <p style={{ color: "var(--muted-fg)", maxWidth: "70ch" }}>{g.resumen}</p> : null}
+
+      {/* EL ANUNCIO VA DESPUÉS DEL TÍTULO Y DEL RESUMEN, NO ANTES.
+          Antes se pintaba lo primero del documento, por encima del <h1>: en móvil la publicidad
+          ocupaba el primer pantallazo y el título de la guía quedaba debajo del pliegue. Google lo
+          trata como experiencia publicitaria intrusiva y el rendimiento es peor. */}
+      <EspacioPublicidad hueco="guia-encabezado" />
       <article style={{ maxWidth: "70ch", lineHeight: 1.65, whiteSpace: "pre-wrap", marginTop: 16 }}>
         {/* Las direcciones van como enlaces; los títulos de sección, como encabezados <h2> reales
             (un solo <h1> en la página, que es el título de la guía). El aspecto no cambia: el

@@ -124,9 +124,6 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
 
   return (
     <main className="wrap" style={{ paddingBottom: 40 }}>
-      {/* Segundo anuncio de la página: debajo de la cabecera. Etiquetado y sin reservar espacio
-          cuando no hay anuncio que mostrar. */}
-      <EspacioPublicidad hueco="experiencia-encabezado" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <nav className="migas" aria-label="Migas de pan">
@@ -174,6 +171,14 @@ export default async function FichaExperiencia({ params }: { params: Promise<{ s
           <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 14 }}>{lugar}</p>
 
           {e.resumen ? <p className="exp-resumen">{e.resumen}</p> : null}
+
+          {/* EL ANUNCIO VA DESPUÉS DEL TÍTULO Y DEL RESUMEN, NO ANTES DE LA FICHA.
+              Antes se pintaba en la primera línea del documento, por encima del <h1> y de la
+              fotografía: en móvil el primer pantallazo era publicidad y el nombre de la experiencia
+              quedaba por debajo del pliegue. Google lo trata como experiencia publicitaria
+              intrusiva; además rinde peor, porque un banner sin contexto se salta sin leerlo.
+              Etiquetado y sin reservar espacio cuando no hay anuncio que mostrar. */}
+          <EspacioPublicidad hueco="experiencia-encabezado" />
 
           {e.descripcion && e.descripcion !== e.resumen ? (
             <section style={{ marginTop: 22 }}>

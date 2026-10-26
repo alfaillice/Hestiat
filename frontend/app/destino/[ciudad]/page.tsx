@@ -134,7 +134,6 @@ export default async function PaginaCiudad({ params }: { params: Promise<{ ciuda
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="wrap" style={{ paddingTop: 18 }}>
-      <EspacioPublicidad hueco="destino-encabezado" />
         <nav aria-label="Migas de pan" className="migas">
           <Link href="/">Hestiat</Link> / <Link href="/destinos">Destinos</Link> / <span>{ciudad}</span>
         </nav>
@@ -142,9 +141,16 @@ export default async function PaginaCiudad({ params }: { params: Promise<{ ciuda
         <h1>{ciudad}</h1>
         <p style={{ maxWidth: "70ch", color: "var(--muted-fg)" }}>
           {total > 0
-            ? `Esto es lo que el catálogo de Hestiat tiene hoy en ${ciudad}: ${d.alojamientos} alojamientos, ${d.experiencias} experiencias y ${d.servicios} servicios. Los datos salen de la fichas reales; lo que no está publicado, no se muestra.`
+            ? `Esto es lo que el catálogo de Hestiat tiene hoy en ${ciudad}: ${d.alojamientos} alojamientos, ${d.experiencias} experiencias y ${d.servicios} servicios. Los datos salen de las fichas reales; lo que no está publicado, no se muestra.`
             : `Todavía no hay fichas suficientes del catálogo en ${ciudad}. Esta página se queda fuera del índice de buscadores hasta que haya contenido útil.`}
         </p>
+
+        {/* EL ANUNCIO VA DESPUÉS DEL TÍTULO Y DEL RESUMEN, NO ANTES.
+            Antes se pintaba por encima del <h1>, de modo que en un móvil el primer bloque era
+            publicidad y el nombre del destino quedaba por debajo del pliegue: Google lo considera
+            una experiencia publicitaria intrusiva (el contenido útil no se ve al cargar) y además
+            rinde peor, porque un banner sin contexto se salta sin leerlo. */}
+        <EspacioPublicidad hueco="destino-encabezado" />
 
         <section className="seccion-home" style={{ marginTop: 22 }}>
           <div className="seccion-cab">

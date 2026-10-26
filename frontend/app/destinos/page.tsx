@@ -28,6 +28,19 @@ export default async function Destinos() {
     provincias = [];
   }
 
+  /* Todas las ciudades que tienen página propia y están marcadas como indexables. Es la MISMA
+     tabla que alimenta el sitemap de ciudades, así que lo que se enlaza aquí y lo que se declara
+     allí no puede divergir. Si la lectura falla, la sección simplemente no se pinta. */
+  let todas: { slug: string; nombre: string; total: number }[] = [];
+  try {
+    const [filas] = await pool.query<any[]>(
+      `SELECT slug, nombre, total FROM localidad_slug WHERE indexable = 1 ORDER BY nombre ASC`,
+    );
+    todas = filas.map((f) => ({ slug: String(f.slug), nombre: String(f.nombre), total: Number(f.total) }));
+  } catch {
+    todas = [];
+  }
+
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
       <MigasJsonLd
@@ -54,6 +67,30 @@ export default async function Destinos() {
           </Link>
         ))}
       </div>
+
+      {todas.length > 0 ? (
+        <>
+          <h2 style={{ marginTop: 30 }}>Todas las ciudades con página</h2>
+          <p style={{ color: "var(--muted-fg)", fontSize: 14 }}>
+            {todas.length.toLocaleString("es-ES")} ciudades con contenido publicado. Cada enlace abre su página real, con su recuento de fichas.
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
+              gap: "6px 16px",
+              fontSize: 14,
+              marginBottom: 18,
+            }}
+          >
+            {todas.map((c) => (
+              <Link key={c.slug} href={`/destino/${c.slug}`}>
+                {c.nombre} <span style={{ color: "var(--muted-fg)" }}>({c.total.toLocaleString("es-ES")})</span>
+              </Link>
+            ))}
+          </div>
+        </>
+      ) : null}
 
       {provincias.length === 0 ? (
         <p className="aviso">

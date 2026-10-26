@@ -2,11 +2,12 @@ import Link from "next/link";
 import { ciudadesDestacadas } from "@/lib/seo.server";
 import { metadatosInformativos } from "@/lib/paginas-info";
 import { pool } from "@/lib/db";
+import MigasJsonLd from "@/components/migas-jsonld";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = metadatosInformativos({
-  titulo: "Destinos para alojarse en España — Hestiat",
+  titulo: "Destinos y ciudades para dormir en España — Hestiat",
   descripcion:
     "Provincias y ciudades del catálogo de Hestiat con alojamientos publicados, con su recuento real, para entrar directamente a buscar en cada destino.",
   ruta: "/destinos",
@@ -29,6 +30,12 @@ export default async function Destinos() {
 
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
+      <MigasJsonLd
+        items={[
+          { nombre: "Hestiat", ruta: "/" },
+          { nombre: "Destinos", ruta: "/destinos" },
+        ]}
+      />
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 8 }}>Destinos</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 20 }}>
         {provincias.length > 0

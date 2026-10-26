@@ -8,6 +8,7 @@ import ListaCatalogo from "@/components/lista-catalogo";
 import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
 import TarjetaCategoria from "@/components/tarjeta-categoria";
 import { categoryImageMap } from "@/lib/imagenes-home";
+import MigasJsonLd from "@/components/migas-jsonld";
 import {
   buscarServicios,
   categoriasServicioConDatos,
@@ -36,7 +37,7 @@ export async function generateMetadata({
   const categoria = typeof sp.categoria === "string" ? sp.categoria : "";
   if (!categoria) {
     return {
-      title: "Servicios — Hestiat",
+      title: "Servicios turísticos y locales en España — Hestiat",
       description:
         "Servicios reales en toda España: peluquerías, bienestar, gimnasios, veterinarios, transporte, lavanderías, fotografía y más, con su ubicación y su precio cuando está publicado.",
       alternates: { canonical: "/servicios" },
@@ -118,6 +119,12 @@ export default async function Servicios({
 
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
+      <MigasJsonLd
+        items={[
+          { nombre: "Hestiat", ruta: "/" },
+          { nombre: "Servicios", ruta: "/servicios" },
+        ]}
+      />
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 6 }}>Servicios</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 18 }}>
         {listado.total.toLocaleString("es-ES")} servicios reales

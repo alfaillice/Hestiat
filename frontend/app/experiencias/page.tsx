@@ -9,6 +9,7 @@ import ListaCatalogo from "@/components/lista-catalogo";
 import TarjetaCatalogo, { aItemCatalogo } from "@/components/tarjeta-catalogo";
 import TarjetaCategoria from "@/components/tarjeta-categoria";
 import { categoryImageMap } from "@/lib/imagenes-home";
+import MigasJsonLd from "@/components/migas-jsonld";
 import {
   buscarExperiencias,
   categoriasConDatos,
@@ -30,7 +31,7 @@ export async function generateMetadata({
 
   if (!categoria) {
     return {
-      title: "Experiencias — Hestiat",
+      title: "Experiencias y planes en España: qué hacer — Hestiat",
       description:
         "Qué hacer y qué visitar en toda España: planes reales del catálogo de Hestiat, con su ubicación, su categoría y su precio cuando está publicado.",
       alternates: { canonical: "/experiencias" },
@@ -119,6 +120,12 @@ export default async function Experiencias({
 
   return (
     <main className="wrap" style={{ paddingTop: 24, paddingBottom: 40 }}>
+      <MigasJsonLd
+        items={[
+          { nombre: "Hestiat", ruta: "/" },
+          { nombre: "Experiencias", ruta: "/experiencias" },
+        ]}
+      />
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 6 }}>Experiencias</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 18 }}>
         {listado.total.toLocaleString("es-ES")} planes reales

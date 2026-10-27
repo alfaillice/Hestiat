@@ -10,6 +10,7 @@ import {
 } from "@/lib/seo.server";
 import { categoriasConDatos } from "@/lib/experiencias.server";
 import { categoriasServicioConDatos } from "@/lib/servicios.server";
+import { MINIMO_ALOJAMIENTOS_INDEXABLE, listaProvincias } from "@/lib/provincias.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,6 +37,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tip
   } else if (tipo === "ciudades") {
     urls = await urlsCiudades();
     priority = "0.9";
+  } else if (tipo === "provincias") {
+    // Solo las provincias con contenido suficiente: la misma constante que usa la propia página
+    // para decidir si se deja indexar. Una provincia con tres fichas no entra en el sitemap.
+    const todas = await listaProvincias();
+    urls = todas
+      .filter((p) => p.alojamientos >= MINIMO_ALOJAMIENTOS_INDEXABLE)
+      .map((p) => `${BASE}/provincia/${p.slug}`);
+    priority = "0.8";
   } else if (tipo === "alojamientos") {
     urls = await urlsAlojamientos();
     priority = "0.7";

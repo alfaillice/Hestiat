@@ -3,6 +3,7 @@ import { ciudadesDestacadas } from "@/lib/seo.server";
 import { metadatosInformativos } from "@/lib/paginas-info";
 import { pool } from "@/lib/db";
 import MigasJsonLd from "@/components/migas-jsonld";
+import { slugDeProvincia } from "@/lib/provincias.server";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +101,7 @@ export default async function Destinos() {
       ) : (
         <div className="f-chips">
           {provincias.map((p) => (
-            <Link className="f-chip" key={p.provincia} href={`/search?provincia=${encodeURIComponent(p.provincia)}`}>
+            <Link className="f-chip" key={p.provincia} href={`/provincia/${slugDeProvincia(p.provincia)}`}>
               <span>
                 {p.provincia} <em>({p.total.toLocaleString("es-ES")})</em>
               </span>

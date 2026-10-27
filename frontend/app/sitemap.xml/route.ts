@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { BASE, cuentasIndexables } from "@/lib/seo.server";
+import { MINIMO_ALOJAMIENTOS_INDEXABLE, listaProvincias } from "@/lib/provincias.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,10 +18,12 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const cuentas = await cuentasIndexables();
   const hoy = new Date().toISOString().slice(0, 10);
+  const provincias = (await listaProvincias()).filter((p) => p.alojamientos >= MINIMO_ALOJAMIENTOS_INDEXABLE).length;
 
   const hijos: Array<{ ruta: string; n: number; priority: string }> = [
     { ruta: "paginas", n: cuentas.paginas, priority: "0.8" },
     { ruta: "ciudades", n: cuentas.ciudades, priority: "0.9" },
+    { ruta: "provincias", n: provincias, priority: "0.8" },
     { ruta: "alojamientos", n: cuentas.alojamientos, priority: "0.7" },
     { ruta: "experiencias", n: cuentas.experiencias, priority: "0.6" },
     { ruta: "servicios", n: cuentas.servicios, priority: "0.6" },

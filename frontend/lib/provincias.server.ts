@@ -123,7 +123,7 @@ export async function datosProvincia(slug: string): Promise<DatosProvincia | nul
   for (const l of localidades) mapa.set(normalizarNombre(String(l.nombre)), String(l.slug));
 
   const [fichas] = await pool.query<any[]>(
-    `SELECT slug, name, city FROM accommodation
+    `SELECT slug, title, city FROM accommodation
       WHERE status = 'published' AND province = ? AND slug IS NOT NULL
       ORDER BY id ASC LIMIT 24`,
     [provincia],
@@ -154,7 +154,7 @@ export async function datosProvincia(slug: string): Promise<DatosProvincia | nul
       slug: mapa.get(normalizarNombre(String(c.nombre))) ?? null,
       total: Number(c.total),
     })),
-    fichas: fichas.map((f) => ({ slug: String(f.slug), name: String(f.name), city: f.city ?? null })),
+    fichas: fichas.map((f) => ({ slug: String(f.slug), name: String(f.title), city: f.city ?? null })),
     experienciasTop: experienciasTop.map((e) => ({ slug: String(e.slug), name: String(e.name), municipality: e.municipality ?? null })),
     serviciosTop: serviciosTop.map((s) => ({ slug: String(s.slug), name: String(s.name), municipality: s.municipality ?? null })),
   };

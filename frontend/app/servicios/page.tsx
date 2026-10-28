@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import type { Metadata } from "next";
 import SeccionHome from "@/components/seccion-home";
 import CercaDeTi from "@/components/cerca-de-ti";
@@ -259,6 +260,7 @@ export default async function Servicios({
         encontrado la imagen oficial del propio negocio, se muestra esa —rotulada como oficial— en
         lugar de la de referencia.
       </p>
-    </main>
+          <EspacioPublicidad hueco="servicios-tras-filtros" />
+</main>
   );
 }

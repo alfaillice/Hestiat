@@ -73,21 +73,21 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     ubicacion: "Listado de alojamientos, en la columna del mapa (solo escritorio)",
     formato: "cuadrado",
     alto: 250,
-    slotAdsense: "",
+    slotAdsense: "5085417706",
   },
   {
     id: "ficha-tras-galeria",
     ubicacion: "Ficha de alojamiento, después de la galería y antes del mapa",
     formato: "horizontal",
     alto: 90,
-    slotAdsense: "",
+    slotAdsense: "5085417706",
   },
   {
     id: "experiencias-tras-filtros",
     ubicacion: "Listado de experiencias, después de los filtros",
     formato: "horizontal",
     alto: 90,
-    slotAdsense: "",
+    slotAdsense: "5085417706",
   },
   /* ── Huecos pedidos para las páginas de más tráfico, todos al final del contenido, donde un
         anuncio no interrumpe la lectura ni tapa nada. ── */
@@ -144,6 +144,32 @@ export const HUECOS_PUBLICIDAD: HuecoPublicidad[] = [
     ubicacion: "Guía de destino, debajo de la cabecera, antes del título",
     formato: "horizontal",
     alto: 110,
+    slotAdsense: "5085417706",
+  },
+  /* ── COBERTURA EN TODAS LAS PÁGINAS (27-10-2026) ────────────────────────────────────────────────
+     El propietario pide el bloque de anuncio en todas las páginas del sitio, en sitios donde no
+     estorbe. Se añaden al final del contenido de cada plantilla que aún no tenía ninguno: listados de
+     experiencias, servicios y alojamientos, provincias y la propia página de destinos. Todos van
+     etiquetados y sin reservar espacio si no hay anuncio que mostrar. ── */
+  {
+    id: "servicios-tras-filtros",
+    ubicacion: "Listado de servicios, al final del listado",
+    formato: "horizontal",
+    alto: 280,
+    slotAdsense: "5085417706",
+  },
+  {
+    id: "destinos-final",
+    ubicacion: "Página /destinos, después de las ciudades y provincias",
+    formato: "horizontal",
+    alto: 280,
+    slotAdsense: "5085417706",
+  },
+  {
+    id: "provincia-final",
+    ubicacion: "Página de provincia, al final del contenido",
+    formato: "horizontal",
+    alto: 280,
     slotAdsense: "5085417706",
   },
 ];

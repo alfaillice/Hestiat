@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import MigasJsonLd from "@/components/migas-jsonld";
@@ -132,6 +133,7 @@ export default async function Provincia({ params }: Props) {
       <p style={{ marginTop: 30, fontSize: 14 }}>
         <Link href="/destinos">Ver las {totalProvincias} provincias y todas las ciudades con página</Link>
       </p>
-    </main>
+          <EspacioPublicidad hueco="provincia-final" />
+</main>
   );
 }

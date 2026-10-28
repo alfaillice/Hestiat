@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import { ciudadesDestacadas } from "@/lib/seo.server";
 import { metadatosInformativos } from "@/lib/paginas-info";
 import { pool } from "@/lib/db";
@@ -109,6 +110,7 @@ export default async function Destinos() {
           ))}
         </div>
       )}
-    </main>
+          <EspacioPublicidad hueco="destinos-final" />
+</main>
   );
 }

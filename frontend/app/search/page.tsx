@@ -225,6 +225,6 @@ export default async function Explorar({
         <Resultados q={filtros.q ?? ""} pagina={pagina} basePath="/search" filtros={filtros} />
         </>
       )}
-    </main>
+</main>
   );
 }

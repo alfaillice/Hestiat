@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import { alojamientoIndexable, imagenDeReferencia } from "@/lib/seo.server";
 import Link from "next/link";
 import { cache } from "react";
@@ -646,7 +647,8 @@ export default async function Ficha({
           </div>
         </section>
       )}
-    </main>
+          <EspacioPublicidad hueco="ficha-tras-galeria" />
+</main>
   );
 }
 

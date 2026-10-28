@@ -1,4 +1,5 @@
 import Link from "next/link";
+import EspacioPublicidad from "@/components/espacio-publicidad";
 import type { Metadata } from "next";
 import Carrusel from "@/components/carrusel";
 import SeccionHome from "@/components/seccion-home";
@@ -277,6 +278,7 @@ export default async function Experiencias({
         enriquecimiento ha encontrado la imagen oficial del propio sitio, se muestra esa —rotulada
         como oficial— en lugar de la de referencia.
       </p>
-    </main>
+          <EspacioPublicidad hueco="experiencias-tras-filtros" />
+</main>
   );
 }

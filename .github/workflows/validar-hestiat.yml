@@ -43,3 +43,20 @@ jobs:
         run: npm run test:unit
       - name: Compilar Next.js
         run: npm run build
+      - name: Empaquetar release para VPS
+        run: |
+          test -f .next/standalone/server.js
+          mkdir -p "$RUNNER_TEMP/hestiat-release/.next"
+          cp -a .next/standalone/. "$RUNNER_TEMP/hestiat-release/"
+          cp -a .next/static "$RUNNER_TEMP/hestiat-release/.next/static"
+          cp -a public "$RUNNER_TEMP/hestiat-release/public"
+          tar -czf "$RUNNER_TEMP/hestiat-release.tgz" -C "$RUNNER_TEMP/hestiat-release" .
+          sha256sum "$RUNNER_TEMP/hestiat-release.tgz" > "$RUNNER_TEMP/hestiat-release.sha256"
+      - name: Guardar paquete verificable sin secretos
+        uses: actions/upload-artifact@v4
+        with:
+          name: hestiat-vps-${{ github.sha }}
+          path: |
+            ${{ runner.temp }}/hestiat-release.tgz
+            ${{ runner.temp }}/hestiat-release.sha256
+          retention-days: 7

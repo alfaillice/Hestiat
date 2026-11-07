@@ -12,7 +12,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
-import { faltaEnriquecimiento } from "@/lib/catalogo-resiliente";
+import { conCatalogoOpcional } from "@/lib/catalogo-resiliente";
 
 export type TipoCatalogoPublico = "experience" | "service" | "accommodation";
 
@@ -55,8 +55,7 @@ export async function datosEnriquecidos(
      mostrando el dato ORIGINAL de nuestra base, que es la regla por defecto. Se reutiliza el mismo
      criterio que el resto del catálogo (`faltaEnriquecimiento`): se tolera la tabla ausente, nunca
      un fallo de conexión ni de permisos. */
-  let filas: mysql.RowDataPacket[];
-  try {
+  const filas = await conCatalogoOpcional(async () => {
     const [res] = await pool.query<mysql.RowDataPacket[]>(
       `SELECT item_id, campo, enriched_value, source, source_name, source_url, confidence, source_type, tarifa_compartida
          FROM catalogo_dato
@@ -66,11 +65,8 @@ export async function datosEnriquecidos(
           AND tarifa_compartida = 0`,
       [tipo, ...ids, ...(campos ?? [])],
     );
-    filas = res;
-  } catch (e) {
-    if (faltaEnriquecimiento(e)) return mapa;
-    throw e;
-  }
+    return res;
+  }, [] as mysql.RowDataPacket[]);
   for (const f of filas) {
     mapa.set(`${Number(f.item_id)}:${String(f.campo)}`, {
       valor: String(f.enriched_value),

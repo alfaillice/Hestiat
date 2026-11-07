@@ -2,13 +2,14 @@
   "name": "hestiat2-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "Hestiat 2.0 — frontend definitivo. Next.js App Router (SSR) sobre el esquema nuevo (db/migrations/001_init.sql).",
+  "description": "Hestiat 2.0 \u2014 frontend definitivo. Next.js App Router (SSR) sobre el esquema nuevo (db/migrations/001_init.sql).",
   "scripts": {
     "test:unit": "node --experimental-strip-types --test tests/*.test.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:integration": "node --experimental-strip-types --test tests/integracion/fichas.test.ts"
   },
   "dependencies": {
     "@types/nodemailer": "^8.0.2",

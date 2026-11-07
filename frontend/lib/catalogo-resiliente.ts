@@ -21,3 +21,22 @@ export function faltaEnriquecimiento(error: unknown): boolean {
   const e = error as { code?: string; message?: string };
   return e.code === "ER_NO_SUCH_TABLE" && /catalogo_dato/i.test(e.message ?? "");
 }
+
+/**
+ * LECTURA OPCIONAL DEL ENRIQUECIDO.
+ *
+ * `catalogo_dato` guarda el dato enriquecido y es OPCIONAL: en una instalación sin esa tabla, o con
+ * la tabla vacía, el catálogo público debe seguir funcionando con el dato ORIGINAL. Esta función
+ * encapsula la decisión para poder probarla sin base de datos:
+ *   · tabla auxiliar ausente → devuelve `vacio`
+ *   · consulta correcta o tabla vacía → devuelve lo que traiga la consulta ([] si no hay filas)
+ *   · cualquier otro fallo → se propaga, no se ocultan errores reales
+ */
+export async function conCatalogoOpcional<T>(consulta: () => Promise<T>, vacio: T): Promise<T> {
+  try {
+    return await consulta();
+  } catch (error) {
+    if (faltaEnriquecimiento(error)) return vacio;
+    throw error;
+  }
+}

@@ -46,7 +46,7 @@ export async function generateMetadata({
   }
 
   // El nombre y el recuento salen del catálogo real: nada inventado.
-  const categorias = await categoriasServicioConDatos();
+  const categorias = await categoriasServicioConDatos().catch(() => []);
   const c = categorias.find((x) => x.slug === categoria);
   const nombre = c?.nombre ?? categoria.replace(/-/g, " ");
   const total = c?.total ?? 0;
@@ -90,12 +90,16 @@ export default async function Servicios({
   const desde = Math.max(0, Number(uno(sp.desde) ?? 0) || 0) || undefined;
   const filtrando = Boolean(q || categoria || provincia);
 
+  // Tolerancia de esquema: si faltan las tablas de clasificación de servicios, cada consulta
+  // devuelve su forma vacía y la página muestra su estado «sin resultados» en vez de un 500.
   const [categorias, provincias, listado] = await Promise.all([
-    categoriasServicioConDatos(),
-    provinciasConServicios(14),
-    buscarServicios({ q, categoria, provincia, desde, porPagina: POR_PAGINA }),
+    categoriasServicioConDatos().catch(() => []),
+    provinciasConServicios(14).catch(() => []),
+    buscarServicios({ q, categoria, provincia, desde, porPagina: POR_PAGINA }).catch(
+      () => ({ total: 0, items: [], porPagina: POR_PAGINA }),
+    ),
   ]);
-  const destacados = filtrando ? [] : await destacadosServicios(13);
+  const destacados = filtrando ? [] : await destacadosServicios(13).catch(() => []);
 
   /*
    * FAVORITOS. La sesión y qué elementos de esta pantalla están guardados, con el mismo ayudante y el

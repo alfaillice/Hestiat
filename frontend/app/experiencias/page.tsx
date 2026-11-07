@@ -39,7 +39,7 @@ export async function generateMetadata({
     };
   }
 
-  const categorias = await categoriasConDatos();
+  const categorias = await categoriasConDatos().catch(() => []);
   const c = categorias.find((x) => x.slug === categoria);
   const nombre = c?.nombre ?? categoria.replace(/-/g, " ");
   const total = c?.total ?? 0;
@@ -89,13 +89,18 @@ export default async function Experiencias({
   const desde = Math.max(0, Number(uno(sp.desde) ?? 0) || 0) || undefined;
   const filtrando = Boolean(q || categoria || subcategoria || provincia || familia || accesible);
 
+  // Tolerancia de esquema: si a esta base de datos le faltan las tablas de clasificación de
+  // experiencias (exp_categoria, experiencia_clasificacion…), cada consulta devuelve su forma vacía
+  // y la página muestra su estado «sin resultados» en lugar de un error 500. No se inventa nada.
   const [categorias, provincias, subcats, listado] = await Promise.all([
-    categoriasConDatos(),
-    provinciasConExperiencias(14),
-    categoria ? subcategoriasDe(categoria) : Promise.resolve([]),
-    buscarExperiencias({ q, categoria, subcategoria, provincia, familia, accesible, desde, porPagina: POR_PAGINA }),
+    categoriasConDatos().catch(() => []),
+    provinciasConExperiencias(14).catch(() => []),
+    categoria ? subcategoriasDe(categoria).catch(() => []) : Promise.resolve([]),
+    buscarExperiencias({ q, categoria, subcategoria, provincia, familia, accesible, desde, porPagina: POR_PAGINA }).catch(
+      () => ({ total: 0, items: [], porPagina: POR_PAGINA }),
+    ),
   ]);
-  const destacadas = filtrando ? [] : await destacadasExperiencias(13);
+  const destacadas = filtrando ? [] : await destacadasExperiencias(13).catch(() => []);
 
   /*
    * FAVORITOS. La sesión y qué elementos de esta pantalla están guardados, con el mismo ayudante y el

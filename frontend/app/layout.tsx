@@ -202,7 +202,8 @@ article.serv-card{position:relative}
 .f-servicios{grid-column:1/-1;border:0}
 .f-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .f-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--border);border-radius:var(--radio-pill);padding:6px 12px;font-size:13.5px;cursor:pointer;background:var(--background)}
-.f-chip input{accent-color:var(--primary)}
+.f-chip input{accent-color:var(--hestiat-primary)}
+.f-chip:has(input:checked){border-color:var(--hestiat-primary);background:var(--fucsia-soft);color:var(--fucsia-tinta)}
 .f-chip em{color:var(--muted-fg);font-style:normal;font-size:12px}
 .f-acciones{grid-column:1/-1;display:flex;align-items:center;gap:14px}
 .f-aplicar{background:var(--hestiat-primary);color:var(--ink);border:0;border-radius:var(--radio-pill);padding:12px 22px;font:inherit;font-weight:700;cursor:pointer;transition:background .16s ease}
@@ -217,8 +218,10 @@ article.serv-card{position:relative}
 .f-limpiar{color:var(--muted-fg);font-size:13.5px;text-decoration:underline}
 /* marcadores de precio del mapa */
 .hx-pin-wrapper{background:none;border:0}
-.hx-pin{display:inline-block;transform:translate(-50%,-50%);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radio-pill);padding:4px 10px;font-weight:600;font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(20,40,50,.18);white-space:nowrap}
-.hx-pin--activo{border-color:var(--accent);box-shadow:0 4px 14px rgba(200,120,0,.30)}
+.hx-pin{display:inline-block;transform:translate(-50%,-50%);background:var(--card);border:1.5px solid var(--border);border-radius:var(--radio-pill);padding:5px 11px;font-weight:700;font-size:12.5px;color:var(--ink);font-variant-numeric:tabular-nums;box-shadow:0 3px 10px rgba(20,40,50,.18);white-space:nowrap;transition:transform .12s ease, background .12s ease, color .12s ease}
+.hx-pin:hover{transform:translate(-50%,-50%) scale(1.06);z-index:2}
+/* Marcador activo: relleno rosa de la identidad nueva (antes ámbar). */
+.hx-pin--activo{background:var(--hestiat-primary);border-color:var(--hestiat-primary);color:var(--ink);box-shadow:0 5px 16px rgba(142,46,73,.32)}
 /* paneles: administracion y anfitrion */
 .admin{display:grid;grid-template-columns:230px minmax(0,1fr);gap:26px;max-width:var(--contenedor);margin:0 auto;padding:22px 18px}
 .admin-nav{background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:16px;position:sticky;top:76px;align-self:start}

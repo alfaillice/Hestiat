@@ -89,11 +89,24 @@ export default async function Portada({
   }
 
   const sesion = await getCurrentUser();
+  // Tolerancia de esquema: cada sección de la portada obtiene sus datos por separado y, si su
+  // consulta falla (por ejemplo porque a esta base de datos le falta una tabla que el código nuevo
+  // espera —localidad_imagen, experiencia_clasificacion…—), esa sección se queda VACÍA y se oculta,
+  // en lugar de tumbar toda la portada con un error 500. Nunca se inventan datos: lo que no hay, no
+  // se enseña. Cuando la base de datos se migre, las secciones se rellenan solas.
+  const sinFallo = async <T,>(p: Promise<T[]>, etiqueta: string): Promise<T[]> => {
+    try {
+      return await p;
+    } catch (e) {
+      console.error(`[portada] la sección «${etiqueta}» no se pudo cargar y se omite:`, e);
+      return [];
+    }
+  };
   const [destinos, servicios, experiencias, alojamientos] = await Promise.all([
-    destinosParaTi(),
-    categoriasServicio(8),
-    categoriasExperiencia(8),
-    destacados(8),
+    sinFallo(destinosParaTi(), "destinos"),
+    sinFallo(categoriasServicio(8), "servicios"),
+    sinFallo(categoriasExperiencia(8), "experiencias"),
+    sinFallo(destacados(8), "alojamientos"),
   ]);
   const tarjetas = alojamientos.map((a) => aTarjeta(a as unknown as Record<string, unknown>));
   const guardados = sesion
@@ -134,54 +147,62 @@ export default async function Portada({
         {/* Segundo anuncio de la portada: justo después del vídeo, al arrancar el contenido, dentro
             del ancho de la página. Etiquetado y sin ocupar nada mientras no haya anuncio. */}
         <EspacioPublicidad hueco="portada-tras-video" />
-        <SeccionHome
-          titulo="Destinos para ti"
-          sub="Ciudades del catálogo con alojamientos publicados, con su recuento real"
-          verTodos="/search"
-        >
-          {destinos.map((d) => (
-            <TarjetaDestino key={d.nombre} destino={d} />
-          ))}
-        </SeccionHome>
+        {destinos.length > 0 && (
+          <SeccionHome
+            titulo="Destinos para ti"
+            sub="Ciudades del catálogo con alojamientos publicados, con su recuento real"
+            verTodos="/search"
+          >
+            {destinos.map((d) => (
+              <TarjetaDestino key={d.nombre} destino={d} />
+            ))}
+          </SeccionHome>
+        )}
 
         {/* Hueco de publicidad previsto: hoy no dibuja nada (ver lib/publicidad.ts). */}
         <EspacioPublicidad hueco="portada-tras-destinos" />
 
-        <SeccionHome
-          titulo="Servicios populares"
-          sub="Las categorías de Hestiat con más servicios reales"
-          verTodos="/servicios"
-        >
-          {servicios.map((c) => (
-            <TarjetaCategoria key={c.valor} categoria={c} pie="servicios" />
-          ))}
-        </SeccionHome>
+        {servicios.length > 0 && (
+          <SeccionHome
+            titulo="Servicios populares"
+            sub="Las categorías de Hestiat con más servicios reales"
+            verTodos="/servicios"
+          >
+            {servicios.map((c) => (
+              <TarjetaCategoria key={c.valor} categoria={c} pie="servicios" />
+            ))}
+          </SeccionHome>
+        )}
 
-        <SeccionHome
-          titulo="Experiencias destacadas"
-          sub="Las categorías de Hestiat con más experiencias reales"
-          verTodos="/experiencias"
-        >
-          {experiencias.map((c) => (
-            <TarjetaCategoria key={c.valor} categoria={c} pie="experiencias" />
-          ))}
-        </SeccionHome>
+        {experiencias.length > 0 && (
+          <SeccionHome
+            titulo="Experiencias destacadas"
+            sub="Las categorías de Hestiat con más experiencias reales"
+            verTodos="/experiencias"
+          >
+            {experiencias.map((c) => (
+              <TarjetaCategoria key={c.valor} categoria={c} pie="experiencias" />
+            ))}
+          </SeccionHome>
+        )}
 
-        <SeccionHome
-          titulo="Alojamientos destacados"
-          sub="Del catálogo real, con el mismo precio que verás en su ficha"
-          verTodos="/search"
-        >
-          {tarjetas.map((t) => (
-            <TarjetaAlojamiento
-              key={t.id}
-              a={t}
-              guardado={guardados.has(t.id)}
-              haySesion={Boolean(sesion)}
-              volverA="/"
-            />
-          ))}
-        </SeccionHome>
+        {tarjetas.length > 0 && (
+          <SeccionHome
+            titulo="Alojamientos destacados"
+            sub="Del catálogo real, con el mismo precio que verás en su ficha"
+            verTodos="/search"
+          >
+            {tarjetas.map((t) => (
+              <TarjetaAlojamiento
+                key={t.id}
+                a={t}
+                guardado={guardados.has(t.id)}
+                haySesion={Boolean(sesion)}
+                volverA="/"
+              />
+            ))}
+          </SeccionHome>
+        )}
 
         {/* Sin ubicación, esta sección usa el destino de la búsqueda (o el último buscado) y lo dice
             en su título; si no hay ninguno, pasa a ser «Descubre alojamientos». Nunca finge

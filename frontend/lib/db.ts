@@ -39,6 +39,25 @@ declare global {
 export const pool: mysql.Pool = global.__hestiatPool ?? mysql.createPool(cfg);
 if (process.env.NODE_ENV !== "production") global.__hestiatPool = pool;
 
+/**
+ * ¿Existe la tabla `localidad_imagen` en ESTA base de datos? Algunas consultas la usan para la
+ * imagen de referencia de la localidad; en bases de datos donde todavía no se ha creado (migración
+ * pendiente), unirla haría fallar TODA la consulta —y dejaría la web sin alojamientos—. Por eso se
+ * comprueba una sola vez (se cachea) y las consultas la incluyen solo si existe. Si falta, los
+ * alojamientos se muestran igual: lo único que se pierde es la imagen de respaldo de la localidad.
+ */
+let _localidadImagenExiste: boolean | undefined;
+export async function localidadImagenExiste(): Promise<boolean> {
+  if (_localidadImagenExiste !== undefined) return _localidadImagenExiste;
+  try {
+    await pool.query("SELECT 1 FROM localidad_imagen LIMIT 1");
+    _localidadImagenExiste = true;
+  } catch {
+    _localidadImagenExiste = false;
+  }
+  return _localidadImagenExiste;
+}
+
 /*
  * SEGUNDA CONEXIÓN — a la base ORIGINAL (el esquema antiguo, vivo).
  *
@@ -249,6 +268,15 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
   );
   const total = Number(totalRows[0]?.n ?? 0);
 
+  // La imagen de referencia de la localidad solo se une si la tabla existe en esta base de datos;
+  // si falta, se usa NULL y los alojamientos se listan igual (sin esa imagen de respaldo).
+  const hayLoc = await localidadImagenExiste();
+  const colLoc = hayLoc ? "li.url, lp.url, lg.url" : "NULL, NULL, NULL";
+  const joinLoc = hayLoc
+    ? `LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
+       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
+       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'`
+    : "";
   const [rows] = await pool.query<mysql.RowDataPacket[]>(
     `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.country,
             a.price_per_night, a.indicative_price, a.price_type,
@@ -260,15 +288,13 @@ export async function buscar(opciones: FiltrosBusqueda = {}): Promise<ResultadoB
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC
                 LIMIT 1),
-              li.url, lp.url, lg.url) AS portada,
+              ${colLoc}) AS portada,
             -- Si la ficha no tiene foto propia, la que se enseña es de REFERENCIA (de su localidad, de
             -- su provincia o del respaldo general) y la tarjeta lo dice. Nunca se hace pasar por foto
             -- de la propiedad.
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
-       LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
-       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
-       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'
+       ${joinLoc}
       WHERE ${where}
       ${orden}
       LIMIT ? OFFSET ?`,
@@ -542,6 +568,13 @@ export async function estilosDeViaje(): Promise<EstiloDestino[]> {
 
 /** Alojamientos destacados: con foto, con precio publicado y orden estable. */
 export async function destacados(limite = 8): Promise<AlojamientoTarjeta[]> {
+  const hayLoc = await localidadImagenExiste();
+  const colLoc = hayLoc ? "li.url, lp.url, lg.url" : "NULL, NULL, NULL";
+  const joinLoc = hayLoc
+    ? `LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
+       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
+       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'`
+    : "";
   const [rows] = await pool.query<mysql.RowDataPacket[]>(
     `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.country,
             a.price_per_night, a.indicative_price, a.price_type,
@@ -551,12 +584,10 @@ export async function destacados(limite = 8): Promise<AlojamientoTarjeta[]> {
                  FROM accommodation_photo p
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
-              li.url, lp.url, lg.url) AS portada,
+              ${colLoc}) AS portada,
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
-       LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
-       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
-       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'
+       ${joinLoc}
       WHERE a.status = 'published'
       ORDER BY (a.price_per_night IS NULL), a.review_count DESC, a.id ASC
       LIMIT ?`,
@@ -575,6 +606,13 @@ export async function porIds(ids: number[]): Promise<AlojamientoTarjeta[]> {
   const limpios = ids.filter((n) => Number.isInteger(n) && n > 0).slice(0, 200);
   if (limpios.length === 0) return [];
   const huecos = limpios.map(() => "?").join(",");
+  const hayLoc = await localidadImagenExiste();
+  const colLoc = hayLoc ? "li.url, lp.url, lg.url" : "NULL, NULL, NULL";
+  const joinLoc = hayLoc
+    ? `LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
+       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
+       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'`
+    : "";
   const [rows] = await pool.query<mysql.RowDataPacket[]>(
     `SELECT a.id, a.legacy_id, a.slug, a.title, a.city, a.province, a.country,
             a.price_per_night, a.indicative_price, a.price_type,
@@ -584,12 +622,10 @@ export async function porIds(ids: number[]): Promise<AlojamientoTarjeta[]> {
                  FROM accommodation_photo p
                 WHERE p.accommodation_id = a.id AND COALESCE(p.origin_url, p.storage_key) IS NOT NULL
                 ORDER BY p.is_primary DESC, p.sort_order ASC LIMIT 1),
-              li.url, lp.url, lg.url) AS portada,
+              ${colLoc}) AS portada,
             ((SELECT COUNT(*) FROM accommodation_photo p WHERE p.accommodation_id = a.id) = 0) AS portada_referencial
        FROM accommodation a
-       LEFT JOIN localidad_imagen li ON li.tipo = 'ciudad' AND li.clave = LOWER(a.city)
-       LEFT JOIN localidad_imagen lp ON lp.tipo = 'provincia' AND lp.clave = LOWER(a.province)
-       LEFT JOIN localidad_imagen lg ON lg.tipo = 'pais' AND lg.clave = 'espana'
+       ${joinLoc}
       WHERE a.id IN (${huecos})
       ORDER BY FIELD(a.id, ${huecos})`,
     [...limpios, ...limpios],

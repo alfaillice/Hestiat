@@ -31,11 +31,11 @@ La prueba anónima no valida autenticación, permisos administrativos, persisten
 
 El repositorio conectado es `alfaillice/Hestiat` y existe la rama `nueva-web`.
 
-**Hecho verificado:** las ramas `main` y `nueva-web` no tienen ancestro común, según la comparación de GitHub. `main` contiene una aplicación Higgsfield de TanStack/Cloudflare Worker, mientras que `nueva-web` contiene documentación de la fundación Hestiat 2.0 y migraciones. **No se ha demostrado que ninguna de esas dos ramas contenga el Next.js que corre hoy en el VPS.**
+**Rectificación tras inspeccionar el árbol Git:** `main` contiene una aplicación Higgsfield de TanStack/Cloudflare Worker, mientras que `nueva-web` **sí contiene un frontend Next.js completo en `frontend/`** y el script `scripts/desplegar-vps.sh` para el VPS. Las ramas no tienen ancestro común. **Aún no está verificado qué SHA exacto corre hoy en el VPS.**
 
 La sesión Supercomputer de Higgsfield del propietario puede tener acceso SSH al VPS, pero ese acceso no se transfiere automáticamente a ChatGPT ni al sandbox de la integración Higgsfield.
 
-**No ejecutar push forzado ni sobrescribir el directorio de producción desde un repositorio sin verificar su correspondencia.**
+**No ejecutar push forzado ni sobrescribir el directorio de producción desde un repositorio sin verificar su correspondencia.** La versión candidata es `nueva-web/frontend` (último commit de aplicación conocido: `06c110282d66`); validar en staging con DB/R2 reales antes de desplegar. El código de `/experiencias` y `/servicios` convierte errores SQL en listados vacíos, lo que puede esconder el problema real.
 
 ## Siguiente intervención desde la sesión Supercomputer que ya está conectada al VPS
 

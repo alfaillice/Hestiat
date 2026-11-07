@@ -5,7 +5,7 @@ import BuscadorCabecera from "@/components/buscador-cabecera";
 import Vitales from "@/components/vitales";
 import MarcaLogo from "@/components/marca-logo";
 import AvisoCookies, { BotonConfigurarCookies } from "@/components/aviso-cookies";
-import { DM_Sans, Manrope } from "next/font/google";
+
 
 /**
  * Sistema de diseño de Hestiat 2.0, tomado de los tokens REALES en producción
@@ -20,8 +20,9 @@ import { DM_Sans, Manrope } from "next/font/google";
  *  · Tipografía: DM Sans (negrita, tracking negativo) en titulares; Manrope en interfaz.
  *  · Controles en píldora (radio completo).
  */
-const manrope = Manrope({ subsets: ["latin"], variable: "--fuente-texto", display: "swap" });
-const dmSans = DM_Sans({ subsets: ["latin"], weight: ["500", "700"], variable: "--fuente-titulo", display: "swap" });
+// Fuentes de sistema: el build no depende de descargas Google Fonts ni expone la IP
+// del visitante a proveedores de tipografía externos. Conserva una jerarquía legible
+// mientras se prepara, si procede, un paquete de fuentes autorizado y autoalojado.
 
 export const metadata: Metadata = {
   title: "Hestiat — Alojamientos con carácter en toda España",
@@ -46,6 +47,8 @@ export const metadata: Metadata = {
 
 const estilos = `
 :root{
+  --fuente-texto:"Avenir Next","Segoe UI",Arial,sans-serif;
+  --fuente-titulo:"Avenir Next","Segoe UI",Arial,sans-serif;
   --background:oklch(98.8% .005 92); --foreground:oklch(23.5% .021 225); --ink:oklch(18.5% .024 230);
   --card:oklch(100% 0 0); --primary:#0A1435; --primary-fg:oklch(98.5% .008 190);
   --primary-soft:oklch(94.5% .022 195); --accent:#F2A9BE; --accent-fg:#5A1F30;
@@ -883,7 +886,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const sesion = await getCurrentUser();
   const esAnfitrion = sesion?.rol === "anfitrion" || sesion?.rol === "admin";
   return (
-    <html lang="es" className={`${manrope.variable} ${dmSans.variable}`}>
+    <html lang="es">
       <head>
         {process.env.GOOGLE_SITE_VERIFICATION ? (
           <meta name="google-site-verification" content={process.env.GOOGLE_SITE_VERIFICATION} />

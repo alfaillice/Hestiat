@@ -12,6 +12,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { faltaEnriquecimiento } from "@/lib/catalogo-resiliente";
 
 export type TipoCatalogoPublico = "experience" | "service" | "accommodation";
 
@@ -49,15 +50,27 @@ export async function datosEnriquecidos(
   if (ids.length === 0) return mapa;
   const marcas = ids.map(() => "?").join(",");
   const filtroCampos = campos && campos.length > 0 ? ` AND campo IN (${campos.map(() => "?").join(",")})` : "";
-  const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT item_id, campo, enriched_value, source, source_name, source_url, confidence, source_type, tarifa_compartida
-       FROM catalogo_dato
-      WHERE catalog_type = ? AND item_id IN (${marcas})${filtroCampos}
-        AND enriched_value IS NOT NULL AND enriched_value <> ''
-        AND confidence <> 'low'
-        AND tarifa_compartida = 0`,
-    [tipo, ...ids, ...(campos ?? [])],
-  );
+  /* `catalogo_dato` es una tabla OPCIONAL de enriquecimiento: puede no existir en una instalación
+     concreta. Si falta, la ficha no se rompe — se devuelve el mapa vacío y cada pantalla sigue
+     mostrando el dato ORIGINAL de nuestra base, que es la regla por defecto. Se reutiliza el mismo
+     criterio que el resto del catálogo (`faltaEnriquecimiento`): se tolera la tabla ausente, nunca
+     un fallo de conexión ni de permisos. */
+  let filas: mysql.RowDataPacket[];
+  try {
+    const [res] = await pool.query<mysql.RowDataPacket[]>(
+      `SELECT item_id, campo, enriched_value, source, source_name, source_url, confidence, source_type, tarifa_compartida
+         FROM catalogo_dato
+        WHERE catalog_type = ? AND item_id IN (${marcas})${filtroCampos}
+          AND enriched_value IS NOT NULL AND enriched_value <> ''
+          AND confidence <> 'low'
+          AND tarifa_compartida = 0`,
+      [tipo, ...ids, ...(campos ?? [])],
+    );
+    filas = res;
+  } catch (e) {
+    if (faltaEnriquecimiento(e)) return mapa;
+    throw e;
+  }
   for (const f of filas) {
     mapa.set(`${Number(f.item_id)}:${String(f.campo)}`, {
       valor: String(f.enriched_value),

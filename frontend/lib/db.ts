@@ -21,7 +21,11 @@ const cfg = {
   user: process.env.DB_USER ?? "",
   password: process.env.DB_PASSWORD ?? "",
   dateStrings: true,
-  database: process.env.DB_NAME_NEW ?? "ppxgfdyc_hestiat2",
+  // Compatibilidad de entorno: se admite DB_NAME_NEW (esquema nuevo) y, si no está,
+  // DB_NAME (el que define el VPS de producción). Antes solo se leía DB_NAME_NEW, así que
+  // en servidores que definen DB_NAME el código caía al valor por defecto y la BD daba
+  // «Access denied» al usuario de solo lectura.
+  database: process.env.DB_NAME_NEW ?? process.env.DB_NAME ?? "ppxgfdyc_hestiat2",
   waitForConnections: true,
   connectionLimit: 8,
   charset: "utf8mb4_unicode_ci",

@@ -7,8 +7,8 @@
 - Las vistas `/experiencias` y `/servicios` anuncian cero resultados aunque sus filtros enumeran recuentos históricos por provincias. Se desconoce la causa.
 - La ficha inspeccionada `/alojamiento/casa-de-campo-en-elche` abre, pero presenta imágenes etiquetadas como referencia externa. No se ha comprobado el acceso a fotos reales ni la disponibilidad fiable.
 - `alfaillice/Hestiat:main` es un proyecto **TanStack Start/Vite** con alojamientos de demostración en `app/src/routes/index.tsx`; **no** es el código completo del Next.js actual y no debe instalarse sobre el VPS como restauración del marketplace.
-- `alfaillice/Hestiat:nueva-web` y `backup-nueva-web` contienen documentación y migración fundacional Hestiat 2.0, pero no el Next.js completo: faltan por ejemplo `package.json` y `app/package.json` en ambas.
-- `main` y `nueva-web` **no tienen ancestro común** según GitHub. Queda prohibido sobrescribir o forzar push entre ambas como si fueran variantes de la misma aplicación.
+- **Rectificación tras inspección del árbol completo:** `alfaillice/Hestiat:nueva-web` SÍ contiene la aplicación Next.js completa en `frontend/` (`frontend/package.json`, `frontend/next.config.mjs`, rutas de alojamientos, experiencias, servicios y admin). El README de la raíz quedó anticuado. `backup-nueva-web` es una referencia histórica, no el candidato más actualizado.
+- `main` y `nueva-web` **no tienen ancestro común** según GitHub. Queda prohibido sobrescribir o forzar push entre ambas como si fueran variantes de la misma aplicación. El código de aplicación más reciente en `nueva-web` era el commit `06c110282d66` (7-nov-2026, antes de dos commits documentales).
 - El informe histórico `docs/ACTA-COPIA-VERIFICADA.md` documenta un volcado MariaDB del **2026-10-03** con 33 tablas restauradas en prueba y hash SHA-256 `b3b997257658bbe11c90a35f7425ff0d9e6873dcbb3645d3be662d1ac8f39c12`. **No prueba** que el archivo exista hoy en el VPS nuevo ni cubre cambios posteriores, fotos R2 o código.
 - La sesión de Higgsfield Supercomputer utilizada por el propietario tiene, según él, acceso al VPS. El conector Higgsfield de ChatGPT **no hereda** automáticamente ese acceso SSH; su sandbox remoto es separado.
 
@@ -31,8 +31,8 @@ Restaurar la última **versión realmente operativa** del marketplace Hestiat, c
 1. Generar snapshot de despliegue y configuración actual y, si hay datos persistentes en el VPS, respaldo de ellos. Verificar integridad y posibilidad de restauración antes de cambios.
 2. Preservar imágenes y sus referencias, credenciales existentes *solo en almacenamiento seguro*, reservas, cuentas, datos de contacto, correos y servicio Shopify. Prohibido publicar dumps en almacenamiento público o GitHub.
 3. Evaluar candidatos de reversión de **más reciente a más antiguo**: releases locales previos, snapshot del proveedor, artefactos CI existentes y copias históricas comprobadas.
-4. Para cada candidato, comprobar **código completo** (incluido `package.json`, lockfile y archivos de configuración sin secretos), compatibilidad de Node, esquema DB, migraciones, servicio de imágenes y variables esperadas.
-5. **No tomar `main` de GitHub como último estado operativo**: contiene demo con datos estáticos. **No tomar `nueva-web` como app instalable**: es fundacional. Si ningún candidato completo supera pruebas, detenerse sin desplegar.
+4. Para cada candidato, comprobar **código completo** (incluido `frontend/package.json`, lockfile y archivos de configuración sin secretos), compatibilidad de Node, esquema DB, migraciones, servicio de imágenes y variables esperadas. La capa `frontend/lib/db.ts` usa `DB_NAME_NEW ?? DB_NAME ?? ppxgfdyc_hestiat2` para el catálogo público y `DB_NAME_LEGACY ?? ppxgfdyc_hestiat` para los datos vivos/administrativos. Verificar a qué bases apuntan realmente **sin imprimir valores de contraseña**.
+5. **No tomar `main` de GitHub como último estado operativo**: contiene demo con datos estáticos. **Sí evaluar `nueva-web/frontend`**, que es un proyecto Next.js completo, usando `scripts/desplegar-vps.sh` como referencia del despliegue atómico; pero no asumir que el último commit está operativo: varias consultas de `/experiencias` y `/servicios` capturan errores y muestran falsos cero resultados. Si ningún candidato supera pruebas, detenerse sin desplegar.
 
 ### Paso 3: ensayo y despliegue reversible
 

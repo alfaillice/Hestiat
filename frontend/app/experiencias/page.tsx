@@ -89,15 +89,18 @@ export default async function Experiencias({
   const desde = Math.max(0, Number(uno(sp.desde) ?? 0) || 0) || undefined;
   const filtrando = Boolean(q || categoria || subcategoria || provincia || familia || accesible);
 
-  // Tolerancia de esquema: si a esta base de datos le faltan las tablas de clasificación de
-  // experiencias (exp_categoria, experiencia_clasificacion…), cada consulta devuelve su forma vacía
-  // y la página muestra su estado «sin resultados» en lugar de un error 500. No se inventa nada.
+  // Un error de BD no significa que no existan experiencias: no anunciamos cero ficticios.
+  let falloListado = false;
   const [categorias, provincias, subcats, listado] = await Promise.all([
     categoriasConDatos().catch(() => []),
     provinciasConExperiencias(14).catch(() => []),
     categoria ? subcategoriasDe(categoria).catch(() => []) : Promise.resolve([]),
     buscarExperiencias({ q, categoria, subcategoria, provincia, familia, accesible, desde, porPagina: POR_PAGINA }).catch(
-      () => ({ total: 0, items: [], porPagina: POR_PAGINA }),
+      (error: unknown) => {
+        falloListado = true;
+        console.error("[experiencias] no se pudo consultar el listado; no equivale a cero fichas", error);
+        return { total: 0, items: [], porPagina: POR_PAGINA };
+      },
     ),
   ]);
   const destacadas = filtrando ? [] : await destacadasExperiencias(13).catch(() => []);
@@ -134,7 +137,7 @@ export default async function Experiencias({
       />
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 6 }}>Experiencias</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 18 }}>
-        {listado.total.toLocaleString("es-ES")} planes reales
+        {falloListado ? "Catálogo temporalmente no disponible" : `${listado.total.toLocaleString("es-ES")} planes reales`}
         {catActual ? ` en «${catActual.nombre}»` : ""}
         {subcategoria ? ` › ${subcategoria}` : ""}
         {provincia ? ` en ${provincia}` : ""}
@@ -254,7 +257,12 @@ export default async function Experiencias({
             </p>
           </div>
         </div>
-        {listado.items.length === 0 ? (
+        {falloListado ? (
+          <p className="aviso" role="alert">
+            No hemos podido consultar las experiencias en este momento. Esto no significa que se hayan eliminado.
+            Vuelve a intentarlo más tarde.
+          </p>
+        ) : listado.items.length === 0 ? (
           <p className="aviso">
             No hay experiencias con esos criterios. Prueba con otra categoría, otro destino o menos palabras.
           </p>
@@ -275,14 +283,14 @@ export default async function Experiencias({
         )}
       </section>
 
-      <p className="aviso" style={{ marginTop: 26 }}>
+      {!falloListado && <p className="aviso" style={{ marginTop: 26 }}>
         Las {listado.total.toLocaleString("es-ES")} experiencias proceden de fuentes públicas (OpenStreetMap
         y otras) y figuran con su autoría. Las fotografías son imágenes de referencia de esas mismas
         fuentes, no fotos propias de cada actividad. Solo 48 experiencias del catálogo tienen precio
         publicado; el resto dice «Consultar» a propósito: no se inventa ninguno. Cuando el motor de
         enriquecimiento ha encontrado la imagen oficial del propio sitio, se muestra esa —rotulada
         como oficial— en lugar de la de referencia.
-      </p>
+      </p>}
           <EspacioPublicidad hueco="experiencias-tras-filtros" />
 </main>
   );

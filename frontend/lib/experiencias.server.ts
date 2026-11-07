@@ -16,6 +16,7 @@
  */
 import * as mysql from "mysql2/promise";
 import { pool } from "@/lib/db";
+import { faltaClasificacion, faltaEnriquecimiento } from "@/lib/catalogo-resiliente";
 import { datosEnriquecidos, datoDe, resolver, resolverImagen, resolverPrecio } from "@/lib/catalogo-datos.server";
 
 export interface ExpTarjeta {
@@ -80,6 +81,13 @@ const DESDE = `FROM experiencia e
   LEFT JOIN exp_categoria c ON c.id = cl.categoria_id
   LEFT JOIN exp_categoria s ON s.id = cl.subcategoria_id`;
 
+/** Consulta de recuperación: utiliza solamente las columnas del catálogo principal.
+ * No se aplica cuando el usuario pide una categoría, porque ignorar ese filtro sería engañoso. */
+const CAMPOS_BASICO = `e.id, e.slug, e.name AS nombre, e.municipality AS municipio, e.province AS provincia,
+  e.main_image AS imagen, e.price, e.currency, e.price_type, e.price_unit, e.price_text,
+  e.image_source AS imagen_origen, e.rating, e.rating_count,
+  NULL AS categoria, NULL AS subcategoria, NULL AS categoria_slug, NULL AS subcategoria_slug`;
+
 function aTarjeta(f: mysql.RowDataPacket): ExpTarjeta {
   const p = precioDe(f as unknown as Record<string, unknown>);
   const hayValor = p.texto !== "Consultar";
@@ -114,7 +122,11 @@ function aTarjeta(f: mysql.RowDataPacket): ExpTarjeta {
  */
 async function aplicarEnriquecido(items: ExpTarjeta[]): Promise<ExpTarjeta[]> {
   if (items.length === 0) return items;
-  const mapa = await datosEnriquecidos("experience", items.map((i) => i.id), ["imagen_oficial", "precio_orientativo"]);
+  const mapa = await datosEnriquecidos("experience", items.map((i) => i.id), ["imagen_oficial", "precio_orientativo"]).catch((error: unknown) => {
+    if (!faltaEnriquecimiento(error)) throw error;
+    console.warn("[experiencias] falta catalogo_dato: se muestran las imágenes y los precios originales");
+    return new Map();
+  });
   return items.map((i) => {
     const img = resolverImagen(i.imagen, i.imagenOrigen, datoDe(mapa, i.id, "imagen_oficial"));
     const pr = resolverPrecio(i.precioOriginal, datoDe(mapa, i.id, "precio_orientativo"));
@@ -211,14 +223,27 @@ export async function buscarExperiencias(f: FiltrosExp = {}): Promise<{ total: n
   }
   const condicion = where.join(" AND ");
 
-  const [tot] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT COUNT(*) AS n ${DESDE} WHERE ${condicion}`,
-    valores,
-  );
-  const [filas] = await pool.query<mysql.RowDataPacket[]>(
-    `SELECT ${CAMPOS} ${DESDE} WHERE ${condicion} ORDER BY e.id ASC LIMIT ? OFFSET ?`,
-    [...valores, porPagina, (pagina - 1) * porPagina],
-  );
+  let tot: mysql.RowDataPacket[];
+  let filas: mysql.RowDataPacket[];
+  try {
+    [tot] = await pool.query<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS n ${DESDE} WHERE ${condicion}`, valores,
+    );
+    [filas] = await pool.query<mysql.RowDataPacket[]>(
+      `SELECT ${CAMPOS} ${DESDE} WHERE ${condicion} ORDER BY e.id ASC LIMIT ? OFFSET ?`,
+      [...valores, porPagina, (pagina - 1) * porPagina],
+    );
+  } catch (error) {
+    if (!faltaClasificacion(error, "experiencia") || f.categoria || f.subcategoria) throw error;
+    console.warn("[experiencias] no hay tablas auxiliares de clasificación; consulta sin categoría");
+    [tot] = await pool.query<mysql.RowDataPacket[]>(
+      `SELECT COUNT(*) AS n FROM experiencia e WHERE ${condicion}`, valores,
+    );
+    [filas] = await pool.query<mysql.RowDataPacket[]>(
+      `SELECT ${CAMPOS_BASICO} FROM experiencia e WHERE ${condicion} ORDER BY e.id ASC LIMIT ? OFFSET ?`,
+      [...valores, porPagina, (pagina - 1) * porPagina],
+    );
+  }
   return { total: Number(tot[0]?.n ?? 0), items: await aplicarEnriquecido(filas.map(aTarjeta)), porPagina };
 }
 

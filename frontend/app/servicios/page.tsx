@@ -90,13 +90,17 @@ export default async function Servicios({
   const desde = Math.max(0, Number(uno(sp.desde) ?? 0) || 0) || undefined;
   const filtrando = Boolean(q || categoria || provincia);
 
-  // Tolerancia de esquema: si faltan las tablas de clasificación de servicios, cada consulta
-  // devuelve su forma vacía y la página muestra su estado «sin resultados» en vez de un 500.
+  // Un error de BD no significa que no existan servicios: no anunciamos cero ficticios.
+  let falloListado = false;
   const [categorias, provincias, listado] = await Promise.all([
     categoriasServicioConDatos().catch(() => []),
     provinciasConServicios(14).catch(() => []),
     buscarServicios({ q, categoria, provincia, desde, porPagina: POR_PAGINA }).catch(
-      () => ({ total: 0, items: [], porPagina: POR_PAGINA }),
+      (error: unknown) => {
+        falloListado = true;
+        console.error("[servicios] no se pudo consultar el listado; no equivale a cero fichas", error);
+        return { total: 0, items: [], porPagina: POR_PAGINA };
+      },
     ),
   ]);
   const destacados = filtrando ? [] : await destacadosServicios(13).catch(() => []);
@@ -132,7 +136,7 @@ export default async function Servicios({
       />
       <h1 style={{ fontSize: "clamp(26px,3.4vw,38px)", marginBottom: 6 }}>Servicios</h1>
       <p className="m" style={{ color: "var(--muted-fg)", marginBottom: 18 }}>
-        {listado.total.toLocaleString("es-ES")} servicios reales
+        {falloListado ? "Catálogo temporalmente no disponible" : `${listado.total.toLocaleString("es-ES")} servicios reales`}
         {elegida ? ` en «${elegida.nombre}»` : ""}
         {provincia ? ` en ${provincia}` : ""}
         {q ? ` que coinciden con «${q}»` : ""}. Con su ubicación y su precio cuando está publicado.
@@ -237,7 +241,12 @@ export default async function Servicios({
             </p>
           </div>
         </div>
-        {listado.items.length === 0 ? (
+        {falloListado ? (
+          <p className="aviso" role="alert">
+            No hemos podido consultar los servicios en este momento. Esto no significa que se hayan eliminado.
+            Vuelve a intentarlo más tarde.
+          </p>
+        ) : listado.items.length === 0 ? (
           <p className="aviso">No hay servicios con esos criterios. Prueba con otra categoría, otro destino o menos palabras.</p>
         ) : (
           <ListaCatalogo
@@ -256,14 +265,14 @@ export default async function Servicios({
         )}
       </section>
 
-      <p className="aviso" style={{ marginTop: 26 }}>
+      {!falloListado && <p className="aviso" style={{ marginTop: 26 }}>
         Los {listado.total.toLocaleString("es-ES")} servicios proceden de fuentes públicas (OpenStreetMap y
         otras) y figuran con su autoría. Las fotografías son imágenes de referencia de esas mismas fuentes,
         no fotos propias de cada negocio. Solo 89 servicios tienen importe publicado; el resto dice
         «Consultar» a propósito: no se inventa ninguno. Cuando el motor de enriquecimiento ha
         encontrado la imagen oficial del propio negocio, se muestra esa —rotulada como oficial— en
         lugar de la de referencia.
-      </p>
+      </p>}
           <EspacioPublicidad hueco="servicios-tras-filtros" />
 </main>
   );

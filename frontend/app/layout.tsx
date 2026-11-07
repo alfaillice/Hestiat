@@ -48,7 +48,7 @@ const estilos = `
 :root{
   --background:oklch(98.8% .005 92); --foreground:oklch(23.5% .021 225); --ink:oklch(18.5% .024 230);
   --card:oklch(100% 0 0); --primary:#0A1435; --primary-fg:oklch(98.5% .008 190);
-  --primary-soft:oklch(94.5% .022 195); --accent:oklch(79.5% .135 74); --accent-fg:oklch(29% .06 62);
+  --primary-soft:oklch(94.5% .022 195); --accent:#F2A9BE; --accent-fg:#5A1F30;
   --secondary:oklch(96.2% .008 92); --muted:oklch(95.5% .007 92); --muted-fg:oklch(51.5% .019 232);
   --success:oklch(58% .115 158); --destructive:oklch(55.2% .191 25);
   --border:oklch(90% .008 232); --surface:oklch(97.2% .008 92); --surface-strong:oklch(93.5% .014 92);
@@ -428,6 +428,17 @@ article.serv-card{position:relative}
 .cab-menu-lista{position:absolute;right:0;top:calc(100% + 8px);background:var(--card);border:1px solid var(--border);border-radius:var(--radio);padding:8px;min-width:220px;box-shadow:0 16px 40px rgba(20,40,50,.16);display:flex;flex-direction:column;gap:2px;z-index:50}
 .cab-menu-lista a,.cab-menu-lista button{padding:10px 12px;border-radius:calc(var(--radio) - 4px);font-size:14px;text-align:left}
 .cab-menu-lista a:hover{background:var(--secondary)}
+/* Iconos de la cabecera: trazo que sigue el color del texto, tamaño fijo. */
+.cab-ico{width:16px;height:16px;flex:0 0 auto}
+/* BOTÓN TIENDA: destacado en rosa pastel, el único elemento de la cabecera con relleno de color,
+   para que se encuentre sin buscarlo. Sigue visible en móvil (está fuera de .cab-nav/.cab-cuenta). */
+.cab-tienda{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;border-radius:var(--radio-pill);padding:10px 17px;font-size:13.5px;font-weight:700;color:var(--fucsia-tinta);background:var(--fucsia-soft);border:1px solid color-mix(in srgb, var(--hestiat-primary) 55%, white);box-shadow:0 6px 16px rgba(142,46,73,.16);white-space:nowrap;transition:transform .16s ease, background .16s ease, box-shadow .16s ease}
+.cab-tienda:hover{transform:translateY(-1px);background:color-mix(in srgb, var(--hestiat-primary) 30%, white);box-shadow:0 10px 24px rgba(142,46,73,.24)}
+.cab-tienda:active{transform:translateY(0) scale(.985)}
+.cab-tienda .cab-ico{width:17px;height:17px}
+.cab-menu-tienda{color:var(--fucsia-tinta)!important;font-weight:700;background:var(--fucsia-soft)}
+/* En pantallas estrechas la TIENDA se reduce al icono para no competir con el buscador. */
+@media(max-width:560px){.cab-tienda-txt{display:none}.cab-tienda{padding:9px 11px}}
 /* BUSCADOR DE LA CABECERA: una sola píldora con el destino y la lupa DENTRO del mismo bloque.
    No hay fechas ni viajeros aquí: es una búsqueda de descubrimiento, no un formulario de reserva.
    El rosa pastel de Hestiat es el color de la acción, el mismo de los botones de la ficha. */
@@ -685,16 +696,20 @@ article.serv-card{position:relative}
 /* Los tres tokens conservan su nombre por compatibilidad con las reglas que ya los usan, pero su
    valor cambia aquí y con él cambia la interfaz entera (botones, enlaces, destacados, cabecera y
    pie) sin tocar ni una regla.
-   DECISIÓN DEL PROPIETARIO (12-10-2026): los botones vuelven al TURQUESA. El turquesa elegido
-   mantiene un contraste alto con la tinta marina del texto de los botones (relación aproximada de
-   9:1, muy por encima del 4.5:1 que exige la norma de accesibilidad), así que no se pierde
+   DECISIÓN DEL PROPIETARIO (nov-2026): NUEVA IDENTIDAD. El acento pasa de turquesa a ROSA PASTEL.
+   El relleno pastel #EE8CA6 mantiene un contraste alto con la tinta marina del texto de los botones
+   (relación ~6.7:1, por encima del 4.5:1 que exige la norma de accesibilidad), así que no se pierde
    legibilidad al cambiar de color. */
-:root{--fucsia:#2EC4B6; --fucsia-soft:#E6F5F3; --fucsia-tinta:#0A1435}
+:root{--fucsia:#EE8CA6; --fucsia-soft:#FBE7EE; --fucsia-tinta:#8E2E49}
 /* Color primario oficial de acción, tomado de la ficha (ver la explicación junto a .f-aplicar).
    --hestiat-primary        relleno de los botones principales: el pastel que se ve en la ficha.
    --hestiat-primary-hover  el mismo tono un poco más profundo, solo al pasar el ratón.
    --hestiat-primary-texto  el mismo tono oscuro, para enlaces y estados activos (contraste). */
-:root{--hestiat-primary:#2EC4B6; --hestiat-primary-hover:#25A99D; --hestiat-primary-texto:#0A1435}
+/* NUEVA IDENTIDAD (nov-2026): el acento pasa a ROSA PASTEL. El relleno pastel #EE8CA6 mantiene la
+   tinta marina del texto de los botones por encima del mínimo de accesibilidad (relación ~6.7:1,
+   sobre el 4.5:1 exigido); el tono de texto #8E2E49 (rosa oscuro) se usa en enlaces y estados
+   activos sobre fondo claro (~6.4:1). */
+:root{--hestiat-primary:#EE8CA6; --hestiat-primary-hover:#E67792; --hestiat-primary-texto:#8E2E49}
 /* Identidad de marca tomada del logo del canal: emblema circular con casa y corazón.
    Se AÑADEN; los tokens de acción de arriba se conservan tal cual para no alterar ningún flujo. */
 :root{--marca-oro-texto:#8A6A1E; --marca-marino:#0A1435; --marca-oro:#C8A858; --marca-oro-claro:#F2E3B4; --marca-oro-oscuro:#6E5220;
@@ -924,13 +939,16 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
             <nav className="cab-nav" aria-label="Secciones de Hestiat">
               <a className="cab-pill cab-pill-on" href="/search">
-                <span aria-hidden="true">🏠</span> Alojamientos
+                <svg className="cab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.4V21h14V9.4" /><path d="M9.5 21v-6h5v6" /></svg>
+                Alojamientos
               </a>
               <a className="cab-pill" href="/experiencias">
-                <span aria-hidden="true">🎈</span> Experiencias
+                <svg className="cab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m15.2 8.8-2 5.4-5.4 2 2-5.4z" /></svg>
+                Experiencias
               </a>
               <a className="cab-pill" href="/servicios">
-                <span aria-hidden="true">🛎</span> Servicios
+                <svg className="cab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 18h16" /><path d="M6 18a6 6 0 0 1 12 0" /><path d="M12 6.2V4.2" /><circle cx="12" cy="3.6" r="1" /></svg>
+                Servicios
               </a>
             </nav>
 
@@ -966,14 +984,30 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               )}
             </nav>
 
+            {/* LA TIENDA. Botón destacado en rosa pastel que lleva a la tienda de Hestiat
+                (Shopify, en su propio subdominio). Vive FUERA de .cab-nav/.cab-cuenta para seguir
+                visible en móvil, donde esas dos zonas se ocultan. Abre en pestaña nueva porque es
+                otro sitio; no se toca nada de shop.hestiat.com desde aquí. */}
+            <a
+              className="cab-tienda"
+              href="https://shop.hestiat.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Tienda Hestiat (se abre en una pestaña nueva)"
+            >
+              <svg className="cab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 8h12l-1 11.5a1 1 0 0 1-1 .9H8a1 1 0 0 1-1-.9z" /><path d="M9 8V6.5a3 3 0 0 1 6 0V8" /></svg>
+              <span className="cab-tienda-txt">Tienda</span>
+            </a>
+
             {/* En móvil, las secciones y la cuenta caben en este desplegable nativo: sin
                 JavaScript, sin tapar la pantalla y sin menús que no llevan a ningún sitio. */}
             <details className="cab-menu">
               <summary aria-label="Abrir menú">Menú</summary>
               <div className="cab-menu-lista">
-                <a href="/search">🏠 Alojamientos</a>
-                <a href="/experiencias">🎈 Experiencias</a>
-                <a href="/servicios">🛎 Servicios</a>
+                <a href="/search">Alojamientos</a>
+                <a href="/experiencias">Experiencias</a>
+                <a href="/servicios">Servicios</a>
+                <a className="cab-menu-tienda" href="https://shop.hestiat.com" target="_blank" rel="noopener noreferrer">Tienda</a>
                 {esAnfitrion && <a href="/host">Mi panel</a>}
                 {sesion ? (
                   <>
@@ -1026,6 +1060,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 <a href="/servicios">Servicios</a>
                 <a href="/destinos">Destinos</a>
                 <a href="/favoritos">Favoritos</a>
+                <a href="https://shop.hestiat.com" target="_blank" rel="noopener noreferrer">Tienda</a>
               </nav>
               <nav aria-label="Para anfitriones y proveedores">
                 <p className="pie-tit">Anfitriones y proveedores</p>

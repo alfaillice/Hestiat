@@ -725,7 +725,8 @@ article.serv-card{position:relative}
       --marca-arena:#D0B890; --marca-crema:#F7EFD8}
 /* Los accesorios se ven antes de leerse: cada uno con su icono, que viene del diccionario de
    servicios (su campo de icono), no de una lista metida en el código. */
-.servicio-icono{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radio-pill);background:var(--fucsia-soft);font-size:17px;flex:0 0 auto}
+.servicio-icono{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:var(--radio-pill);background:var(--fucsia-soft);font-size:17px;flex:0 0 auto;color:var(--fucsia-tinta)}
+.servicio-icono svg,.hecho-icono svg{width:18px;height:18px}
 /* Selector con .ficha delante a propósito: las reglas de la ficha vienen después en la hoja y, con
    la misma especificidad, ganarían ellas. */
 .ficha .servicios-grid li{display:flex;align-items:center;gap:10px;border-radius:var(--radio-pill);padding:8px 15px 8px 9px;background:var(--card)}

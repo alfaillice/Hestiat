@@ -20,6 +20,7 @@ import { contactosPublicadosDeAlojamiento } from "@/lib/perfil-contactos.server"
 import { guardadosEntre } from "@/lib/favoritos.server";
 import { experienciasCerca } from "@/lib/cerca.server";
 import Carrusel from "@/components/carrusel";
+import { iconoComodidad } from "@/components/icono-comodidad";
 
 export const dynamic = "force-dynamic";
 
@@ -352,7 +353,7 @@ export default async function Ficha({
               <ul className="servicios-grid">
                 {servicios.slice(0, 12).map((s) => (
                   <li key={s.id}>
-                    <span className="servicio-icono" aria-hidden="true">{s.icono ?? "✨"}</span>
+                    <span className="servicio-icono" aria-hidden="true">{iconoComodidad(s.nombre) ?? (s.icono ?? "✨")}</span>
                     <span>{s.nombre}</span>
                   </li>
                 ))}
@@ -363,7 +364,7 @@ export default async function Ficha({
                   <ul className="servicios-grid" style={{ marginTop: 10 }}>
                     {servicios.map((s) => (
                       <li key={`t-${s.id}`}>
-                        <span className="servicio-icono" aria-hidden="true">{s.icono ?? "✨"}</span>
+                        <span className="servicio-icono" aria-hidden="true">{iconoComodidad(s.nombre) ?? (s.icono ?? "✨")}</span>
                         <span>{s.nombre}</span>
                       </li>
                     ))}

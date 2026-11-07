@@ -470,6 +470,12 @@ article.serv-card{position:relative}
 .acceso b{display:block;font-family:var(--fuente-titulo);font-size:15px;color:var(--ink)}
 .acceso span span{font-size:12.5px;color:var(--muted-fg)}
 .hero2-credito{position:absolute;right:16px;bottom:8px;color:rgba(255,255,255,.6);font-size:10.5px}
+/* Buscador principal sobre el hero (reutiliza el buscador real de Explorar). */
+.hero2-busca{margin-top:20px;max-width:940px}
+.hero2-busca .buscador{box-shadow:0 18px 50px rgba(10,25,32,.30);margin-bottom:0}
+/* Iconos SVG de los accesos del hero, en el acento rosa. */
+.acceso-icono{display:inline-flex;align-items:center;justify-content:center;color:var(--hestiat-primary-texto);flex:0 0 auto}
+.acceso-icono svg{width:24px;height:24px}
 .inicio{padding-bottom:40px}
 .seccion-home{margin:46px 0}
 .seccion-home-cab{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}

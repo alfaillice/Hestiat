@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import BuscadorExplorar from "@/components/buscador-explorar";
 
 /**
  * El hero de la portada: un fondo con vídeo y el contenido ENCIMA, visible desde el primer momento.
@@ -126,23 +127,36 @@ export default function HeroHome({
           <span className="hero2-sub">Tu próxima experiencia empieza aquí</span>
         </h1>
 
+        {/* BUSCADOR PRINCIPAL. Reutiliza el buscador real de «Explorar» (destino con autocompletado,
+            fechas con calendario y huéspedes), que envía a /search con parámetros que esa página ya
+            entiende. Es funcional de verdad, no decorativo, y funciona también sin JavaScript. */}
+        <div className="hero2-busca">
+          <BuscadorExplorar destino="" />
+        </div>
+
         <div className="hero2-accesos">
           <Link className="acceso" href="/search">
-            <span className="acceso-icono" aria-hidden="true">🏠</span>
+            <span className="acceso-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 10.5 12 3l9 7.5" /><path d="M5 9.4V21h14V9.4" /><path d="M9.5 21v-6h5v6" /></svg>
+            </span>
             <span>
               <b>Alojamientos</b>
               <span>Casas, hoteles y más</span>
             </span>
           </Link>
           <Link className="acceso" href="/experiencias">
-            <span className="acceso-icono" aria-hidden="true">🎈</span>
+            <span className="acceso-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><path d="m15.2 8.8-2 5.4-5.4 2 2-5.4z" /></svg>
+            </span>
             <span>
               <b>Experiencias</b>
               <span>Actividades únicas</span>
             </span>
           </Link>
           <Link className="acceso" href="/servicios">
-            <span className="acceso-icono" aria-hidden="true">🛎</span>
+            <span className="acceso-icono" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 18h16" /><path d="M6 18a6 6 0 0 1 12 0" /><path d="M12 6.2V4.2" /><circle cx="12" cy="3.6" r="1" /></svg>
+            </span>
             <span>
               <b>Servicios</b>
               <span>Todo lo que necesitas</span>

@@ -1,1 +1,45 @@
-node_modules
+node_modules/
+.env
+.env.*
+*.log
+backups/
+dist/
+.output/
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Artefactos de despliegue y paquetes: se generan, no se versionan.
+*.zip
+next-standalone*/
+pkg*/
+
+# Proyecto aparte del marketplace de Higgsfield: no forma parte de Hestiat.
+hestiat-marketplace*/
+
+# Caché de Python (nunca debe subirse)
+__pycache__/
+*.pyc
+
+# Archivos de trabajo de las fases anteriores: se conservan en el disco pero no en el repositorio.
+# Se incluyeron por error en el commit 6898b53 y se retiraron en un commit posterior.
+/*.txt
+/*.json
+/*.sql
+AUDITORIA-FASE2-DOCE-GUIAS.md
+ENTREGA-CORRECCIONES-FASE2.md
+ENTREGA-FASE2-DOCE-GUIAS.md
+ENTREGA-PILOTOS-GUIAS.md
+GUIA-ENVIAR-SITEMAP-Y-ACELERAR-RASTREO.md
+INFORME-CONSOLIDADO-FASE2.md
+INFORME-INDEXACION-15-GUIAS.md
+PROPUESTA-GUIAS-DESTINOS.md
+scripts/datos-ciudades-guias.sh
+scripts/fase2-datos-12.sh
+scripts/fase2-enlaces.sh
+scripts/guias-candidatas.sh
+scripts/guias-verificar-enlaces.sh
+scripts/pilotos-datos.sh
+scripts/pilotos-enlaces.sh
+scripts/pilotos-enlaces2.sh
+scripts/pilotos-final.sh

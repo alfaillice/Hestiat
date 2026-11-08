@@ -1,0 +1,11 @@
+[Unit]
+Description=Hestiat — comprueba cada 15 minutos la conexión del agente de IA
+
+[Timer]
+# Cada 15 minutos. Si el servidor estaba apagado, se hace al arrancar.
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=60
+
+[Install]
+WantedBy=timers.target

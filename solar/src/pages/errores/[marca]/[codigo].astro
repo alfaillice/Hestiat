@@ -1,0 +1,76 @@
+---
+import Base from "../../../layouts/Base.astro";
+import RecomendadorKit from "../../../components/RecomendadorKit.astro";
+import errores from "../../../data/errores.json";
+import { slugify } from "../../../lib/slug";
+
+export function getStaticPaths() {
+  return errores.map((e) => ({
+    params: { marca: slugify(e.marca), codigo: slugify(e.codigo) },
+    props: { error: e },
+  }));
+}
+
+const { error } = Astro.props as { error: (typeof errores)[number] };
+const relacionados = errores.filter((e) => e.marca === error.marca && e.codigo !== error.codigo);
+const marcaSlug = slugify(error.marca);
+const tituloPagina = `${error.codigo}: ${error.titulo_fallo} · ${error.marca}`;
+---
+<Base title={tituloPagina} description={`${error.codigo} en ${error.marca}: ${error.titulo_fallo.toLowerCase()}. Causa probable, pasos de verificación y componente a revisar, según la documentación del fabricante.`}>
+  <article class="sec">
+    <div class="wrap articulo">
+      <p class="m">{error.marca}</p>
+      <h1>{error.codigo}: {error.titulo_fallo}</h1>
+
+      <section aria-labelledby="causa">
+        <h2 id="causa">Causa probable</h2>
+        <p>{error.causa_probable}</p>
+      </section>
+
+      <section aria-labelledby="pasos">
+        <h2 id="pasos">Pasos de verificación</h2>
+        <ol class="pasos-lista">
+          {error.pasos_verificacion.map((p) => (<li>{p}</li>))}
+        </ol>
+      </section>
+
+      {error.componente_reemplazo && (
+        <section aria-labelledby="componente">
+          <h2 id="componente">Componente a revisar</h2>
+          <p>{error.componente_reemplazo}</p>
+        </section>
+      )}
+
+      <section aria-labelledby="kit">
+        <h2 id="kit">Kit relacionado</h2>
+        <p>Si este fallo aparece en una instalación parecida a la de este kit, revisa la configuración con la documentación del fabricante.</p>
+        <RecomendadorKit kitId={error.kit_id} mostrarCrossSell={false} />
+      </section>
+
+      <section aria-labelledby="fuente">
+        <h2 id="fuente">Fuente</h2>
+        <p>Descripción basada en la documentación oficial del fabricante: <a href={error.fuente} rel="noopener noreferrer" target="_blank">ver la página del fabricante</a>. Confirma siempre el código y la versión de firmware con tu equipo.</p>
+      </section>
+
+      {relacionados.length > 0 && (
+        <section aria-labelledby="otros">
+          <h2 id="otros">Otros códigos de {error.marca}</h2>
+          <ul class="enlaces-errores">
+            {relacionados.map((r) => (
+              <li><a href={`/errores/${marcaSlug}/${slugify(r.codigo)}`}>{r.codigo}: {r.titulo_fallo}</a></li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <p class="aviso-nota">Orientativo. Un fallo eléctrico puede ser peligroso: si no tienes claro el diagnóstico, consulta con un instalador autorizado antes de tocar la instalación.</p>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .pasos-lista { padding-left: 22px; display: grid; gap: 10px; margin-top: 12px; }
+  .pasos-lista li { color: var(--ink); }
+  .enlaces-errores { list-style: none; display: grid; gap: 10px; margin-top: 12px; }
+  .enlaces-errores a { text-decoration: underline; text-decoration-color: var(--sun); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+</style>

@@ -1,0 +1,212 @@
+[
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 1",
+    "titulo_fallo": "Temperatura de la batería demasiado alta",
+    "causa_probable": "El regulador deja de cargar para proteger la batería. Se reinicia solo cuando la temperatura baja.",
+    "pasos_verificacion": [
+      "Comprueba la temperatura de la batería y, si tienes sensor externo, su lectura.",
+      "Deja que la batería se enfríe: el error se resetea solo.",
+      "Si se repite con temperatura normal, revisa la ventilación del lugar donde está la batería."
+    ],
+    "componente_reemplazo": "Sensor de temperatura externo (solo si su lectura no coincide con la real)",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 2",
+    "titulo_fallo": "Tensión de batería demasiado alta",
+    "causa_probable": "Otro equipo de carga conectado a la batería, un fallo del regulador o una tensión de sistema configurada menor que la de la batería.",
+    "pasos_verificacion": [
+      "Mide la tensión de la batería con un multímetro, sin carga.",
+      "Comprueba si hay otro cargador conectado a la batería (alternador, cargador de red u otro regulador).",
+      "Verifica que la tensión configurada en el regulador (12, 24 o 48 V) coincide con la de tu batería."
+    ],
+    "componente_reemplazo": "Regulador MPPT (solo si la tensión medida es correcta y el error persiste)",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 3 y Err 4",
+    "titulo_fallo": "Fallo del sensor de temperatura remoto",
+    "causa_probable": "El conector T-sense no está bien conectado al sensor remoto. La causa más frecuente es que esté conectado a los bornes BAT+ o BAT-.",
+    "pasos_verificacion": [
+      "Comprueba que el conector T-sense está en el sensor remoto y no en los bornes de la batería.",
+      "Revisa que el sensor esté colocado sobre la batería.",
+      "Tras corregir la conexión, el error se resetea solo."
+    ],
+    "componente_reemplazo": "Sensor de temperatura remoto",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 6 y Err 7",
+    "titulo_fallo": "Fallo de la detección de tensión de batería (V-sense)",
+    "causa_probable": "El conector V-sense está conectado con la polaridad invertida en BAT+ o BAT-.",
+    "pasos_verificacion": [
+      "Desconecta las fuentes de energía según indica el manual antes de tocar el cableado.",
+      "Comprueba que el conector V-sense va a los bornes de la batería, con la polaridad correcta.",
+      "Vuelve a conectar y verifica que el error desaparece."
+    ],
+    "componente_reemplazo": "Cable V-sense",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 14",
+    "titulo_fallo": "Temperatura de la batería demasiado baja",
+    "causa_probable": "El regulador no carga baterías LiFePO4 a baja temperatura, porque cargarlas así dañaría las celdas.",
+    "pasos_verificacion": [
+      "Mide la temperatura real de la batería.",
+      "Espera a que suba la temperatura antes de cargar, o colócala en una zona con temperatura adecuada.",
+      "Si la lectura del sensor no coincide con la temperatura real, revisa el sensor."
+    ],
+    "componente_reemplazo": null,
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 17",
+    "titulo_fallo": "Regulador sobrecalentado",
+    "causa_probable": "El regulador se calienta aunque ya reduce su corriente de salida. Se resetea al enfriarse.",
+    "pasos_verificacion": [
+      "Mide la temperatura ambiente del lugar donde está montado.",
+      "Quita obstáculos cerca del disipador y de las rejillas de ventilación.",
+      "Si la ventilación es correcta y el error se repite, el regulador puede estar averiado."
+    ],
+    "componente_reemplazo": "Regulador MPPT",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 18",
+    "titulo_fallo": "Sobrecorriente en el regulador",
+    "causa_probable": "Conexión o desconexión de una carga grande en el lado de batería, un cambio brusco de irradiancia o una sobrecarga de la salida del inversor.",
+    "pasos_verificacion": [
+      "Reduce las cargas conectadas a la batería, sobre todo las de arranque brusco.",
+      "Carga la batería antes de usar el inversor a plena potencia: con más tensión, la misma potencia exige menos corriente.",
+      "Si el error no se resetea solo, desconecta todas las fuentes, espera 3 minutos y vuelve a alimentar."
+    ],
+    "componente_reemplazo": "Regulador MPPT (si el error persiste tras los pasos anteriores)",
+    "kit_id": "kit-camper-200-pro",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 33",
+    "titulo_fallo": "Sobretensión en el campo solar (PV)",
+    "causa_probable": "La tensión en circuito abierto de los paneles es demasiado alta para el regulador. Se resetea cuando baja a un valor seguro.",
+    "pasos_verificacion": [
+      "Calcula la tensión en circuito abierto de los paneles en serie: sube con el frío.",
+      "Si hace falta, reorganiza el número de paneles en serie o en paralelo.",
+      "Confirma que la configuración de paneles respeta lo que indica el manual del regulador."
+    ],
+    "componente_reemplazo": null,
+    "kit_id": "kit-camper-200-pro",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 34",
+    "titulo_fallo": "Sobrecorriente en el campo solar (PV)",
+    "causa_probable": "La corriente de los paneles supera el límite del regulador. También puede deberse a un fallo interno.",
+    "pasos_verificacion": [
+      "Desconecta el regulador de todas las fuentes, espera 3 minutos y vuelve a conectarlo.",
+      "Revisa que el número de paneles en paralelo no supere la corriente máxima del regulador.",
+      "Si el error vuelve a aparecer, el regulador puede estar averiado: consulta con tu distribuidor."
+    ],
+    "componente_reemplazo": "Regulador MPPT",
+    "kit_id": "kit-camper-200-pro",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 67",
+    "titulo_fallo": "Pérdida de comunicación con el BMS",
+    "causa_probable": "El regulador está configurado para ser controlado por un BMS, pero no recibe sus mensajes. Por seguridad reduce su tensión de salida.",
+    "pasos_verificacion": [
+      "Comprueba la conexión entre el regulador y el BMS.",
+      "Si el regulador va a funcionar sin BMS, cambia el ajuste BMS a 'N' en el menú de configuración, o restaura los valores de fábrica con VictronConnect.",
+      "Este error solo aparece con sol: revísalo con el regulador en funcionamiento."
+    ],
+    "componente_reemplazo": "Cable de comunicación con el BMS",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MPPT",
+    "codigo": "Err 114",
+    "titulo_fallo": "Temperatura interna del regulador demasiado alta",
+    "causa_probable": "La temperatura interna es alta. El error se resetea cuando el regulador se enfría.",
+    "pasos_verificacion": [
+      "Revisa la temperatura ambiente del armario o del lugar de montaje.",
+      "Comprueba que las entradas y salidas de aire no estén tapadas.",
+      "Si el error persiste con buena ventilación, el regulador puede estar averiado."
+    ],
+    "componente_reemplazo": "Regulador MPPT",
+    "kit_id": "kit-camper-100",
+    "fuente": "https://www.victronenergy.com/live/mppt-error-codes"
+  },
+  {
+    "marca": "Victron MultiPlus",
+    "codigo": "Error 1",
+    "titulo_fallo": "Un equipo se apaga porque otra fase del sistema se ha apagado",
+    "causa_probable": "En sistemas multifase, la fase que falla se apaga por batería baja, sobrecarga o alta temperatura. Las demás fases muestran este error.",
+    "pasos_verificacion": [
+      "Localiza la fase que no muestra el Error 1 y revisa sus LED o su pantalla GX.",
+      "Identifica la causa: sobrecarga, batería baja o temperatura.",
+      "Corrige la causa con el sistema apagado. El equipo se reinicia solo cuando el error desaparece."
+    ],
+    "componente_reemplazo": null,
+    "kit_id": "kit-respaldo-48v",
+    "fuente": "https://www.victronenergy.com/live/ve.bus:ve.bus_error_codes"
+  },
+  {
+    "marca": "Victron MultiPlus",
+    "codigo": "Error 3",
+    "titulo_fallo": "Faltan o sobran equipos en el sistema",
+    "causa_probable": "Suele aparecer después del Error 1. También puede deberse a un cable de comunicación defectuoso o a un fusible de corriente continua fundido en una unidad.",
+    "pasos_verificacion": [
+      "Si aparece el Error 1, resuélvelo primero.",
+      "Revisa los cables de comunicación: deben ser cables comerciales, no cables hechos a mano.",
+      "Comprueba los fusibles de corriente continua de cada unidad: una unidad sin fusible desaparece de la red cuando no hay red eléctrica."
+    ],
+    "componente_reemplazo": "Cable de comunicación VE.Bus",
+    "kit_id": "kit-respaldo-48v",
+    "fuente": "https://www.victronenergy.com/live/ve.bus:ve.bus_error_codes"
+  },
+  {
+    "marca": "Victron MultiPlus",
+    "codigo": "Error 4",
+    "titulo_fallo": "No se encuentra ningún otro equipo",
+    "causa_probable": "El equipo maestro está configurado en paralelo, split o trifásico, pero no encuentra los demás. Es normal durante un reinicio del sistema.",
+    "pasos_verificacion": [
+      "Si aparece justo tras un reinicio, espera: suele desaparecer solo.",
+      "Si persiste, revisa los cables de comunicación. No uses cables hechos a mano.",
+      "Comprueba que todas las unidades están configuradas como un único sistema."
+    ],
+    "componente_reemplazo": "Cable de comunicación VE.Bus",
+    "kit_id": "kit-respaldo-48v",
+    "fuente": "https://www.victronenergy.com/live/ve.bus:ve.bus_error_codes"
+  },
+  {
+    "marca": "Victron MultiPlus",
+    "codigo": "Error 5",
+    "titulo_fallo": "Sobretensión en la salida de corriente alterna",
+    "causa_probable": "El cableado de corriente alterna de una unidad esclava no está conectado bien, o no está conectado.",
+    "pasos_verificacion": [
+      "Revisa el cableado de corriente alterna de cada unidad esclava.",
+      "Comprueba que no haya cables intercambiados.",
+      "Tras corregir la conexión, el sistema se reinicia solo."
+    ],
+    "componente_reemplazo": null,
+    "kit_id": "kit-respaldo-48v",
+    "fuente": "https://www.victronenergy.com/live/ve.bus:ve.bus_error_codes"
+  }
+]

@@ -130,7 +130,7 @@ a.card:hover { border-color: var(--navy); }
 
 /* Guide index: editorial rows */
 .guia-lista { list-style: none; border-top: 1px solid var(--line-strong); }
-.guia { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 30px 0; border-bottom: 1px solid var(--line); transition: background-color 0.15s ease; }
+.guia { display: grid; grid-template-columns: 200px 48px minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 22px 0; border-bottom: 1px solid var(--line); transition: background-color 0.15s ease; }
 .guia:hover { background: var(--surface); }
 .guia-n { color: var(--muted); font-weight: 600; font-size: 15px; padding-left: 4px; }
 .guia-titulo { display: block; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); }
@@ -202,7 +202,8 @@ footer { background: var(--navy); color: var(--on-dark-soft); }
   .comp-grid, .material-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .comp { padding: 10px; }
   .comp p { font-size: 14px; margin-top: 10px; }
-  .guia { grid-template-columns: 40px minmax(0, 1fr); }
+  .guia { grid-template-columns: 120px minmax(0, 1fr); gap: 14px; }
+  .guia-n { display: none; }
   .guia-leer { grid-column: 2; }
   .tienda { padding: 26px; }
   .calc { padding: 22px; }
@@ -216,3 +217,9 @@ footer { background: var(--navy); color: var(--on-dark-soft); }
   .esquema, .bloque, .comp, .material { break-inside: avoid; border-color: var(--line-strong); }
   a[href]::after { content: ""; }
 }
+
+/* Imágenes de contenido: tamaño fijo para evitar saltos de diseño */
+.figura { display: block; width: 100%; height: auto; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius); border: 1px solid var(--line); margin: 28px 0 8px; background: var(--surface-2); }
+.guia-img { width: 200px; height: 133px; object-fit: cover; border-radius: var(--radius-s); border: 1px solid var(--line); background: var(--surface-2); }
+.card-img { width: calc(100% + 52px); max-width: none; height: auto; margin: -26px -26px 22px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-2); }
+@media (max-width: 680px) { .guia-img { width: 120px; height: 80px; } }

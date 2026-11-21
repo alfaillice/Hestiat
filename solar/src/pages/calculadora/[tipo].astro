@@ -11,6 +11,7 @@ const { tipo } = Astro.params;
 const u = (usos as Record<string, any>)[tipo as string];
 const cargas = u.cargas.filter((c: any) => c.w > 0);
 const whDia = cargas.reduce((s: number, c: any) => s + c.w * c.horas, 0);
+const fotos: Record<string, string> = { camper: "/img/camper.png", jardin: "/img/jardin.png", hogar: "/img/hogar.png" };
 ---
 <Base title={`Calculadora solar · ${u.titulo}`} description={`Dimensiona una instalación solar para ${u.titulo.toLowerCase()}: paneles, inversor y batería a partir de tu consumo. Estimación orientativa.`}>
   <section class="sec">
@@ -19,6 +20,7 @@ const whDia = cargas.reduce((s: number, c: any) => s + c.w * c.horas, 0);
         <h2>Calculadora para {u.titulo.toLowerCase()}</h2>
         <p>{u.intro}</p>
       </div>
+      {fotos[tipo as string] && <img class="figura" src={fotos[tipo as string]} alt={`Instalación de ${u.titulo.toLowerCase()}`} width="1264" height="848" />}
       <div class="dos-col">
         <div>
           <Calculadora consumoInicial={u.consumo} objetivoInicial={u.objetivo} />

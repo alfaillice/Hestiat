@@ -29,6 +29,8 @@ const recomendada = filas.find((f) => f.dias >= 1) ?? filas[filas.length - 1];
 // Ejemplo resuelto con la primera batería de la lista (100 Ah · 12 V) y las horas de partida.
 const ejemplo = filas[0];
 const otrosEquipos = equipos.filter((e) => e.slug !== equipo.slug);
+// Solo equipos con foto propia generada; el resto no muestra imagen.
+const imagenEquipo: Record<string, string> = { "nevera-compresor-12v": "/img/autonomia-nevera.png" };
 
 const faqs = [
   {
@@ -64,6 +66,7 @@ const jsonLd = {
     <div class="wrap articulo">
       <h1>Autonomía de una {equipo.nombre.toLowerCase()}</h1>
       <p class="entradilla">{equipo.uso}</p>
+      {imagenEquipo[equipo.slug] && <img class="figura" src={imagenEquipo[equipo.slug]} alt={equipo.nombre} width="1264" height="848" />}
 
       <section aria-labelledby="resultados">
         <h2 id="resultados">Cuánto aguanta cada batería</h2>

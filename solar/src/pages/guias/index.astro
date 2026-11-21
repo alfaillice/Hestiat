@@ -1,10 +1,10 @@
 ---
 import Base from "../../layouts/Base.astro";
 const guias = [
-  { href: "/guias/amortizacion", t: "¿Cuándo se paga sola la instalación?", d: "Cómo calcular la amortización con tus números reales, sin promesas infladas de ahorro." },
-  { href: "/guias/autoconsumo-con-sin-bateria", t: "Autoconsumo con o sin batería", d: "Cuándo compensa la batería y cuándo es mejor verter los excedentes a la red." },
-  { href: "/baterias", t: "Baterías: LFP frente al resto", d: "Ciclos, profundidad de descarga y cuánta capacidad necesitas de verdad." },
-  { href: "/permisos", t: "Permisos y legalización", d: "Qué trámite aplica según tu caso: autoconsumo, obra o uso móvil." },
+  { img: "/img/guia-amortizacion.png", href: "/guias/amortizacion", t: "¿Cuándo se paga sola la instalación?", d: "Cómo calcular la amortización con tus números reales, sin promesas infladas de ahorro." },
+  { img: "/img/hogar.png", href: "/guias/autoconsumo-con-sin-bateria", t: "Autoconsumo con o sin batería", d: "Cuándo compensa la batería y cuándo es mejor verter los excedentes a la red." },
+  { img: "/img/bateria-rack-48v.png", href: "/baterias", t: "Baterías: LFP frente al resto", d: "Ciclos, profundidad de descarga y cuánta capacidad necesitas de verdad." },
+  { img: "/img/instalador-cuadro.png", href: "/permisos", t: "Permisos y legalización", d: "Qué trámite aplica según tu caso: autoconsumo, obra o uso móvil." },
 ];
 ---
 <Base title="Guías de autoconsumo solar" description="Guías claras de autoconsumo solar y baterías: amortización, baterías, permisos y cómo dimensionar sin inventar ahorros.">
@@ -18,6 +18,7 @@ const guias = [
         {guias.map((g, i) => (
           <li>
             <a class="guia" href={g.href}>
+              <img class="guia-img" src={g.img} alt={g.t} width="1264" height="848" loading="lazy" />
               <span class="guia-n">{String(i + 1).padStart(2, "0")}</span>
               <span class="guia-t">
                 <span class="guia-titulo">{g.t}</span>

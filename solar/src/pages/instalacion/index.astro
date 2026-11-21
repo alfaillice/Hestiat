@@ -3,6 +3,8 @@ import Base from "../../layouts/Base.astro";
 import Esquema from "../../components/Esquema.astro";
 import sistemas from "../../data/sistemas.json";
 const lista = Object.entries(sistemas as Record<string, any>);
+// Foto por sistema: 12 V camper, 24 V caseta, 48 V hogar.
+const fotoSistema: Record<string, string> = { "12v": "/img/camper.png", "24v": "/img/jardin.png", "48v": "/img/hogar.png" };
 ---
 <Base title="Esquemas de instalación solar" description="Esquemas de instalación a 12V, 24V y 48V, con sus componentes y protecciones. Diagramas claros para entender dónde va cada pieza.">
   <section class="sec">
@@ -15,6 +17,7 @@ const lista = Object.entries(sistemas as Record<string, any>);
       <div class="grid3" style="margin-top:28px">
         {lista.map(([slug, s]) => (
           <a class="card" href={`/instalacion/${slug}`}>
+            <img class="card-img" src={fotoSistema[slug]} alt={s.titulo} width="1264" height="848" loading="lazy" />
             <h3>{s.titulo}</h3>
             <p>{s.uso}</p>
             <span class="go">Ver el esquema y sus componentes</span>

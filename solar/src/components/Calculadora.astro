@@ -1,0 +1,116 @@
+---
+import { PROVINCIAS } from "../lib/solar";
+const { compact = false } = Astro.props;
+---
+<form class="calc" id="calc" novalidate>
+  <h2>Calculadora de dimensionamiento</h2>
+  <p class="sub">Consumo y provincia → paneles, inversor y batería. Estimación orientativa.</p>
+
+  <div class="campo">
+    <label id="obj-lbl">¿Para qué lo quieres?</label>
+    <div class="segment" role="group" aria-labelledby="obj-lbl">
+      <button type="button" data-obj="ahorro" aria-pressed="true">Ahorro</button>
+      <button type="button" data-obj="autoconsumo" aria-pressed="false">Con batería</button>
+      <button type="button" data-obj="respaldo" aria-pressed="false">Respaldo</button>
+      <button type="button" data-obj="aislada" aria-pressed="false">Aislada</button>
+    </div>
+    <input type="hidden" name="objetivo" id="objetivo" value="ahorro" />
+  </div>
+
+  <div class="fila2">
+    <div class="campo">
+      <label for="consumo">Consumo anual</label>
+      <input id="consumo" name="consumo" type="number" inputmode="numeric" min="0" step="100" placeholder="p. ej. 3500" />
+      <span class="hint">kWh al año (lo pone tu factura). Si no lo sabes, deja la factura.</span>
+    </div>
+    <div class="campo">
+      <label for="factura">o factura mensual</label>
+      <input id="factura" name="factura" type="number" inputmode="numeric" min="0" step="5" placeholder="€ / mes" />
+      <span class="hint">Media al mes. Menos preciso que los kWh.</span>
+    </div>
+  </div>
+
+  <div class="campo">
+    <label for="provincia">Provincia</label>
+    <select id="provincia" name="provincia">
+      {PROVINCIAS.map((p) => <option value={p}>{p}</option>)}
+    </select>
+  </div>
+
+  <details class="supuestos">
+    <summary>Ajustar supuestos (panel, precio de la luz, coste)</summary>
+    <div class="fila2" style="margin-top:10px">
+      <div class="campo"><label for="panelW">Panel</label><input id="panelW" type="number" min="100" step="5" value="450" /><span class="hint">Wp por panel</span></div>
+      <div class="campo"><label for="precio">Precio luz</label><input id="precio" type="number" min="0" step="0.01" value="0.18" /><span class="hint">€/kWh</span></div>
+    </div>
+  </details>
+
+  <button type="submit" class="btn btn-sun calc-btn">Calcular</button>
+
+  <div class="res" id="res" hidden>
+    <div class="res-grid">
+      <div class="res-card res-sun"><div class="k">Potencia solar</div><div class="v" id="r-kwp">—</div><div class="u" id="r-paneles">—</div></div>
+      <div class="res-card"><div class="k">Inversor</div><div class="v" id="r-inv">—</div><div class="u">kW recomendados</div></div>
+      <div class="res-card res-eco" id="r-bat-card"><div class="k">Batería</div><div class="v" id="r-bat">—</div><div class="u">capacidad útil</div></div>
+      <div class="res-card"><div class="k">Producción estimada</div><div class="v" id="r-prod">—</div><div class="u" id="r-cob">—</div></div>
+      <div class="res-card"><div class="k">Ahorro anual</div><div class="v" id="r-ahorro">—</div><div class="u">con tus supuestos</div></div>
+      <div class="res-card"><div class="k">Amortización</div><div class="v" id="r-amort">—</div><div class="u">años (estimado)</div></div>
+    </div>
+    <div class="avisos" id="r-avisos"></div>
+  </div>
+</form>
+
+<script>
+  import { dimensionar, type Objetivo } from "../lib/solar";
+
+  const form = document.getElementById("calc") as HTMLFormElement | null;
+  if (form) {
+    const objInput = document.getElementById("objetivo") as HTMLInputElement;
+    const seg = form.querySelectorAll<HTMLButtonElement>(".segment button");
+    seg.forEach((b) =>
+      b.addEventListener("click", () => {
+        seg.forEach((o) => o.setAttribute("aria-pressed", String(o === b)));
+        objInput.value = b.dataset.obj || "ahorro";
+      }),
+    );
+
+    const $ = (id: string) => document.getElementById(id) as HTMLElement;
+    const num = (id: string) => {
+      const v = Number((document.getElementById(id) as HTMLInputElement)?.value);
+      return Number.isFinite(v) && v > 0 ? v : undefined;
+    };
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const r = dimensionar({
+        consumoAnualKwh: num("consumo"),
+        facturaMensualEur: num("factura"),
+        provincia: (document.getElementById("provincia") as HTMLSelectElement).value,
+        objetivo: objInput.value as Objetivo,
+        potenciaPanelW: num("panelW"),
+        precioLuzEurKwh: num("precio"),
+      });
+
+      $("r-kwp").textContent = r.potenciaRealKwp.toLocaleString("es-ES") + " kWp";
+      $("r-paneles").textContent = r.paneles + " paneles · " + r.supuestos.potenciaPanelW + " Wp";
+      $("r-inv").textContent = r.inversorKw.toLocaleString("es-ES");
+      const batCard = $("r-bat-card");
+      if (r.bateriaKwh) {
+        $("r-bat").textContent = r.bateriaKwh.toLocaleString("es-ES") + " kWh";
+        batCard.style.display = "";
+      } else {
+        batCard.style.display = "none";
+      }
+      $("r-prod").textContent = r.produccionAnualKwh.toLocaleString("es-ES") + " kWh";
+      $("r-cob").textContent = "cubre ~" + r.coberturaPct + "% del consumo";
+      $("r-ahorro").textContent = r.ahorroAnualEur.toLocaleString("es-ES") + " €";
+      $("r-amort").textContent = r.amortizacionAnios ? r.amortizacionAnios.toLocaleString("es-ES") : "—";
+      $("r-avisos").innerHTML =
+        "<strong>A tener en cuenta</strong><ul>" + r.avisos.map((a) => "<li>" + a + "</li>").join("") + "</ul>";
+
+      const res = $("res");
+      res.hidden = false;
+      res.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+  }
+</script>

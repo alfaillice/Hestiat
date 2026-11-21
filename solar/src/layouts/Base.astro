@@ -1,0 +1,96 @@
+---
+import "../styles/tokens.css";
+import "../styles/base.css";
+import "../styles/site.css";
+const { title, description } = Astro.props;
+const SHOP = "https://shop.hestiat.com";
+const t = title ? `${title} · Hestiat` : "Hestiat — Dimensionamiento solar y baterías";
+const d =
+  description ??
+  "Calcula cuántos paneles, qué inversor y qué batería necesitas para tu autoconsumo solar en España. Guías, esquemas, permisos y tienda.";
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t}</title>
+    <meta name="description" content={d} />
+    <link rel="canonical" href={new URL(Astro.url.pathname, "https://hestiat.com").href} />
+    <meta property="og:title" content={t} />
+    <meta property="og:description" content={d} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_ES" />
+  </head>
+  <body>
+    <header class="cab">
+      <div class="wrap cab-in">
+        <a class="marca" href="/" aria-label="Hestiat, inicio">
+          <svg class="sol" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.4" fill="var(--sun)" stroke="var(--sun-strong)" stroke-width="1.6" />
+            <g stroke="var(--sun-strong)" stroke-width="2" stroke-linecap="round">
+              <path d="M12 2.6v2.3M12 19.1v2.3M4.3 4.3l1.6 1.6M18.1 18.1l1.6 1.6M2.6 12h2.3M19.1 12h2.3M4.3 19.7l1.6-1.6M18.1 5.9l1.6-1.6" />
+            </g>
+          </svg>
+          <span>hestiat <span class="b2">solar</span></span>
+        </a>
+        <nav class="nav" aria-label="Principal">
+          <a href="/calculadora">Calculadora</a>
+          <a href="/guias">Guías</a>
+          <a href="/instalacion">Instalación</a>
+          <a href="/permisos">Permisos</a>
+          <a href="/baterias">Baterías</a>
+        </nav>
+        <div class="cab-cta">
+          <a class="btn btn-ghost" href={SHOP} target="_blank" rel="noopener noreferrer">Tienda</a>
+          <a class="btn btn-sun" href="/calculadora">Calcular ahora</a>
+        </div>
+        <details class="cab-menu">
+          <summary aria-label="Abrir menú">☰</summary>
+          <div class="sheet">
+            <a href="/calculadora">Calculadora</a>
+            <a href="/guias">Guías</a>
+            <a href="/instalacion">Instalación</a>
+            <a href="/permisos">Permisos</a>
+            <a href="/baterias">Baterías</a>
+            <a href={SHOP} target="_blank" rel="noopener noreferrer">Tienda</a>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <div class="wrap pie">
+        <div>
+          <span class="marca">hestiat <span class="b2">solar</span></span>
+          <p class="about">Autoconsumo solar y baterías explicado claro: calcula, aprende y compra con criterio.</p>
+        </div>
+        <nav aria-label="Herramientas">
+          <h4>Herramientas</h4>
+          <a href="/calculadora">Calculadora de dimensionamiento</a>
+          <a href="/baterias">Comparador de baterías</a>
+          <a href="/instalacion">Esquemas de instalación</a>
+        </nav>
+        <nav aria-label="Aprender">
+          <h4>Aprender</h4>
+          <a href="/guias">Guías</a>
+          <a href="/permisos">Permisos y legalización</a>
+          <a href="/guias/amortizacion">Amortización y ahorro</a>
+        </nav>
+        <nav aria-label="Hestiat">
+          <h4>Hestiat</h4>
+          <a href={SHOP} target="_blank" rel="noopener noreferrer">Tienda</a>
+          <a href="/contacto">Contacto</a>
+          <a href="/aviso-legal">Aviso legal</a>
+        </nav>
+      </div>
+      <div class="wrap pie-legal">
+        © {new Date().getFullYear()} Hestiat · Los cálculos son orientativos; un instalador debe confirmar el proyecto, la legalización y el presupuesto reales.
+      </div>
+    </footer>
+  </body>
+</html>

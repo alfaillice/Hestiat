@@ -1,0 +1,16 @@
+{
+  "name": "hestiat-solar",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hestiat — dimensionamiento solar y baterías (Camper / Jardín / Hogar). Sitio estático en Astro.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check"
+  },
+  "dependencies": {
+    "astro": "4.16.18"
+  }
+}

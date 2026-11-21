@@ -1,0 +1,15 @@
+---
+import Base from "../../layouts/Base.astro";
+import Calculadora from "../../components/Calculadora.astro";
+---
+<Base title="Calculadora de dimensionamiento solar" description="Calcula paneles, inversor y batería a partir de tu consumo y provincia. Estimación orientativa, con supuestos a la vista.">
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Calculadora de dimensionamiento</h2>
+        <p>Dinos tu consumo y tu provincia. Te damos una estimación de potencia solar, inversor y batería, con todos los supuestos a la vista. No es un proyecto: es el punto de partida para hablar con un instalador.</p>
+      </div>
+      <div style="max-width:620px"><Calculadora /></div>
+    </div>
+  </section>
+</Base>

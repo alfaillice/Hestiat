@@ -1,0 +1,128 @@
+---
+import Base from "../layouts/Base.astro";
+import Calculadora from "../components/Calculadora.astro";
+const SHOP = "https://shop.hestiat.com";
+---
+<Base>
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div>
+        <h1>Dimensiona tu solar <span class="em">en un minuto</span></h1>
+        <p class="lead">
+          Dinos tu consumo y tu provincia y te decimos cuántos paneles, qué inversor y qué batería
+          necesitas. Para camper, jardín u hogar.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-sun" href="#calc">Empezar el cálculo</a>
+          <a class="btn btn-ghost" href="/guias">Ver las guías</a>
+        </div>
+        <p class="hero-note">
+          Resultado <b>orientativo y honesto</b>: con supuestos a la vista, sin pedirte el correo.
+        </p>
+      </div>
+      <div id="calc"><Calculadora /></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Elige por dónde empiezas</h2>
+        <p>Cada uso tiene su cálculo y su esquema. Entra por el tuyo.</p>
+      </div>
+      <div class="selector">
+        <a class="uso" href="/calculadora/camper">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13l4 4v5H3z"/><circle cx="7.5" cy="16" r="1.8"/><circle cx="16.5" cy="16" r="1.8"/><path d="M3 11h17"/></svg>
+          </span>
+          <h3>Camper y furgoneta</h3>
+          <p>Nevera 12V, bomba de agua, Starlink. Autonomía real sin arrancar el motor.</p>
+          <span class="go">Calcular para camper</span>
+        </a>
+        <a class="uso" href="/calculadora/jardin">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-7"/><path d="M12 14c-3 0-5-2-5-5 3 0 5 2 5 5Z"/><path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5Z"/></svg>
+          </span>
+          <h3>Jardín y caseta</h3>
+          <p>Riego, herramientas, iluminación y una caseta aislada de la red.</p>
+          <span class="go">Calcular para jardín</span>
+        </a>
+        <a class="uso" href="/calculadora/hogar">
+          <span class="ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.4V21h14V9.4"/><path d="M9.5 21v-6h5v6"/></svg>
+          </span>
+          <h3>Hogar y autoconsumo</h3>
+          <p>Reduce la factura con o sin batería, con excedentes a la red.</p>
+          <span class="go">Calcular para hogar</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec bg-surface">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Esquemas que se entienden</h2>
+        <p>Diagramas de instalación a 12, 24 y 48 voltios, con fusibles y secciones de cable, para descargar en PDF.</p>
+      </div>
+      <div class="grid3">
+        <a class="card" href="/instalacion/12v">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h6l-1 8 9-12h-6z"/></svg></span>
+          <h3>Sistema 12V</h3>
+          <p>Camper y pequeñas instalaciones portátiles.</p>
+          <span class="go">Ver esquema</span>
+        </a>
+        <a class="card" href="/instalacion/24v">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7V5h4v2M21 10v4"/></svg></span>
+          <h3>Sistema 24V</h3>
+          <p>Casetas y consumos medios, menos pérdidas.</p>
+          <span class="go">Ver esquema</span>
+        </a>
+        <a class="card" href="/instalacion/48v">
+          <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h16M6 18a6 6 0 0 1 12 0M12 6V4"/><circle cx="12" cy="3.4" r="1"/></svg></span>
+          <h3>Sistema 48V</h3>
+          <p>Hogar e híbrido con batería y respaldo.</p>
+          <span class="go">Ver esquema</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Antes de comprar, entiende</h2>
+        <p>Lo que de verdad cambia tu instalación: baterías, permisos y cuándo se amortiza.</p>
+      </div>
+      <div class="grid3">
+        <a class="card" href="/baterias"><h3>Baterías: LFP frente al resto</h3><p>Ciclos, profundidad de descarga y cuánta capacidad necesitas de verdad.</p><span class="go">Leer</span></a>
+        <a class="card" href="/permisos"><h3>Permisos y legalización</h3><p>Autoconsumo, REBT y uso móvil (ITV): qué aplica según tu caso. A verificar siempre.</p><span class="go">Leer</span></a>
+        <a class="card" href="/guias/amortizacion"><h3>¿Cuándo se paga sola?</h3><p>Amortización con tus números, sin promesas infladas de ahorro.</p><span class="go">Leer</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec bg-surface">
+    <div class="wrap">
+      <div class="sec-head"><h2>De la duda al pedido</h2></div>
+      <div class="pasos">
+        <div class="paso"><div class="n">1</div><h3>Calcula</h3><p>Consumo y provincia: potencia, inversor y batería.</p></div>
+        <div class="paso"><div class="n">2</div><h3>Aprende</h3><p>Guías y esquemas para el sistema que te toca.</p></div>
+        <div class="paso"><div class="n">3</div><h3>Legaliza</h3><p>Sabes qué permiso necesitas antes de instalar.</p></div>
+        <div class="paso"><div class="n">4</div><h3>Compra</h3><p>El kit en la tienda, con las piezas del cálculo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="tienda">
+        <div>
+          <h2>El kit que sale de tu cálculo, en la tienda</h2>
+          <p>Paneles, inversores, baterías y accesorios elegidos con criterio. La tienda vive en shop.hestiat.com.</p>
+        </div>
+        <a class="btn btn-sun" href={SHOP} target="_blank" rel="noopener noreferrer">Ir a la tienda</a>
+      </div>
+    </div>
+  </section>
+</Base>

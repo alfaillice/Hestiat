@@ -25,8 +25,8 @@
 .cab-menu .sheet a { padding: 11px 13px; border-radius: var(--radius-s); font-weight: 600; color: var(--ink); }
 .cab-menu .sheet a:hover { background: var(--surface); }
 
-/* Hero */
-.hero { background: linear-gradient(180deg, var(--paper), var(--sun-tint)); }
+/* Hero — sober: flat paper, a hairline rule under it, no wash */
+.hero { background: var(--paper); border-bottom: 1px solid var(--line); }
 .hero-in { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 44px; align-items: center; padding: 60px 0 54px; }
 .hero h1 { font-size: clamp(32px, 4.6vw, 52px); }
 .hero h1 .em { color: var(--sun-strong); }
@@ -36,7 +36,7 @@
 .hero-note b { color: var(--ink); font-weight: 700; }
 
 /* Calculator (the signature, in the hero) */
-.calc { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--shadow-2); padding: 22px; }
+.calc { background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: var(--shadow-1); padding: 22px; }
 .calc h2 { font-size: 20px; }
 .calc .sub { color: var(--muted); font-size: 14px; margin: 4px 0 16px; }
 .campo { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
@@ -71,9 +71,11 @@
 .bg-surface { background: var(--surface); }
 
 .selector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
-.uso { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
+.uso { display: block; background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: clip; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
 .uso:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: var(--line-strong); }
-.uso .ico { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; background: var(--sun-tint); color: var(--sun-strong); margin-bottom: 14px; }
+.uso-img { display: block; aspect-ratio: 3 / 2; background: var(--surface-2); }
+.uso-img img { width: 100%; height: 100%; object-fit: cover; }
+.uso-body { display: block; padding: 18px 20px 20px; }
 .uso h3 { font-size: 19px; margin-bottom: 6px; }
 .uso p { color: var(--muted); font-size: 14.5px; }
 .uso .go { display: inline-block; margin-top: 12px; color: var(--sun-strong); font-weight: 700; font-size: 14.5px; }
@@ -81,7 +83,26 @@
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; transition: transform 0.16s ease, box-shadow 0.16s ease; }
 .card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
-.card .ico { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; background: var(--eco-tint); color: var(--eco); margin-bottom: 14px; }
+.card .ico { width: 42px; height: 42px; border-radius: var(--radius-s); display: grid; place-items: center; background: var(--paper); border: 1px solid var(--line-strong); color: var(--ink); margin-bottom: 14px; }
+/* Esquema técnico */
+.esquema { background: var(--paper); border: 1px solid var(--line-strong); border-radius: var(--radius); padding: 22px; }
+.esquema-svg { width: 100%; height: auto; }
+.esquema figcaption { color: var(--muted); font-size: 14px; margin-top: 12px; }
+.bx-pv, .bx, .bx-in { fill: var(--paper); stroke: var(--line-strong); stroke-width: 1.5; }
+.bx-core { fill: var(--navy); stroke: var(--navy); }
+.bx-bat { fill: var(--eco-tint); stroke: var(--eco-line); stroke-width: 1.5; }
+.pv-l { stroke: var(--sun-strong); stroke-width: 1.4; }
+.wire { stroke: var(--navy); stroke-width: 2; fill: none; }
+.wire-2 { stroke: var(--eco); }
+.lb { fill: var(--muted); font-size: 13px; font-weight: 600; }
+.lb-core { fill: var(--on-dark); font-size: 15px; font-weight: 700; }
+.lb-bat { fill: var(--eco); font-size: 15px; font-weight: 700; }
+.lb-in { fill: var(--ink); font-size: 15px; font-weight: 700; }
+.fus rect { fill: var(--sun-tint); stroke: var(--sun-strong); stroke-width: 1.2; }
+.fl { fill: var(--soft); font-size: 11px; }
+.esquema-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.esquema-links a { border: 1px solid var(--line-strong); border-radius: var(--pill); padding: 8px 15px; font-weight: 700; font-size: 14px; color: var(--ink); transition: background-color 0.15s ease, border-color 0.15s ease; }
+.esquema-links a:hover { background: var(--surface); border-color: var(--navy); }
 .card h3 { font-size: 18px; margin-bottom: 6px; }
 .card p { color: var(--muted); font-size: 14.5px; }
 .card .go { display: inline-block; margin-top: 12px; color: var(--sun-strong); font-weight: 700; font-size: 14.5px; }

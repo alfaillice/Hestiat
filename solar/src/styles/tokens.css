@@ -40,8 +40,8 @@
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
   /* shape + rhythm */
-  --radius: 16px;
-  --radius-s: 10px;
+  --radius: 12px;
+  --radius-s: 9px;
   --pill: 999px;
   --max: 1120px;
   --gutter: 20px;

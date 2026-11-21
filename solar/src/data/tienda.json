@@ -1,0 +1,11 @@
+{
+  "panel": [
+    {
+      "titulo": "Panel Solar Monocristalino 18V para Camping",
+      "precio": "144,32 €",
+      "url": "https://shop.hestiat.com/products/panel-solar-monocristalino-18v-para-camping",
+      "imagen": "/img/tienda/panel-18v-camping.jpg",
+      "sistemas": ["12v", "24v"]
+    }
+  ]
+}

@@ -1,48 +1,53 @@
-/* Hallmark · v2.0.0 — hestiat solar · genre modern-minimal · theme custom (sober-solar) · floor-only: skill references and scripts not synced here · signature: the live calculator in the hero */
-/* critique: sober and flat: paper, hairlines and one orange accent kept for the primary action; components drawn as own SVG, no stock imagery; no eyebrow, no tracked caps, colours and type tokenised */
+/* Hallmark · v2.0.0 — hestiat solar · genre modern-minimal · theme custom (sober-trust) · floor-only: skill references and scripts not synced here · signature: the calculator set on the navy hero band */
+/* critique: serious and institutional: navy and graphite carry the structure, one amber accent for the primary action only, square-cornered panels, no decorative shadows, real product photos only where the shop sells the item; no eyebrow, no tracked caps, colours and type tokenised */
 :root {
   /* surfaces */
   --paper: #ffffff;
-  --surface: #f6f8fa;
-  --surface-2: #eceff4;
-  --line: #e2e7ee;
-  --line-strong: #cfd7e1;
+  --surface: #f3f5f8;
+  --surface-2: #e7ebf1;
+  --line: #dde2e9;
+  --line-strong: #bfc7d2;
 
   /* ink */
-  --ink: #131a22;
-  --muted: #566070;
-  --soft: #87909e;
+  --ink: #111a24;
+  --muted: #4d5865;
+  --soft: #6f7b8a;
   --on-dark: #ffffff;
-  --on-dark-soft: #b7c3d2;
-  --on-dark-mute: #8498aa;
+  --on-dark-soft: #c9d3df;
+  --on-dark-mute: #93a1b2;
 
-  /* brand: sun + eco + deep */
-  --sun: #f4a019;
-  --sun-strong: #d97d00;
-  --sun-ink: #3a2500;
-  --sun-tint: #fff3dd;
-  --eco: #0e7a56;
-  --eco-tint: #e3f4ec;
-  --eco-line: #bfe6d4;
-  --navy: #0f2235;
-  --navy-2: #163049;
+  /* structure: navy and graphite */
+  --navy: #13212f;
+  --navy-2: #1c3044;
+  --graphite: #2b3541;
+
+  /* one accent: amber, for the primary action and small rules */
+  --sun: #f2a01d;
+  --sun-hover: #d98a06;
+  --sun-strong: #a85f00;
+  --sun-ink: #1a1200;
+  --sun-tint: #fbf2e0;
+
+  /* technical colour: batteries and eco paths only */
+  --eco: #17684d;
+  --eco-tint: #e6f1ec;
+  --eco-line: #b7d8c7;
 
   /* focus */
-  --focus: #1769d9;
+  --focus: #1f5fbf;
 
-  /* shadows (colour lives in the token, never in a rule) */
-  --shadow-1: 0 6px 18px rgba(15, 34, 53, 0.10);
-  --shadow-2: 0 18px 48px rgba(15, 34, 53, 0.12);
-  --shadow-sun: 0 8px 20px rgba(217, 125, 0, 0.26);
+  /* elevation: one restrained level */
+  --shadow-1: 0 1px 2px rgba(17, 26, 36, 0.06);
+  --shadow-2: 0 14px 34px rgba(17, 26, 36, 0.12);
 
   /* type */
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
 
-  /* shape + rhythm */
-  --radius: 12px;
-  --radius-s: 9px;
-  --pill: 999px;
-  --max: 1120px;
-  --gutter: 20px;
+  /* shape and rhythm: squarer than before, to read as institutional */
+  --radius: 6px;
+  --radius-s: 4px;
+  --pill: 6px;
+  --max: 1160px;
+  --gutter: 24px;
 }

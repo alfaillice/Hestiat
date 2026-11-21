@@ -3,6 +3,7 @@ import Base from "../../layouts/Base.astro";
 import Esquema from "../../components/Esquema.astro";
 import Ilustra from "../../components/Ilustra.astro";
 import sistemas from "../../data/sistemas.json";
+import tienda from "../../data/tienda.json";
 
 export function getStaticPaths() {
   return Object.keys(sistemas).map((sistema) => ({ params: { sistema } }));
@@ -15,6 +16,11 @@ const fotos: Record<string, string> = {
   bateria: "/img/bateria-lfp.png",
   mppt: "/img/regulador-mppt.png",
 };
+// Solo productos que la tienda vende de verdad, con su foto y enlace; se filtran por sistema.
+const materiales = (Object.values(tienda) as any[][])
+  .flat()
+  .filter((m: any) => m.sistemas.includes(sistema))
+  .filter((m: any, i: number, lista: any[]) => lista.findIndex((x) => x.url === m.url) === i);
 ---
 <Base title={`${s.titulo} · esquema de instalación`} description={`Esquema e instalación de un sistema solar ${s.titulo}: componentes, protecciones y cuándo elegirlo.`}>
   <section class="sec">
@@ -35,6 +41,25 @@ const fotos: Record<string, string> = {
           </li>
         ))}
       </ul>
+
+      {materiales.length > 0 && (
+        <>
+          <h2 class="titulo-bloque">Material en la tienda</h2>
+          <ul class="material-grid">
+            {materiales.map((m: any) => (
+              <li class="material">
+                <img src={m.imagen} alt={m.titulo} width="800" height="800" loading="lazy" />
+                <div class="material-body">
+                  <h3>{m.titulo}</h3>
+                  <p class="precio">desde {m.precio}</p>
+                  <a class="btn btn-sun" href={m.url} target="_blank" rel="noopener noreferrer">Ver en la tienda</a>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p class="material-nota">Solo aparecen los productos que vendemos. Para el resto de componentes, confirma el modelo con tu instalador.</p>
+        </>
+      )}
 
       <div class="dos-col" style="margin-top:40px">
         <div class="bloque">

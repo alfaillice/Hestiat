@@ -1,0 +1,203 @@
+---
+import Base from "../../layouts/Base.astro";
+import RecomendadorKit from "../../components/RecomendadorKit.astro";
+import data from "../../data/autonomia.json";
+
+export function getStaticPaths() {
+  return data.equipos.map((equipo) => ({ params: { slug: equipo.slug }, props: { equipo } }));
+}
+
+const { equipo } = Astro.props as { equipo: (typeof data.equipos)[number] };
+const { supuestos, baterias, equipos } = data;
+const DOD = supuestos.dod_lifepo4;
+const EF = supuestos.eficiencia_inversor_ac;
+
+const fmt1 = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
+const fmt0 = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
+
+function calcular(b: (typeof baterias)[number], horas: number) {
+  const consumo = equipo.potencia_w * horas;
+  const util = b.capacidad_wh * DOD * (equipo.es_ac ? EF : 1);
+  const dias = consumo > 0 ? util / consumo : Infinity;
+  return { consumo, util, dias, horasAutonomia: dias * 24 };
+}
+
+const filas = baterias.map((b) => ({ ...b, ...calcular(b, equipo.horas_dia) }));
+// Recomendación: la batería más pequeña que cubre al menos un día con las horas de partida; si ninguna, la mayor.
+const recomendada = filas.find((f) => f.dias >= 1) ?? filas[filas.length - 1];
+
+// Ejemplo resuelto con la primera batería de la lista (100 Ah · 12 V) y las horas de partida.
+const ejemplo = filas[0];
+const otrosEquipos = equipos.filter((e) => e.slug !== equipo.slug);
+
+const faqs = [
+  {
+    q: `¿Cuántas horas al día usa una ${equipo.nombre.toLowerCase()}?`,
+    a: `Por defecto calculamos ${equipo.horas_dia} horas al día. ${equipo.uso} Si tienes un consumo real medido, cámbialo en la calculadora de esta página: el resultado se actualiza al momento.`,
+  },
+  {
+    q: "¿Por qué no usar toda la capacidad de la batería?",
+    a: `Porque una LiFePO4 se degrada menos cuando no se descarga por completo. Aplicamos un ${fmt0.format(DOD * 100)} % de profundidad de descarga: de cada 100 Wh nominales, se consideran utilizables ${fmt0.format(DOD * 100)} Wh. Es un criterio prudente, no un límite del fabricante.`,
+  },
+  {
+    q: equipo.es_ac ? "¿Por qué el inversor resta energía?" : "¿Hace falta inversor para este equipo?",
+    a: equipo.es_ac
+      ? `Este equipo funciona a 230 V, así que la energía de la batería (12, 24 o 48 V) pasa por un inversor. Consideramos una eficiencia del ${fmt0.format(EF * 100)} %: por cada 100 Wh que sale de la batería, unos ${fmt0.format(EF * 100)} Wh llegan al aparato.`
+      : `Este equipo funciona a 12 V, así que puede alimentarse directamente de la batería, sin pasar por el inversor. Por eso no aplicamos pérdida de conversión en el cálculo.`,
+  },
+];
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.q,
+    acceptedAnswer: { "@type": "Answer", text: f.a },
+  })),
+};
+---
+<Base
+  title={`Autonomía de una ${equipo.nombre.toLowerCase()} con baterías LiFePO4`}
+  description={`Cuántos días aguanta una batería LiFePO4 si usas una ${equipo.nombre.toLowerCase()} ${equipo.horas_dia} horas al día. Cálculo con profundidad de descarga del ${fmt0.format(DOD * 100)} % y resultados para 12, 24 y 48 V.`}
+>
+  <article class="sec">
+    <div class="wrap articulo">
+      <h1>Autonomía de una {equipo.nombre.toLowerCase()}</h1>
+      <p class="entradilla">{equipo.uso}</p>
+
+      <section aria-labelledby="resultados">
+        <h2 id="resultados">Cuánto aguanta cada batería</h2>
+        <p>Con {equipo.horas_dia} horas de uso al día, consume unos <b>{fmt0.format(equipo.potencia_w * equipo.horas_dia)} Wh</b> diarios. Esta tabla usa las horas de partida; la calculadora de abajo las ajusta.</p>
+        <div class="tabla-wrap">
+          <table class="tabla tabla-autonomia" data-autonomia-tabla>
+            <thead>
+              <tr><th scope="col">Batería</th><th scope="col">Energía útil</th><th scope="col">Autonomía</th></tr>
+            </thead>
+            <tbody>
+              {filas.map((f) => (
+                <tr data-fila={f.id}>
+                  <td>{f.etiqueta}</td>
+                  <td>{fmt0.format(f.util)} Wh</td>
+                  <td data-dias>{fmt1.format(f.dias)} días ({fmt0.format(f.horasAutonomia)} h)</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section aria-labelledby="formula">
+        <h2 id="formula">La fórmula</h2>
+        <p>Dividimos la energía que la batería puede entregar entre lo que consume el equipo cada día:</p>
+        <p class="formula"><b>Autonomía (días)</b> = capacidad nominal × {fmt0.format(DOD * 100)} % {equipo.es_ac ? `× ${fmt0.format(EF * 100)} % (inversor)` : ""} ÷ (potencia × horas al día)</p>
+        <p>La <b>capacidad nominal</b> es voltaje × amperios-hora: una batería de 100 Ah a 12 V tiene 1280 Wh (12,8 V nominales de LiFePO4). La <b>potencia</b> es la que pone el fabricante del equipo, y las <b>horas</b> son las que tú usas de verdad.</p>
+
+        <h3>Ejemplo resuelto: {ejemplo.etiqueta}</h3>
+        <p>Capacidad nominal {fmt0.format(ejemplo.capacidad_wh)} Wh × {fmt0.format(DOD * 100)} % = {fmt0.format(ejemplo.capacidad_wh * DOD)} Wh.
+          {equipo.es_ac ? ` Como funciona a 230 V, lo multiplicamos por ${fmt0.format(EF * 100)} %: ${fmt0.format(ejemplo.util)} Wh utilizables.` : ` Como funciona a 12 V no hay pérdida de inversor: ${fmt0.format(ejemplo.util)} Wh utilizables.`}
+          Consumo diario: {fmt0.format(equipo.potencia_w)} W × {equipo.horas_dia} h = {fmt0.format(ejemplo.consumo)} Wh.
+          Autonomía: {fmt0.format(ejemplo.util)} ÷ {fmt0.format(ejemplo.consumo)} = <b>{fmt1.format(ejemplo.dias)} días</b>.</p>
+      </section>
+
+      <section aria-labelledby="calculadora" class="bloque autonomia-calc">
+        <h2 id="calculadora">Calcula con tus horas</h2>
+        <div class="fila2">
+          <div class="campo">
+            <label for="horas">Horas de uso al día</label>
+            <input id="horas" type="number" min="0" max="24" step="0.5" value={equipo.horas_dia} inputmode="decimal" />
+          </div>
+          <div class="campo">
+            <label for="bateria">Batería</label>
+            <select id="bateria">
+              {filas.map((f) => (
+                <option value={f.id} data-kit={f.kit_id} selected={f.id === recomendada.id}>{f.etiqueta}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <p class="resultado" aria-live="polite" data-resultado>
+          Con esa batería y {equipo.horas_dia} h al día: <b>{fmt1.format(recomendada.dias)} días</b> de autonomía.
+        </p>
+      </section>
+
+      <section aria-labelledby="kit">
+        <h2 id="kit">Configuración recomendada</h2>
+        <p>Según la autonomía que necesitas, el paquete que mejor encaja es el que se indica abajo. Cambia la batería en la calculadora y la ficha se actualiza.</p>
+        <RecomendadorKit kitId={recomendada.kit_id} />
+      </section>
+
+      <section aria-labelledby="otros">
+        <h2 id="otros">Otros equipos</h2>
+        <ul class="enlaces-equipos">
+          {otrosEquipos.map((e) => (<li><a href={`/autonomia/${e.slug}`}>{e.nombre}</a></li>))}
+        </ul>
+      </section>
+
+      <section aria-labelledby="faq">
+        <h2 id="faq">Preguntas frecuentes</h2>
+        {faqs.map((f) => (
+          <div class="faq">
+            <h3>{f.q}</h3>
+            <p>{f.a}</p>
+          </div>
+        ))}
+      </section>
+
+      <p class="aviso-nota">Resultados orientativos. Los consumos reales dependen del modelo, la temperatura y el uso. Confirma el dimensionamiento con un instalador.</p>
+    </div>
+  </article>
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+  <script define:vars={{ baterias: filas.map((f) => ({ id: f.id, etiqueta: f.etiqueta, capacidad: f.capacidad_wh, kit: f.kit_id })), potencia: equipo.potencia_w, horasDefault: equipo.horas_dia, es_ac: equipo.es_ac, DOD, EF }}>
+    (function () {
+      const horas = document.getElementById("horas");
+      const sel = document.getElementById("bateria");
+      const salida = document.querySelector("[data-resultado]");
+      const filas = document.querySelectorAll("[data-fila]");
+      if (!horas || !sel || !salida) return;
+      const fmt1 = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 1 });
+      const fmt0 = new Intl.NumberFormat("es-ES", { maximumFractionDigits: 0 });
+
+      function dias(b, h) {
+        const consumo = potencia * h;
+        const util = b.capacidad * DOD * (es_ac ? EF : 1);
+        return consumo > 0 ? util / consumo : Infinity;
+      }
+
+      function actualizar() {
+        const h = Math.min(24, Math.max(0, parseFloat(horas.value) || 0));
+        const b = baterias.find((x) => x.id === sel.value);
+        if (!b) return;
+        const d = dias(b, h);
+        salida.innerHTML = "Con esa batería y " + fmt1.format(h) + " h al día: <b>" +
+          (isFinite(d) ? fmt1.format(d) + " días" : "sin consumo") + "</b> de autonomía.";
+        filas.forEach((tr) => {
+          const fb = baterias.find((x) => x.id === tr.dataset.fila);
+          const celda = tr.querySelector("[data-dias]");
+          if (fb && celda) {
+            const df = dias(fb, h);
+            celda.textContent = (isFinite(df) ? fmt1.format(df) + " días (" + fmt0.format(df * 24) + " h)" : "sin consumo");
+          }
+        });
+        window.dispatchEvent(new CustomEvent("actualizar-kit", { detail: { kitId: b.kit } }));
+      }
+
+      horas.addEventListener("input", actualizar);
+      sel.addEventListener("change", actualizar);
+    })();
+  </script>
+</Base>
+
+<style>
+  .tabla-wrap { min-height: 190px; overflow-x: auto; }
+  .tabla-autonomia td, .tabla-autonomia th { white-space: nowrap; }
+  .formula { background: var(--surface); border-left: 3px solid var(--navy); padding: 12px 14px; border-radius: var(--radius-s); margin: 14px 0; }
+  .autonomia-calc { margin: 36px 0; }
+  .resultado { margin-top: 14px; min-height: 26px; }
+  .enlaces-equipos { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .enlaces-equipos a { text-decoration: underline; text-decoration-color: var(--sun); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+  .faq { border-top: 1px solid var(--line); padding: 16px 0; }
+  .faq h3 { font-size: 17px; }
+  @media (max-width: 560px) { .enlaces-equipos { grid-template-columns: minmax(0, 1fr); } }
+</style>

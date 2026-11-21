@@ -1,0 +1,69 @@
+{
+  "supuestos": {
+    "dod_lifepo4": 0.9,
+    "eficiencia_inversor_ac": 0.88,
+    "nota": "Factor de profundidad de descarga del 90% para LiFePO4 y eficiencia del inversor del 88% cuando el equipo funciona a 230 V AC. Las horas de uso son un punto de partida: ajústalas en la calculadora con tus equipos reales."
+  },
+  "baterias": [
+    { "id": "100ah-12v", "etiqueta": "100 Ah · 12 V", "voltaje": 12, "ah": 100, "capacidad_wh": 1280, "kit_id": "kit-camper-100" },
+    { "id": "200ah-12v", "etiqueta": "200 Ah · 12 V", "voltaje": 12, "ah": 200, "capacidad_wh": 2560, "kit_id": "kit-camper-200-pro" },
+    { "id": "100ah-24v", "etiqueta": "100 Ah · 24 V", "voltaje": 24, "ah": 100, "capacidad_wh": 2560, "kit_id": "kit-jardin-24v" },
+    { "id": "100ah-48v", "etiqueta": "100 Ah · 48 V", "voltaje": 48, "ah": 100, "capacidad_wh": 5120, "kit_id": "kit-respaldo-48v" }
+  ],
+  "equipos": [
+    {
+      "slug": "nevera-compresor-12v",
+      "nombre": "Nevera de compresor 12 V",
+      "potencia_w": 45,
+      "alimentacion": "12 V",
+      "es_ac": false,
+      "horas_dia": 8,
+      "uso": "Conservar alimentos en ruta. El compresor no funciona de forma continua: las horas reales dependen de la temperatura y de cuánto abras la puerta."
+    },
+    {
+      "slug": "antena-starlink",
+      "nombre": "Antena Starlink estándar",
+      "potencia_w": 55,
+      "alimentacion": "230 V",
+      "es_ac": true,
+      "horas_dia": 24,
+      "uso": "Internet por satélite en ruta. Consume de forma continua mientras está encendida."
+    },
+    {
+      "slug": "depuradora-piscina",
+      "nombre": "Depuradora de piscina",
+      "potencia_w": 350,
+      "alimentacion": "230 V",
+      "es_ac": true,
+      "horas_dia": 6,
+      "uso": "Filtrado de piscinas pequeñas. Consume lo mismo mientras funciona, así que las horas diarias marcan el gasto."
+    },
+    {
+      "slug": "bomba-riego",
+      "nombre": "Bomba de riego",
+      "potencia_w": 750,
+      "alimentacion": "230 V",
+      "es_ac": true,
+      "horas_dia": 2,
+      "uso": "Riego de huerto o jardín. Potencia alta pero poco tiempo de uso al día."
+    },
+    {
+      "slug": "cpap",
+      "nombre": "Equipo CPAP",
+      "potencia_w": 35,
+      "alimentacion": "230 V",
+      "es_ac": true,
+      "horas_dia": 8,
+      "uso": "Terapia nocturna. Consume durante toda la noche de uso."
+    },
+    {
+      "slug": "portatil-router",
+      "nombre": "Ordenador portátil y router",
+      "potencia_w": 80,
+      "alimentacion": "230 V",
+      "es_ac": true,
+      "horas_dia": 6,
+      "uso": "Trabajo o estudio en ruta con conexión a internet."
+    }
+  ]
+}

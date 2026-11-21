@@ -1,0 +1,48 @@
+/* Hallmark · v2.0.0 — hestiat solar · genre modern-minimal · theme custom (solar), floor-only: skill scripts/themes not synced · signature: the live calculator in the hero */
+/* critique: content-first, one idea per screen; density risk in the hero calculator kept to four inputs; no eyebrow, no tracked caps, colours and type tokenised */
+:root {
+  /* surfaces */
+  --paper: #ffffff;
+  --surface: #f6f8fa;
+  --surface-2: #eceff4;
+  --line: #e2e7ee;
+  --line-strong: #cfd7e1;
+
+  /* ink */
+  --ink: #131a22;
+  --muted: #566070;
+  --soft: #87909e;
+  --on-dark: #ffffff;
+  --on-dark-soft: #b7c3d2;
+  --on-dark-mute: #8498aa;
+
+  /* brand: sun + eco + deep */
+  --sun: #f4a019;
+  --sun-strong: #d97d00;
+  --sun-ink: #3a2500;
+  --sun-tint: #fff3dd;
+  --eco: #0e7a56;
+  --eco-tint: #e3f4ec;
+  --eco-line: #bfe6d4;
+  --navy: #0f2235;
+  --navy-2: #163049;
+
+  /* focus */
+  --focus: #1769d9;
+
+  /* shadows (colour lives in the token, never in a rule) */
+  --shadow-1: 0 6px 18px rgba(15, 34, 53, 0.10);
+  --shadow-2: 0 18px 48px rgba(15, 34, 53, 0.12);
+  --shadow-sun: 0 8px 20px rgba(217, 125, 0, 0.26);
+
+  /* type */
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  /* shape + rhythm */
+  --radius: 12px;
+  --radius-s: 9px;
+  --pill: 999px;
+  --max: 1120px;
+  --gutter: 20px;
+}

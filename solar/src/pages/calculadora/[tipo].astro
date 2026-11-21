@@ -1,0 +1,47 @@
+---
+import Base from "../../layouts/Base.astro";
+import Calculadora from "../../components/Calculadora.astro";
+import usos from "../../data/usos.json";
+
+export function getStaticPaths() {
+  return Object.keys(usos).map((tipo) => ({ params: { tipo } }));
+}
+
+const { tipo } = Astro.params;
+const u = (usos as Record<string, any>)[tipo as string];
+const cargas = u.cargas.filter((c: any) => c.w > 0);
+const whDia = cargas.reduce((s: number, c: any) => s + c.w * c.horas, 0);
+---
+<Base title={`Calculadora solar · ${u.titulo}`} description={`Dimensiona una instalación solar para ${u.titulo.toLowerCase()}: paneles, inversor y batería a partir de tu consumo. Estimación orientativa.`}>
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Calculadora para {u.titulo.toLowerCase()}</h2>
+        <p>{u.intro}</p>
+      </div>
+      <div class="dos-col">
+        <div>
+          <Calculadora consumoInicial={u.consumo} objetivoInicial={u.objetivo} />
+        </div>
+        <aside class="lateral">
+          <h3>Consumos típicos</h3>
+          {cargas.length > 0 ? (
+            <table class="tabla">
+              <thead><tr><th>Equipo</th><th>Potencia</th><th>Uso al día</th></tr></thead>
+              <tbody>
+                {cargas.map((c: any) => (
+                  <tr><td>{c.nombre}</td><td>{c.w} W</td><td>{c.horas} h</td></tr>
+                ))}
+              </tbody>
+            </table>
+            <p class="lateral-tot">Suma orientativa: <b>{Math.round(whDia)} Wh al día</b> (~{Math.round(whDia * 365 / 1000)} kWh/año).</p>
+          ) : (
+            <p class="m">Para un hogar, lo fiable son los kWh de tu factura anual. La tabla de equipos tiene sentido en instalaciones aisladas.</p>
+          )}
+          <p class="aviso-nota">{u.nota}</p>
+          <a class="btn btn-ghost" href={`/instalacion/${u.sistema.toLowerCase()}`}>Ver el esquema {u.sistema}</a>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Base>

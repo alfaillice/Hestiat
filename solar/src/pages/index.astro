@@ -1,0 +1,115 @@
+---
+import Base from "../layouts/Base.astro";
+import Calculadora from "../components/Calculadora.astro";
+import Esquema from "../components/Esquema.astro";
+const SHOP = "https://shop.hestiat.com";
+---
+<Base>
+  <section class="hero">
+    <div class="wrap hero-in">
+      <div>
+        <h1>Dimensiona tu solar <span class="em">en un minuto</span></h1>
+        <p class="lead">
+          Dinos tu consumo y tu provincia y te decimos cuántos paneles, qué inversor y qué batería
+          necesitas. Para camper, jardín u hogar.
+        </p>
+        <div class="hero-cta">
+          <a class="btn btn-sun" href="#calc">Empezar el cálculo</a>
+          <a class="btn btn-ghost" href="/guias">Ver las guías</a>
+        </div>
+        <p class="hero-note">
+          Resultado <b>orientativo y honesto</b>: con supuestos a la vista, sin pedirte el correo.
+        </p>
+      </div>
+      <div id="calc"><Calculadora /></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Elige por dónde empiezas</h2>
+        <p>Cada uso tiene su cálculo y su esquema. Entra por el tuyo.</p>
+      </div>
+      <div class="selector">
+        <a class="uso" href="/calculadora/camper">
+          <span class="uso-img"><img src="/img/camper.png" alt="Furgoneta camper con un panel solar en el techo, aparcada en el campo" width="400" height="300" loading="lazy" /></span>
+          <span class="uso-body">
+            <h3>Camper y furgoneta</h3>
+            <p>Nevera 12V, bomba de agua, Starlink. Autonomía real sin arrancar el motor.</p>
+            <span class="go">Calcular para camper</span>
+          </span>
+        </a>
+        <a class="uso" href="/calculadora/jardin">
+          <span class="uso-img"><img src="/img/jardin.png" alt="Caseta de jardín de madera con un panel solar en el tejado" width="400" height="300" loading="lazy" /></span>
+          <span class="uso-body">
+            <h3>Jardín y caseta</h3>
+            <p>Riego, herramientas, iluminación y una caseta aislada de la red.</p>
+            <span class="go">Calcular para jardín</span>
+          </span>
+        </a>
+        <a class="uso" href="/calculadora/hogar">
+          <span class="uso-img"><img src="/img/hogar.png" alt="Batería e inversor híbrido de autoconsumo montados en la pared de un cuarto técnico" width="400" height="300" loading="lazy" /></span>
+          <span class="uso-body">
+            <h3>Hogar y autoconsumo</h3>
+            <p>Reduce la factura con o sin batería, con excedentes a la red.</p>
+            <span class="go">Calcular para hogar</span>
+          </span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec bg-surface">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Esquemas que se entienden</h2>
+        <p>Cada componente en su sitio y por qué. Diagramas a 12, 24 y 48 voltios, con protecciones y secciones de cable, para descargar en PDF.</p>
+      </div>
+      <Esquema />
+      <div class="esquema-links">
+        <a href="/instalacion/12v">Esquema 12V · camper</a>
+        <a href="/instalacion/24v">Esquema 24V · caseta</a>
+        <a href="/instalacion/48v">Esquema 48V · hogar</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Antes de comprar, entiende</h2>
+        <p>Lo que de verdad cambia tu instalación: baterías, permisos y cuándo se amortiza.</p>
+      </div>
+      <div class="grid3">
+        <a class="card" href="/baterias"><h3>Baterías: LFP frente al resto</h3><p>Ciclos, profundidad de descarga y cuánta capacidad necesitas de verdad.</p><span class="go">Leer</span></a>
+        <a class="card" href="/permisos"><h3>Permisos y legalización</h3><p>Autoconsumo, REBT y uso móvil (ITV): qué aplica según tu caso. A verificar siempre.</p><span class="go">Leer</span></a>
+        <a class="card" href="/guias/amortizacion"><h3>¿Cuándo se paga sola?</h3><p>Amortización con tus números, sin promesas infladas de ahorro.</p><span class="go">Leer</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec bg-surface">
+    <div class="wrap">
+      <div class="sec-head"><h2>De la duda al pedido</h2></div>
+      <div class="pasos">
+        <div class="paso"><div class="n">1</div><h3>Calcula</h3><p>Consumo y provincia: potencia, inversor y batería.</p></div>
+        <div class="paso"><div class="n">2</div><h3>Aprende</h3><p>Guías y esquemas para el sistema que te toca.</p></div>
+        <div class="paso"><div class="n">3</div><h3>Legaliza</h3><p>Sabes qué permiso necesitas antes de instalar.</p></div>
+        <div class="paso"><div class="n">4</div><h3>Compra</h3><p>El kit en la tienda, con las piezas del cálculo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="tienda">
+        <div>
+          <h2>El kit que sale de tu cálculo, en la tienda</h2>
+          <p>Paneles, inversores, baterías y accesorios elegidos con criterio. La tienda vive en shop.hestiat.com.</p>
+        </div>
+        <a class="btn btn-sun" href={SHOP} target="_blank" rel="noopener noreferrer">Ir a la tienda</a>
+      </div>
+    </div>
+  </section>
+</Base>

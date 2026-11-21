@@ -1,0 +1,149 @@
+---
+// Ficha comercial de un kit. Se renderiza en el servidor con el kit inicial (visible sin JavaScript)
+// y se actualiza en el cliente al recibir el evento 'actualizar-kit' con { detail: { kitId } }.
+// Un dato a null no se muestra: sin precio no hay precio, sin checkout_url no hay botón de compra.
+import catalogo from "../data/kits.json";
+
+interface Props { kitId: string; }
+const { kitId } = Astro.props;
+const kits = catalogo.kits;
+const CRUCE_ID = "kit-protecciones-pro";
+const kitInicial = kits.find((k) => k.id === kitId);
+---
+<section class="kit" data-kit-root aria-live="polite" aria-label="Ficha del kit">
+  <div data-kit-contenido>
+    {kitInicial && (
+      <>
+        <header class="kit-head">
+          <h3 data-kit-nombre>{kitInicial.nombre}</h3>
+          <p class="m" data-kit-uso>{kitInicial.uso_ideal}</p>
+        </header>
+        <dl class="kit-specs">
+          {kitInicial.voltaje != null && (<div><dt>Tensión</dt><dd>{kitInicial.voltaje} V</dd></div>)}
+          {kitInicial.capacidad_wh != null && (<div><dt>Batería</dt><dd>{kitInicial.capacidad_wh.toLocaleString("es-ES")} Wh</dd></div>)}
+          {kitInicial.potencia_solar_w != null && (<div><dt>Solar</dt><dd>{kitInicial.potencia_solar_w} W</dd></div>)}
+          {kitInicial.potencia_inversor_w != null && (<div><dt>Inversor</dt><dd>{kitInicial.potencia_inversor_w} W</dd></div>)}
+        </dl>
+        <ul class="kit-comp">
+          {kitInicial.componentes.map((c) => (
+            <li><span>{c.cantidad}× {c.nombre}</span>{c.especificacion && <span class="m"> · {c.especificacion}</span>}</li>
+          ))}
+        </ul>
+        <div class="kit-compra">
+          {kitInicial.precio_eur != null && (<p class="kit-precio">{kitInicial.precio_eur.toLocaleString("es-ES", { style: "currency", currency: "EUR" })}</p>)}
+          {kitInicial.checkout_url ? (
+            <a class="btn btn-sun" href={kitInicial.checkout_url}>Comprar este kit</a>
+          ) : (
+            <a class="btn btn-ghost" href="/contacto">Preguntar por este kit</a>
+          )}
+        </div>
+      </>
+    )}
+  </div>
+
+  <aside class="kit-cruce" data-kit-cruce hidden>
+    <h4>Protección recomendada</h4>
+    <p class="m" data-cruce-texto></p>
+    <a class="btn btn-ghost" data-cruce-enlace href="/contacto">Ver protecciones</a>
+  </aside>
+</section>
+
+<script define:vars={{ catalogo: kits, cruceId: CRUCE_ID }}>
+  (function () {
+    const root = document.querySelector("[data-kit-root]");
+    if (!root) return;
+    const contenido = root.querySelector("[data-kit-contenido]");
+    const cruce = root.querySelector("[data-kit-cruce]");
+    const eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+    const el = (tag, cls, texto) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (texto != null) n.textContent = texto;
+      return n;
+    };
+
+    function pintar(kit) {
+      contenido.replaceChildren();
+      const head = el("header", "kit-head");
+      head.append(el("h3", null, kit.nombre), el("p", "m", kit.uso_ideal));
+      contenido.append(head);
+
+      const specs = el("dl", "kit-specs");
+      const filas = [
+        ["Tensión", kit.voltaje, (v) => v + " V"],
+        ["Batería", kit.capacidad_wh, (v) => v.toLocaleString("es-ES") + " Wh"],
+        ["Solar", kit.potencia_solar_w, (v) => v + " W"],
+        ["Inversor", kit.potencia_inversor_w, (v) => v + " W"],
+      ];
+      for (const [nombre, valor, fmt] of filas) {
+        if (valor == null) continue;
+        const div = el("div");
+        div.append(el("dt", null, nombre), el("dd", null, fmt(valor)));
+        specs.append(div);
+      }
+      if (specs.children.length) contenido.append(specs);
+
+      const lista = el("ul", "kit-comp");
+      for (const c of kit.componentes) {
+        const li = el("li");
+        li.append(el("span", null, c.cantidad + "× " + c.nombre));
+        if (c.especificacion) li.append(el("span", "m", " · " + c.especificacion));
+        lista.append(li);
+      }
+      contenido.append(lista);
+
+      const compra = el("div", "kit-compra");
+      if (kit.precio_eur != null) compra.append(el("p", "kit-precio", eur.format(kit.precio_eur)));
+      if (kit.checkout_url) {
+        compra.append(Object.assign(el("a", "btn btn-sun", "Comprar este kit"), { href: kit.checkout_url }));
+      } else {
+        compra.append(Object.assign(el("a", "btn btn-ghost", "Preguntar por este kit"), { href: "/contacto" }));
+      }
+      contenido.append(compra);
+
+      pintarCruce(kit);
+    }
+
+    function pintarCruce(kit) {
+      const otro = catalogo.find((k) => k.id === cruceId);
+      if (!otro || kit.id === cruceId) {
+        cruce.hidden = true;
+        return;
+      }
+      cruce.hidden = false;
+      const texto = otro.componentes.map((c) => c.cantidad + "× " + c.nombre).join(", ");
+      cruce.querySelector("[data-cruce-texto]").textContent = otro.nombre + ": " + texto + ".";
+      const enlace = cruce.querySelector("[data-cruce-enlace]");
+      if (otro.checkout_url) {
+        enlace.href = otro.checkout_url;
+        enlace.textContent = "Añadir protecciones";
+      } else {
+        enlace.href = "/contacto";
+        enlace.textContent = "Ver protecciones";
+      }
+    }
+
+    window.addEventListener("actualizar-kit", (e) => {
+      const kit = catalogo.find((k) => k.id === (e.detail && e.detail.kitId));
+      if (kit) pintar(kit);
+    });
+  })();
+</script>
+
+<style>
+  .kit { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; min-height: 420px; }
+  .kit-head h3 { font-size: 22px; }
+  .kit-head p { margin-top: 6px; }
+  .kit-specs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 20px 0; }
+  .kit-specs div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-s); padding: 12px 14px; }
+  .kit-specs dt { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .kit-specs dd { font-size: 18px; font-weight: 700; margin-top: 2px; color: var(--ink); }
+  .kit-comp { list-style: none; display: grid; gap: 8px; font-size: 15px; border-top: 1px solid var(--line); padding-top: 16px; }
+  .kit-compra { margin-top: 22px; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  .kit-precio { font-size: 26px; font-weight: 700; color: var(--ink); }
+  .kit-cruce { margin-top: 22px; border-top: 3px solid var(--navy); padding: 18px 0 0; }
+  .kit-cruce h4 { font-size: 16px; margin-bottom: 6px; }
+  .kit-cruce p { margin-bottom: 14px; font-size: 14px; }
+  .kit-cruce[hidden] { display: none; }
+  @media (max-width: 520px) { .kit-specs { grid-template-columns: minmax(0, 1fr); } }
+</style>

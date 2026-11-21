@@ -13,7 +13,7 @@
 # No toca: base de datos, shop.hestiat.com, newtimes.news, correo, DNS.
 set -euo pipefail
 
-REPO_URL="https://github.com/alfaillice/Hestiat.git"   # si el repo es privado, usar clave de despliegue (ver README)
+REPO_URL="https://github.com/alfaillice/Hestiat.git"   # repo público: clonado sin credenciales
 RAMA="solar-web"
 SRC="/root/hestiat-src"
 BASE="/var/www/hestiat-solar"
@@ -134,6 +134,9 @@ fase_revertir() {
 }
 
 fase_retirar() {
+  # Solo se retira la web antigua si la nueva está publicada y responde.
+  [ "$(readlink -f "$CURRENT")" = "$(readlink -f "$(ultima_release)")" ] || { echo "hestiat.com no apunta a la última release. Ejecuta primero activar."; exit 1; }
+  curl -fsS -o /dev/null https://hestiat.com/ || { echo "hestiat.com no responde. No se borra nada."; exit 1; }
   log "Se van a eliminar:"
   echo "  - servicio hestiat-nueva (si existe)"
   echo "  - carpeta /home/ubuntu/hestiat-nueva"

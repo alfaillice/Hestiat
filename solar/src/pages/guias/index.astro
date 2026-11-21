@@ -10,15 +10,24 @@ const guias = [
 <Base title="Guías de autoconsumo solar" description="Guías claras de autoconsumo solar y baterías: amortización, baterías, permisos y cómo dimensionar sin inventar ahorros.">
   <section class="sec">
     <div class="wrap">
-      <div class="sec-head">
-        <h2>Guías</h2>
+      <header class="sec-head">
+        <h1>Guías</h1>
         <p>Lo que de verdad cambia una instalación, explicado sin humo. Datos verificables y, donde algo depende de tu caso, se dice.</p>
-      </div>
-      <div class="grid2">
-        {guias.map((g) => (
-          <a class="card" href={g.href}><h3>{g.t}</h3><p>{g.d}</p><span class="go">Leer</span></a>
+      </header>
+      <ol class="guia-lista">
+        {guias.map((g, i) => (
+          <li>
+            <a class="guia" href={g.href}>
+              <span class="guia-n">{String(i + 1).padStart(2, "0")}</span>
+              <span class="guia-t">
+                <span class="guia-titulo">{g.t}</span>
+                <span class="guia-d">{g.d}</span>
+              </span>
+              <span class="guia-leer">Leer</span>
+            </a>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
   </section>
 </Base>

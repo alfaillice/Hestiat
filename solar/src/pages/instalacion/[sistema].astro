@@ -1,6 +1,7 @@
 ---
 import Base from "../../layouts/Base.astro";
 import Esquema from "../../components/Esquema.astro";
+import Ilustra from "../../components/Ilustra.astro";
 import sistemas from "../../data/sistemas.json";
 
 export function getStaticPaths() {
@@ -13,24 +14,32 @@ const s = (sistemas as Record<string, any>)[sistema as string];
 <Base title={`${s.titulo} · esquema de instalación`} description={`Esquema e instalación de un sistema solar ${s.titulo}: componentes, protecciones y cuándo elegirlo.`}>
   <section class="sec">
     <div class="wrap wrap-print">
-      <div class="sec-head">
-        <h2>{s.titulo}</h2>
+      <header class="sec-head">
+        <h1>{s.titulo}</h1>
         <p>{s.intro}</p>
-      </div>
+      </header>
 
       <Esquema />
 
-      <div class="dos-col" style="margin-top:28px">
-        <div class="bloque">
-          <h3>Componentes</h3>
-          <ul class="lista-check">
-            {s.componentes.map((c: string) => <li>{c}</li>)}
-          </ul>
-        </div>
+      <h2 class="titulo-bloque">Componentes de este sistema</h2>
+      <ul class="comp-grid">
+        {s.componentes.map((c: { tipo: string; texto: string }) => (
+          <li class="comp">
+            <Ilustra tipo={c.tipo} />
+            <p>{c.texto}</p>
+          </li>
+        ))}
+      </ul>
+
+      <div class="dos-col" style="margin-top:40px">
         <div class="bloque">
           <h3>Cuándo elegir este sistema</h3>
           <p class="m">{s.cuando}</p>
           <p class="aviso-nota">Las secciones de cable y las protecciones concretas dependen de las potencias y las distancias de tu instalación; confírmalas con un instalador antes de comprar.</p>
+        </div>
+        <div class="bloque">
+          <h3>Guardar la ficha</h3>
+          <p class="m">Imprime esta página para llevarla al instalador: esquema y componentes, sin menú ni pie.</p>
           <button type="button" class="btn btn-ghost" id="imprimir">Guardar como PDF (imprimir)</button>
         </div>
       </div>

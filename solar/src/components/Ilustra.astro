@@ -1,6 +1,6 @@
 ---
 // Ilustración vectorial propia de cada componente de una instalación. Sin imágenes de stock ni marcas.
-const { tipo } = Astro.props;
+const { tipo, foto } = Astro.props as { tipo: string; foto?: string };
 const etiquetas: Record<string, string> = {
   panel: "Panel solar",
   mppt: "Regulador MPPT",
@@ -11,6 +11,9 @@ const etiquetas: Record<string, string> = {
   red: "Conexión a la red",
 };
 ---
+{foto ? (
+  <img class="il il-foto" src={foto} alt={etiquetas[tipo]} width="1264" height="848" loading="lazy" />
+) : (
 <svg class="il" viewBox="0 0 160 120" role="img" aria-label={etiquetas[tipo]}>
   <rect x="1" y="1" width="158" height="118" rx="10" class="il-base" />
 
@@ -81,9 +84,11 @@ const etiquetas: Record<string, string> = {
     </g>
   )}
 </svg>
+)}
 
 <style>
   .il { width: 100%; height: auto; display: block; }
+  .il-foto { aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius-s); }
   .il-base { fill: var(--surface); stroke: var(--line); }
   .il-body { fill: var(--paper); stroke: var(--navy); stroke-width: 1.6; }
   .il-face { fill: var(--paper); stroke: var(--navy); stroke-width: 1.6; }

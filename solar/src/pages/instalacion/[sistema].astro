@@ -10,6 +10,11 @@ export function getStaticPaths() {
 
 const { sistema } = Astro.params;
 const s = (sistemas as Record<string, any>)[sistema as string];
+// Fotos reales generadas (Gemini). Los tipos sin foto usan la ilustración vectorial.
+const fotos: Record<string, string> = {
+  bateria: "/img/bateria-lfp.png",
+  mppt: "/img/regulador-mppt.png",
+};
 ---
 <Base title={`${s.titulo} · esquema de instalación`} description={`Esquema e instalación de un sistema solar ${s.titulo}: componentes, protecciones y cuándo elegirlo.`}>
   <section class="sec">
@@ -25,7 +30,7 @@ const s = (sistemas as Record<string, any>)[sistema as string];
       <ul class="comp-grid">
         {s.componentes.map((c: { tipo: string; texto: string }) => (
           <li class="comp">
-            <Ilustra tipo={c.tipo} />
+            <Ilustra tipo={c.tipo} foto={fotos[c.tipo]} />
             <p>{c.texto}</p>
           </li>
         ))}

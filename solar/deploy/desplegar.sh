@@ -39,8 +39,8 @@ fase_estado() {
   ss -ltnp | grep -E ':(80|443|3000|3002|3999)\b' || echo "(ninguno de 3000/3002/3999)"
   log "Servicios hestiat:"
   systemctl list-units --type=service --all | grep -i hestiat || echo "(ninguno)"
-  log "Carpeta de la web antigua:"
-  ls -d /home/ubuntu/hestiat-nueva 2>/dev/null || echo "(no encontrada)"
+  log "Carpeta de la web antigua (se conserva data/ con la base de datos):"
+  ls -la /srv/hestiat/data 2>/dev/null | head -3 || echo "(no encontrada)"
   log "Comprobación de puerto 3999 (debe estar libre):"
   ss -ltn | grep ':3999' && echo "AVISO: 3999 ocupado" || echo "3999 libre"
 }
@@ -137,17 +137,23 @@ fase_retirar() {
   # Solo se retira la web antigua si la nueva está publicada y responde.
   [ "$(readlink -f "$CURRENT")" = "$(readlink -f "$(ultima_release)")" ] || { echo "hestiat.com no apunta a la última release. Ejecuta primero activar."; exit 1; }
   curl -fsS -o /dev/null https://hestiat.com/ || { echo "hestiat.com no responde. No se borra nada."; exit 1; }
+  [ -d /srv/hestiat/data ] || { echo "No encuentro /srv/hestiat/data. No borro nada."; exit 1; }
   log "Se van a eliminar:"
-  echo "  - servicio hestiat-nueva (si existe)"
-  echo "  - carpeta /home/ubuntu/hestiat-nueva"
-  echo "NO se toca la base de datos. Eso requiere una orden aparte y explícita."
-  pide_si "Irreversible: no hay respaldo de la web antigua."
-  systemctl stop hestiat-nueva 2>/dev/null || true
-  systemctl disable hestiat-nueva 2>/dev/null || true
-  rm -f /etc/systemd/system/hestiat-nueva.service
+  echo "  - servicio hestiat-web y su unidad systemd"
+  echo "  - launcher /usr/local/sbin/hestiat-web-launch"
+  echo "  - sitio nginx hestiat-web (app.57-129-181-57.sslip.io)"
+  echo "  - todo en /srv/hestiat EXCEPTO data/"
+  echo "Se conserva: /srv/hestiat/data (base de datos SQLite y backups)."
+  pide_si "Irreversible: no hay respaldo del código antiguo."
+  systemctl disable --now hestiat-web 2>/dev/null || true
+  rm -f /etc/systemd/system/hestiat-web.service
   systemctl daemon-reload
-  rm -rf /home/ubuntu/hestiat-nueva
-  log "Web antigua retirada. Base de datos intacta."
+  rm -f /usr/local/sbin/hestiat-web-launch
+  rm -f /etc/nginx/sites-enabled/hestiat-web
+  nginx -t && systemctl reload nginx
+  find /srv/hestiat -mindepth 1 -maxdepth 1 ! -name data -exec rm -rf {} +
+  log "Web antigua retirada. Conservado: /srv/hestiat/data"
+  ls -la /srv/hestiat
 }
 
 case "${1:-}" in

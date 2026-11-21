@@ -1,0 +1,42 @@
+{
+  "camper": {
+    "titulo": "Camper y furgoneta",
+    "sistema": "12V",
+    "objetivo": "aislada",
+    "consumo": 300,
+    "intro": "Una instalación de camper es pequeña y autónoma: todo va a batería y se consume cuando no hay sol. Lo que manda no son los kWh al año, sino cubrir el día a día sin arrancar el motor.",
+    "cargas": [
+      { "nombre": "Nevera de compresor 12V", "w": 45, "horas": 8 },
+      { "nombre": "Bomba de agua", "w": 60, "horas": 0.3 },
+      { "nombre": "Iluminación LED", "w": 15, "horas": 4 },
+      { "nombre": "Starlink / router", "w": 50, "horas": 5 },
+      { "nombre": "Cargar móviles y portátil", "w": 60, "horas": 2 }
+    ],
+    "nota": "El consumo de partida (unos 300 kWh/año) es orientativo y estacional: en verano se usa más. Ajusta la calculadora con tus equipos reales."
+  },
+  "jardin": {
+    "titulo": "Jardín y caseta",
+    "sistema": "24V",
+    "objetivo": "aislada",
+    "consumo": 350,
+    "intro": "Riego, herramientas, iluminación y una caseta sin tirar línea desde casa. A 24V se pierde menos por el cable que a 12V cuando hay algo de distancia.",
+    "cargas": [
+      { "nombre": "Bomba de riego", "w": 500, "horas": 0.5 },
+      { "nombre": "Iluminación del jardín", "w": 30, "horas": 3 },
+      { "nombre": "Herramientas (ocasional)", "w": 800, "horas": 0.3 },
+      { "nombre": "Pequeños consumos de la caseta", "w": 40, "horas": 3 }
+    ],
+    "nota": "El riego concentra el consumo en pocos minutos de mucha potencia: cuenta con un inversor que lo aguante, no solo con la media diaria."
+  },
+  "hogar": {
+    "titulo": "Hogar y autoconsumo",
+    "sistema": "48V",
+    "objetivo": "autoconsumo",
+    "consumo": 3500,
+    "intro": "Reduce la factura produciendo de día lo que gastas, con o sin batería. Con conexión a red puedes verter los excedentes y compensarlos. A 48V el sistema es más eficiente y crece mejor.",
+    "cargas": [
+      { "nombre": "Consumo medio de un hogar en España", "w": 0, "horas": 0 }
+    ],
+    "nota": "El punto de partida son 3.500 kWh/año (media de un hogar español). Usa los kWh reales de tu factura anual para afinar de verdad."
+  }
+}

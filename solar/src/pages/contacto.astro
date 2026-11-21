@@ -1,0 +1,27 @@
+---
+import Base from "../layouts/Base.astro";
+const SHOP = "https://shop.hestiat.com";
+const EMAIL = "hola@hestiat.com";
+---
+<Base title="Contacto" description="Cómo contactar con Hestiat para dudas sobre dimensionamiento solar y baterías.">
+  <article class="sec">
+    <div class="wrap articulo">
+      <h1>Contacto</h1>
+      <p class="entradilla">Para dudas sobre el cálculo o sobre qué sistema te encaja, escríbenos. Para comprar, la tienda está en un sitio aparte.</p>
+
+      <div class="dos-col" style="margin-top:8px">
+        <div class="bloque">
+          <h3>Dudas y dimensionamiento</h3>
+          <p class="m">Cuéntanos tu consumo, tu provincia y tu uso (camper, jardín u hogar) y te orientamos.</p>
+          <a class="btn btn-sun" href={`mailto:${EMAIL}`}>Escribir a {EMAIL}</a>
+          <p class="aviso-nota">Confirma que esta es la dirección de correo correcta antes de publicar.</p>
+        </div>
+        <div class="bloque">
+          <h3>Comprar</h3>
+          <p class="m">Los kits y componentes se venden en la tienda, en su propio dominio.</p>
+          <a class="btn btn-ghost" href={SHOP} target="_blank" rel="noopener noreferrer">Ir a shop.hestiat.com</a>
+        </div>
+      </div>
+    </div>
+  </article>
+</Base>

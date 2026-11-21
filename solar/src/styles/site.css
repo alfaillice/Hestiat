@@ -140,3 +140,32 @@ footer { background: var(--navy); color: var(--on-dark-soft); }
   .fila2, .res-grid, .pasos { grid-template-columns: minmax(0, 1fr); }
   .tienda { padding: 26px; }
 }
+
+/* Páginas internas: contenido y utilidades */
+.dos-col { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.9fr); gap: 26px; align-items: start; }
+.articulo { max-width: 70ch; }
+.articulo h1 { font-size: clamp(30px, 4vw, 44px); }
+.articulo h2 { font-size: 22px; margin-top: 30px; margin-bottom: 8px; }
+.articulo p { color: var(--ink); margin-top: 10px; }
+.articulo .entradilla { color: var(--muted); font-size: 19px; margin-top: 14px; }
+.articulo .btn { margin-top: 24px; }
+.bloque, .lateral { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.lateral h3, .bloque h3 { font-size: 17px; margin-bottom: 10px; }
+.m { color: var(--muted); font-size: 15px; }
+.lateral-tot { font-size: 14px; color: var(--muted); margin-top: 10px; }
+.aviso-nota { margin-top: 14px; padding: 12px 14px; background: var(--sun-tint); border: 1px solid var(--line); border-left: 3px solid var(--sun-strong); border-radius: var(--radius-s); font-size: 13.5px; color: var(--ink); }
+.tabla { width: 100%; border-collapse: collapse; font-size: 14px; }
+.tabla th { text-align: left; font-weight: 700; color: var(--muted); padding: 8px 6px; border-bottom: 1px solid var(--line-strong); }
+.tabla td { padding: 8px 6px; border-bottom: 1px solid var(--line); color: var(--ink); }
+.lista-check { list-style: none; display: grid; gap: 8px; }
+.lista-check li { position: relative; padding-left: 26px; color: var(--ink); font-size: 15px; }
+.lista-check li::before { content: ""; position: absolute; left: 0; top: 7px; width: 14px; height: 8px; border-left: 2px solid var(--eco); border-bottom: 2px solid var(--eco); transform: rotate(-45deg); }
+
+@media (max-width: 820px) { .dos-col { grid-template-columns: minmax(0, 1fr); } }
+
+@media print {
+  .cab, footer, #imprimir { display: none !important; }
+  .sec { padding: 0; }
+  .esquema, .bloque { break-inside: avoid; border-color: var(--line-strong); }
+  a[href]::after { content: ""; }
+}

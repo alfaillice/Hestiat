@@ -1,0 +1,24 @@
+---
+import Base from "../../layouts/Base.astro";
+const guias = [
+  { href: "/guias/amortizacion", t: "¿Cuándo se paga sola la instalación?", d: "Cómo calcular la amortización con tus números reales, sin promesas infladas de ahorro." },
+  { href: "/guias/autoconsumo-con-sin-bateria", t: "Autoconsumo con o sin batería", d: "Cuándo compensa la batería y cuándo es mejor verter los excedentes a la red." },
+  { href: "/baterias", t: "Baterías: LFP frente al resto", d: "Ciclos, profundidad de descarga y cuánta capacidad necesitas de verdad." },
+  { href: "/permisos", t: "Permisos y legalización", d: "Qué trámite aplica según tu caso: autoconsumo, obra o uso móvil." },
+];
+---
+<Base title="Guías de autoconsumo solar" description="Guías claras de autoconsumo solar y baterías: amortización, baterías, permisos y cómo dimensionar sin inventar ahorros.">
+  <section class="sec">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Guías</h2>
+        <p>Lo que de verdad cambia una instalación, explicado sin humo. Datos verificables y, donde algo depende de tu caso, se dice.</p>
+      </div>
+      <div class="grid2">
+        {guias.map((g) => (
+          <a class="card" href={g.href}><h3>{g.t}</h3><p>{g.d}</p><span class="go">Leer</span></a>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>

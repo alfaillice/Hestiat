@@ -1,0 +1,44 @@
+{
+  "12v": {
+    "titulo": "Sistema 12V",
+    "uso": "Camper, furgoneta y pequeñas instalaciones portátiles",
+    "intro": "El estándar de la mayoría de campers y furgonetas: sencillo, barato y compatible con casi todo el equipamiento de 12V. Su límite son las pérdidas por el cable cuando sube la potencia o la distancia.",
+    "componentes": [
+      "Panel o paneles solares (hasta ~400 Wp en techo)",
+      "Regulador MPPT (mejor que PWM a partir de un panel grande)",
+      "Batería de litio LFP 12V",
+      "Inversor 12V a 230V para los consumos de corriente alterna",
+      "Fusibles en cada tramo y un interruptor general",
+      "Cable de sección generosa: a 12V la corriente es alta"
+    ],
+    "cuando": "Elígelo si tu consumo diario es bajo y los aparatos son de 12V. Si vas a meter inducción, aire o mucha potencia, mira a 24V o 48V."
+  },
+  "24v": {
+    "titulo": "Sistema 24V",
+    "uso": "Casetas, consumos medios y distancias algo mayores",
+    "intro": "Un punto intermedio: a 24V la corriente baja a la mitad que a 12V para la misma potencia, así que se pierde menos por el cable y los componentes sufren menos.",
+    "componentes": [
+      "Varios paneles en serie para alcanzar la tensión de trabajo",
+      "Regulador MPPT dimensionado para 24V",
+      "Batería LFP 24V",
+      "Inversor 24V a 230V",
+      "Protecciones de continua y de alterna",
+      "Cableado más fino que a 12V para la misma potencia"
+    ],
+    "cuando": "Buena opción para una caseta de jardín o un taller con bomba de riego y herramientas, donde el cable recorre algo de distancia."
+  },
+  "48v": {
+    "titulo": "Sistema 48V",
+    "uso": "Hogar, autoconsumo e híbrido con batería y respaldo",
+    "intro": "La tensión de las instalaciones de vivienda. A 48V el sistema es más eficiente, admite más potencia y crece mejor; es lo que usan los inversores híbridos con batería y respaldo ante cortes.",
+    "componentes": [
+      "String de paneles en serie hacia el inversor híbrido",
+      "Inversor híbrido con MPPT integrado",
+      "Batería LFP de 48V (ampliable en módulos)",
+      "Cuadro de protecciones con magnetotérmico y diferencial",
+      "Conexión a red para verter excedentes y tomar respaldo",
+      "Puesta a tierra y protección contra sobretensiones"
+    ],
+    "cuando": "Es el sistema para reducir la factura de una vivienda, con o sin batería, y tener respaldo si se va la luz."
+  }
+}

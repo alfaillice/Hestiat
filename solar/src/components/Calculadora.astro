@@ -1,6 +1,17 @@
 ---
 import { PROVINCIAS } from "../lib/solar";
-const { compact = false } = Astro.props;
+interface Props {
+  consumoInicial?: number;
+  objetivoInicial?: "ahorro" | "autoconsumo" | "respaldo" | "aislada";
+  tituloInicial?: string;
+}
+const { consumoInicial, objetivoInicial = "ahorro", tituloInicial } = Astro.props;
+const objetivos = [
+  { v: "ahorro", t: "Ahorro" },
+  { v: "autoconsumo", t: "Con batería" },
+  { v: "respaldo", t: "Respaldo" },
+  { v: "aislada", t: "Aislada" },
+];
 ---
 <form class="calc" id="calc" novalidate>
   <h2>Calculadora de dimensionamiento</h2>
@@ -9,18 +20,17 @@ const { compact = false } = Astro.props;
   <div class="campo">
     <label id="obj-lbl">¿Para qué lo quieres?</label>
     <div class="segment" role="group" aria-labelledby="obj-lbl">
-      <button type="button" data-obj="ahorro" aria-pressed="true">Ahorro</button>
-      <button type="button" data-obj="autoconsumo" aria-pressed="false">Con batería</button>
-      <button type="button" data-obj="respaldo" aria-pressed="false">Respaldo</button>
-      <button type="button" data-obj="aislada" aria-pressed="false">Aislada</button>
+      {objetivos.map((o) => (
+        <button type="button" data-obj={o.v} aria-pressed={String(o.v === objetivoInicial)}>{o.t}</button>
+      ))}
     </div>
-    <input type="hidden" name="objetivo" id="objetivo" value="ahorro" />
+    <input type="hidden" name="objetivo" id="objetivo" value={objetivoInicial} />
   </div>
 
   <div class="fila2">
     <div class="campo">
       <label for="consumo">Consumo anual</label>
-      <input id="consumo" name="consumo" type="number" inputmode="numeric" min="0" step="100" placeholder="p. ej. 3500" />
+      <input id="consumo" name="consumo" type="number" inputmode="numeric" min="0" step="100" placeholder="p. ej. 3500" value={consumoInicial ?? ""} />
       <span class="hint">kWh al año (lo pone tu factura). Si no lo sabes, deja la factura.</span>
     </div>
     <div class="campo">

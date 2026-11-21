@@ -1,118 +1,232 @@
-{
-  "_nota": "Catálogo de kits. Los valores null no se muestran en el sitio: un dato que no existe no se publica. precio_eur, checkout_url e imagen deben venir de la tienda real. capacidad_wh = voltaje nominal × Ah (LiFePO4 12,8 V por celda de 4 celdas; 25,6 V y 51,2 V en 24 V y 48 V).",
-  "kits": [
-    {
-      "id": "kit-portatil-1000",
-      "nombre": "Kit portátil 1000",
-      "slug": "kit-portatil-1000",
-      "voltaje": null,
-      "capacidad_wh": 1024,
-      "potencia_solar_w": 200,
-      "potencia_inversor_w": null,
-      "precio_eur": null,
-      "checkout_url": null,
-      "imagen": null,
-      "uso_ideal": "Consumos puntuales fuera de casa: luz, móvil, portátil y pequeños aparatos.",
-      "componentes": [
-        { "nombre": "Estación LiFePO4", "cantidad": 1, "especificacion": "1024 Wh" },
-        { "nombre": "Panel solar plegable", "cantidad": 1, "especificacion": "200 W" }
-      ]
-    },
-    {
-      "id": "kit-camper-100",
-      "nombre": "Kit camper 100",
-      "slug": "kit-camper-100",
-      "voltaje": 12,
-      "capacidad_wh": 1280,
-      "potencia_solar_w": 200,
-      "potencia_inversor_w": null,
-      "precio_eur": null,
-      "checkout_url": null,
-      "imagen": null,
-      "uso_ideal": "Furgoneta o camper de fin de semana con nevera de compresor y carga de móviles.",
-      "componentes": [
-        { "nombre": "Panel solar", "cantidad": 1, "especificacion": "200 W" },
-        { "nombre": "Regulador MPPT", "cantidad": 1, "especificacion": "20 A" },
-        { "nombre": "Batería LiFePO4 12 V", "cantidad": 1, "especificacion": "100 Ah" },
-        { "nombre": "Cableado y fusible", "cantidad": 1, "especificacion": null }
-      ]
-    },
-    {
-      "id": "kit-camper-200-pro",
-      "nombre": "Kit camper 200 Pro",
-      "slug": "kit-camper-200-pro",
-      "voltaje": 12,
-      "capacidad_wh": 2560,
-      "potencia_solar_w": 400,
-      "potencia_inversor_w": 1500,
-      "precio_eur": null,
-      "checkout_url": null,
-      "imagen": null,
-      "uso_ideal": "Camper con uso diario prolongado y equipos de 230 V como cafetera o portátil.",
-      "componentes": [
-        { "nombre": "Panel solar", "cantidad": 2, "especificacion": "200 W" },
-        { "nombre": "Regulador MPPT", "cantidad": 1, "especificacion": "30 A" },
-        { "nombre": "Batería LiFePO4 12 V", "cantidad": 1, "especificacion": "200 Ah" },
-        { "nombre": "Inversor de onda pura", "cantidad": 1, "especificacion": "1500 W" },
-        { "nombre": "Protecciones", "cantidad": 1, "especificacion": null }
-      ]
-    },
-    {
-      "id": "kit-jardin-24v",
-      "nombre": "Kit jardín 24 V",
-      "slug": "kit-jardin-24v",
-      "voltaje": 24,
-      "capacidad_wh": 2560,
-      "potencia_solar_w": 900,
-      "potencia_inversor_w": 2000,
-      "precio_eur": null,
-      "checkout_url": null,
-      "imagen": null,
-      "uso_ideal": "Jardín o caseta con riego, herramientas eléctricas y iluminación.",
-      "componentes": [
-        { "nombre": "Panel solar", "cantidad": 1, "especificacion": "900 W" },
-        { "nombre": "Regulador MPPT", "cantidad": 1, "especificacion": "40 A" },
-        { "nombre": "Batería LiFePO4 12 V en 24 V", "cantidad": 2, "especificacion": "100 Ah" },
-        { "nombre": "Inversor 24 V", "cantidad": 1, "especificacion": "2000 W" }
-      ]
-    },
-    {
-      "id": "kit-respaldo-48v",
-      "nombre": "Kit respaldo 48 V",
-      "slug": "kit-respaldo-48v",
-      "voltaje": 48,
-      "capacidad_wh": 5120,
-      "potencia_solar_w": null,
-      "potencia_inversor_w": 3000,
-      "precio_eur": null,
-      "checkout_url": null,
-      "imagen": null,
-      "uso_ideal": "Respaldo doméstico con red o autoconsumo: cargas de la vivienda ante un corte.",
-      "componentes": [
-        { "nombre": "Inversor híbrido 48 V", "cantidad": 1, "especificacion": "3000 W" },
-        { "nombre": "Batería rack LiFePO4 48 V", "cantidad": 1, "especificacion": "100 Ah · 5,12 kWh" },
-        { "nombre": "Protecciones", "cantidad": 1, "especificacion": null }
-      ]
-    },
-    {
-      "id": "kit-protecciones-pro",
-      "nombre": "Kit protecciones Pro",
-      "slug": "kit-protecciones-pro",
-      "voltaje": null,
-      "capacidad_wh": null,
-      "potencia_solar_w": null,
-      "potencia_inversor_w": null,
-      "precio_eur": null,
-      "checkout_url": null,
-      "imagen": null,
-      "uso_ideal": "Complemento para cualquier instalación: cableado, conexión y protección.",
-      "componentes": [
-        { "nombre": "Cable solar", "cantidad": 1, "especificacion": "6 mm²" },
-        { "nombre": "Conectores MC4", "cantidad": 1, "especificacion": null },
-        { "nombre": "Desconectador", "cantidad": 1, "especificacion": null },
-        { "nombre": "Embarrado", "cantidad": 1, "especificacion": "150 A" },
-        { "nombre": "Fusibles Mega", "cantidad": 1, "especificacion": null }
-      ]
-    }
-  ]
-}
+[
+  {
+    "id": "kit-portatil-1000",
+    "nombre": "Kit Escapada Plug & Play (Sin instalación)",
+    "slug": "kit-escapada-plug-and-play-1000wh",
+    "voltaje": "12V / 230V",
+    "capacidad_wh": 1024,
+    "potencia_solar_w": 200,
+    "potencia_inversor_w": 1200,
+    "precio_eur": null,
+    "checkout_url": null,
+    "imagen": null,
+    "uso_ideal": "Camping ligero, furgonetas sin homologar y respaldo portátil para nevera 12V, portátiles e iluminación.",
+    "componentes": [
+      {
+        "cantidad": 1,
+        "nombre": "Estación de energía portátil LiFePO4 1024Wh",
+        "especificacion": "Inversor de onda pura 1200W integrado, salida 12V regulada y carga rápida AC/Solar"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Panel solar plegable monocristalino 200W",
+        "especificacion": "Eficiencia >22%, soporte ajustable integrado y salida MC4"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Cable adaptador solar MC4 a XT60",
+        "especificacion": "Longitud 3 metros, sección 4mm²"
+      }
+    ]
+  },
+  {
+    "id": "kit-camper-100",
+    "nombre": "Kit Camper Fin de Semana 12V (100Ah)",
+    "slug": "kit-camper-fin-de-semana-12v-100ah",
+    "voltaje": "12V",
+    "capacidad_wh": 1280,
+    "potencia_solar_w": 200,
+    "potencia_inversor_w": null,
+    "precio_eur": null,
+    "checkout_url": null,
+    "imagen": null,
+    "uso_ideal": "Furgonetas camper y autocaravanas con consumos diarios de 400 Wh a 800 Wh (nevera compresor 12V, bomba de agua y luces LED).",
+    "componentes": [
+      {
+        "cantidad": 1,
+        "nombre": "Panel solar monocristalino rígido 200W 12V",
+        "especificacion": "Células PERC de alta eficiencia, marco de aluminio anodizado"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Regulador de carga solar MPPT 20A",
+        "especificacion": "Detección automática 12V/24V, perfil de carga configurable para LiFePO4"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Batería LiFePO4 12.8V 100Ah",
+        "especificacion": "1280 Wh nominales, BMS integrado de 100A, >4000 ciclos al 80% DoD"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Pasamuros estanco doble ABS",
+        "especificacion": "Protección IP68 para entrada de cables en techo"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Rollo cable solar 6mm² (10 metros)",
+        "especificacion": "5m rojo + 5m negro con conectores MC4 crimpados"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Portafusibles Mega + Fusible 40A",
+        "especificacion": "Protección principal entre regulador y batería"
+      }
+    ]
+  },
+  {
+    "id": "kit-camper-200-pro",
+    "nombre": "Kit Camper Full-Time y Starlink 12V (200Ah)",
+    "slug": "kit-camper-full-time-starlink-12v-200ah",
+    "voltaje": "12V",
+    "capacidad_wh": 2560,
+    "potencia_solar_w": 400,
+    "potencia_inversor_w": 1500,
+    "precio_eur": null,
+    "checkout_url": null,
+    "imagen": null,
+    "uso_ideal": "Teletrabajo en ruta con antena Starlink, uso todo el año y electrodomésticos a 230V (cafetera, portátiles, nevera).",
+    "componentes": [
+      {
+        "cantidad": 2,
+        "nombre": "Panel solar monocristalino rígido 200W 12V",
+        "especificacion": "400W totales, conexión en paralelo o serie según sombreado"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Regulador de carga solar MPPT 30A",
+        "especificacion": "100V/30A con conectividad Bluetooth y curva LiFePO4"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Batería LiFePO4 12.8V 200Ah",
+        "especificacion": "2560 Wh nominales, BMS integrado de 150A-200A"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Inversor de onda sinusoidal pura 12V a 230V 1500W",
+        "especificacion": "Pico de arranque 3000W, toma Schuko y puerto remoto"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Desconectador rotativo de batería 275A",
+        "especificacion": "Corte general de seguridad en polo positivo"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Kit embarrado y protecciones ANL",
+        "especificacion": "Busbar 150A positivo/negativo + portafusibles ANL 150A para inversor"
+      }
+    ]
+  },
+  {
+    "id": "kit-jardin-24v",
+    "nombre": "Kit Caseta de Jardín y Riego Aislado 24V",
+    "slug": "kit-caseta-jardin-riego-aislado-24v",
+    "voltaje": "24V",
+    "capacidad_wh": 2560,
+    "potencia_solar_w": 900,
+    "potencia_inversor_w": 2000,
+    "precio_eur": null,
+    "checkout_url": null,
+    "imagen": null,
+    "uso_ideal": "Casetas de campo, depuradoras de piscina pequeñas, bombas de riego de hasta 1 CV y herramientas eléctricas sin acometida.",
+    "componentes": [
+      {
+        "cantidad": 2,
+        "nombre": "Panel solar monocristalino 450W 24V",
+        "especificacion": "900W totales, tecnología Half-Cell"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Regulador de carga solar MPPT 40A 12V/24V",
+        "especificacion": "Soporta hasta 1040W en sistemas de 24V"
+      },
+      {
+        "cantidad": 2,
+        "nombre": "Batería LiFePO4 12.8V 100Ah (conexión en serie 24V)",
+        "especificacion": "Banco de 25.6V 100Ah (2560 Wh útiles)"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Inversor de onda sinusoidal pura 24V a 230V 2000W",
+        "especificacion": "Pico de arranque 4000W para motores inductivos y bombas"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Cuadro de protecciones DC",
+        "especificacion": "Interruptor magnetotérmico DC doble para campo fotovoltaico y fusible de batería"
+      }
+    ]
+  },
+  {
+    "id": "kit-respaldo-48v",
+    "nombre": "Kit Respaldo Hogar Anti-Apagones 48V",
+    "slug": "kit-respaldo-hogar-anti-apagones-48v",
+    "voltaje": "48V",
+    "capacidad_wh": 5120,
+    "potencia_solar_w": null,
+    "potencia_inversor_w": 3000,
+    "precio_eur": null,
+    "checkout_url": null,
+    "imagen": null,
+    "uso_ideal": "Viviendas que necesitan respaldo automático de 24 a 36 horas para frigorífico, congelador, router, caldera, iluminación y persianas.",
+    "componentes": [
+      {
+        "cantidad": 1,
+        "nombre": "Inversor cargador híbrido 48V 3000W",
+        "especificacion": "Conmutación SAI <10ms, cargador AC integrado y regulador MPPT listo para ampliar con paneles"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Batería LiFePO4 formato Rack/Pared 51.2V 100Ah",
+        "especificacion": "5.12 kWh, comunicación CAN/RS485 con inversor y >6000 ciclos"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Cuadro de protecciones AC/DC y cableado de potencia",
+        "especificacion": "Cables de batería 25mm², seccionador 125A y diferencial superinmunizado"
+      }
+    ]
+  },
+  {
+    "id": "kit-protecciones-pro",
+    "nombre": "Pack Seguridad, Cableado y Protecciones",
+    "slug": "pack-seguridad-cableado-protecciones",
+    "voltaje": "12V / 24V / 48V",
+    "capacidad_wh": null,
+    "potencia_solar_w": null,
+    "potencia_inversor_w": null,
+    "precio_eur": null,
+    "checkout_url": null,
+    "imagen": null,
+    "uso_ideal": "Instalaciones nuevas o ampliaciones que requieren evitar caídas de tensión y proteger el banco de baterías frente a cortocircuitos.",
+    "componentes": [
+      {
+        "cantidad": 1,
+        "nombre": "Cable solar fotovoltaico 6mm² (5m rojo + 5m negro)",
+        "especificacion": "Aislamiento XLPE resistente a rayos UV según norma EN 50618"
+      },
+      {
+        "cantidad": 4,
+        "nombre": "Pares de conectores MC4 macho/hembra",
+        "especificacion": "Grado de estanqueidad IP67, contacto de cobre estañado"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Desconectador rotativo de batería",
+        "especificacion": "Corte mecánico positivo hasta 48V DC"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Portafusibles Mega + 2 fusibles de repuesto",
+        "especificacion": "Base aislada de alta temperatura"
+      },
+      {
+        "cantidad": 1,
+        "nombre": "Juego de embarrados (Busbar) 150A",
+        "especificacion": "Barra positiva roja y negativa negra con tapa protectora"
+      }
+    ]
+  }
+]

@@ -1,5 +1,6 @@
 ---
 import kits from '../data/kits.json';
+import tienda from '../data/tienda.json';
 
 interface Componente {
   cantidad: number;
@@ -32,6 +33,9 @@ const allKits = kits as Kit[];
 const kitInicial = allKits.find((k) => k.id === kitId) || allKits[0];
 const kitProtecciones = allKits.find((k) => k.id === 'kit-protecciones-pro');
 const mostrarPackExtra = mostrarCrossSell && kitProtecciones && kitInicial.id !== 'kit-protecciones-pro';
+const tiendaData = tienda as any;
+const enlacesTienda = (kitId: string, nombre: string): any[] =>
+  ((tiendaData.kits[kitId] || {})[nombre] || []).map((id: string) => tiendaData.productos[id]).filter(Boolean);
 ---
 
 <aside class="recomendador-wrapper" data-recomendador-root>
@@ -70,6 +74,9 @@ const mostrarPackExtra = mostrarCrossSell && kitProtecciones && kitInicial.id !=
           <li>
             <strong>{comp.cantidad}x {comp.nombre}</strong>
             <span> — {comp.especificacion}</span>
+            {enlacesTienda(kitInicial.id, comp.nombre).map((p: any) => (
+              <a class="kit-tienda" href={p.url} rel="noopener">Ver en la tienda: {p.titulo}</a>
+            ))}
           </li>
         ))}
       </ul>
@@ -123,12 +130,20 @@ const mostrarPackExtra = mostrarCrossSell && kitProtecciones && kitInicial.id !=
   )}
 
   <script type="application/json" id="hestiat-kits-catalog" set:html={JSON.stringify(allKits)} />
+  <script type="application/json" id="hestiat-tienda" set:html={JSON.stringify({ kits: tiendaData.kits, productos: tiendaData.productos })} />
 </aside>
 
 <script>
   const catalogEl = document.getElementById('hestiat-kits-catalog');
   if (catalogEl) {
     const kitsData = JSON.parse(catalogEl.textContent || '[]');
+    const tiendaEl = document.getElementById('hestiat-tienda');
+    const tiendaData = tiendaEl ? JSON.parse(tiendaEl.textContent || '{}') : { kits: {}, productos: {} };
+    const enlacesHtml = (kitId, nombre) => ((tiendaData.kits[kitId] || {})[nombre] || [])
+      .map((id) => tiendaData.productos[id])
+      .filter(Boolean)
+      .map((p) => `<a class="kit-tienda" href="${p.url}" rel="noopener">Ver en la tienda: ${p.titulo}</a>`)
+      .join('');
 
     window.addEventListener('actualizar-kit', (event) => {
       const customEvent = event as CustomEvent<{ kitId: string }>;
@@ -175,7 +190,7 @@ const mostrarPackExtra = mostrarCrossSell && kitProtecciones && kitInicial.id !=
         listaEl.innerHTML = kit.componentes
           .map(
             (c: any) =>
-              `<li><strong>${c.cantidad}x ${c.nombre}</strong><span> — ${c.especificacion}</span></li>`
+              `<li><strong>${c.cantidad}x ${c.nombre}</strong><span> — ${c.especificacion}</span>${enlacesHtml(kit.id, c.nombre)}</li>`
           )
           .join('');
       }
@@ -352,4 +367,5 @@ const mostrarPackExtra = mostrarCrossSell && kitProtecciones && kitInicial.id !=
     background: var(--paper);
     border-color: var(--ink);
   }
+  .kit-componentes .kit-tienda { display: block; margin-top: 4px; font-size: 0.88rem; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--sun); text-decoration-thickness: 2px; text-underline-offset: 4px; }
 </style>

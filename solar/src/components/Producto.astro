@@ -1,0 +1,32 @@
+---
+// Ficha de un artículo real de shop.hestiat.com: foto del artículo y enlace directo a la tienda.
+// Si el artículo no tiene foto a tamaño suficiente, se muestra solo el nombre y el enlace.
+import tienda from "../data/tienda.json";
+
+interface Props { id: string; compacto?: boolean; }
+const { id, compacto = false } = Astro.props;
+const p = (tienda as any).productos[id];
+---
+{p && (
+  <article class={`producto${compacto ? " producto-compacto" : ""}`}>
+    {p.imagen && (
+      <img class="producto-img" src={p.imagen} alt={p.titulo} width="800" height="800" loading="lazy" />
+    )}
+    <div class="producto-body">
+      <h3>{p.titulo}</h3>
+      <a class="btn btn-sun" href={p.url} rel="noopener">Ver en la tienda</a>
+    </div>
+  </article>
+)}
+
+<style>
+  .producto { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); overflow: clip; display: flex; flex-direction: column; }
+  .producto-img { width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: contain; background: var(--paper); border-bottom: 1px solid var(--line); padding: 12px; }
+  .producto-body { padding: 18px 20px 20px; display: flex; flex-direction: column; gap: 12px; flex: 1; }
+  .producto h3 { font-size: 17px; }
+  .producto .btn { align-self: flex-start; margin-top: auto; }
+  .producto-compacto { flex-direction: row; align-items: center; }
+  .producto-compacto .producto-img { width: 140px; min-width: 140px; aspect-ratio: 1 / 1; border-bottom: 0; border-right: 1px solid var(--line); }
+  .producto-compacto .producto-body { padding: 16px 18px; }
+  @media (max-width: 480px) { .producto-compacto { flex-direction: column; align-items: stretch; } .producto-compacto .producto-img { width: 100%; min-width: 0; border-right: 0; border-bottom: 1px solid var(--line); } }
+</style>

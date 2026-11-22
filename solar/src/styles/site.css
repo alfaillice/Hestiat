@@ -223,3 +223,7 @@ footer { background: var(--navy); color: var(--on-dark-soft); }
 .guia-img { width: 200px; height: 133px; object-fit: cover; border-radius: var(--radius-s); border: 1px solid var(--line); background: var(--surface-2); }
 .card-img { width: calc(100% + 52px); max-width: none; height: auto; margin: -26px -26px 22px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-2); }
 @media (max-width: 680px) { .guia-img { width: 120px; height: 80px; } }
+
+/* Ficha de producto de la tienda dentro de guías y páginas de instalación */
+.producto-guia { margin: 36px 0 8px; }
+.comp-tienda { display: block; margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--sun); text-decoration-thickness: 2px; text-underline-offset: 4px; }

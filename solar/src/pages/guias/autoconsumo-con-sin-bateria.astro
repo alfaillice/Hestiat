@@ -1,5 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Producto from "../../components/Producto.astro";
 ---
 <Base title="Autoconsumo con o sin batería" description="Cuándo compensa la batería en una instalación de autoconsumo y cuándo es mejor verter los excedentes a la red.">
   <article class="sec">
@@ -19,6 +20,7 @@ import Base from "../../layouts/Base.astro";
 
       <p class="aviso-nota">No hay una respuesta única: depende de tu horario de consumo y del precio al que te compensen los excedentes. Calcula los dos escenarios antes de decidir.</p>
       <a class="btn btn-sun" href="/calculadora">Comparar con y sin batería</a>
+      <div class="producto-guia"><Producto id="inversor-hibrido-48v" compacto /></div>
     </div>
   </article>
 </Base>

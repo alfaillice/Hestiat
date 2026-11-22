@@ -1,11 +1,209 @@
 {
-  "panel": [
-    {
+  "_nota": "Productos reales de shop.hestiat.com. Solo se enlazan coincidencias verificadas por título y descripción. Sin precios: el precio se consulta en la propia tienda.",
+  "productos": {
+    "panel-18v": {
       "titulo": "Panel Solar Monocristalino 18V para Camping",
-      "precio": "144,32 €",
       "url": "https://shop.hestiat.com/products/panel-solar-monocristalino-18v-para-camping",
-      "imagen": "/img/tienda/panel-18v-camping.jpg",
-      "sistemas": ["12v", "24v"]
+      "imagen": "/img/tienda/panel-18v-camping.jpg"
+    },
+    "panel-pv": {
+      "titulo": "Panel Solar Monocristalino PV para Sistema Solar",
+      "url": "https://shop.hestiat.com/products/panel-solar-monocristalino-pv-para-sistema-solar",
+      "imagen": "/img/tienda/panel-pv.jpg"
+    },
+    "regulador-12-24": {
+      "titulo": "Controlador de Carga Solar MPPT 12V 24V",
+      "url": "https://shop.hestiat.com/products/controlador-de-carga-solar-mppt-12v-24v",
+      "imagen": "/img/tienda/regulador-12-24.jpg"
+    },
+    "bateria-100ah-12v": {
+      "titulo": "Batería LiFePO4 de Ciclo Profundo 12,8V 100Ah 1280Wh",
+      "url": "https://shop.hestiat.com/products/bateria-lifepo4-de-ciclo-profundo-12-8v-100ah-1280wh",
+      "imagen": null
+    },
+    "inversor-12-24-220": {
+      "titulo": "Inversor de Onda Sinusoidal Pura 12V 24V a 220V 50Hz",
+      "url": "https://shop.hestiat.com/products/inversor-onda-sinusoidal-pura-12v-24v-a-220v-50hz",
+      "imagen": "/img/tienda/inversor-12-24-220.jpg"
+    },
+    "inversor-hibrido-48v": {
+      "titulo": "Inversor Solar Híbrido de Onda Sinusoidal Pura 12V 24V 48V",
+      "url": "https://shop.hestiat.com/products/inversor-solar-hibrido-de-onda-sinusoidal-pura-12v-24v-48v",
+      "imagen": "/img/tienda/inversor-hibrido-48v.jpg"
+    },
+    "estacion-1024wh": {
+      "titulo": "Estación de Energía Portátil LiFePO4 1200W 1024Wh",
+      "url": "https://shop.hestiat.com/products/estacion-de-energia-portatil-lifepo4-1200w-1024wh-onda-senoidal-pura",
+      "imagen": "/img/tienda/estacion-1024wh.jpg"
+    },
+    "cable-fv": {
+      "titulo": "Cable Solar Fotovoltaico para Paneles Solares y Conexión FV",
+      "url": "https://shop.hestiat.com/products/cable-solar-fotovoltaico-para-paneles-solares-y-conexion-fv",
+      "imagen": null
+    },
+    "cable-xt60": {
+      "titulo": "Cable Solar Fotovoltaico 12AWG XT60 Anti-Spark con Conector PV",
+      "url": "https://shop.hestiat.com/products/cable-solar-fotovoltaico-12awg-xt60-anti-spark-con-conector-pv",
+      "imagen": "/img/tienda/cable-xt60.jpg"
+    },
+    "desconectador-275a": {
+      "titulo": "Interruptor Desconectador de Batería 12-48V 275A Giratorio",
+      "url": "https://shop.hestiat.com/products/interruptor-desconectador-de-bateria-12-48v-275a-giratorio",
+      "imagen": "/img/tienda/desconectador-275a.jpg"
+    },
+    "portafusibles-mega": {
+      "titulo": "Portafusibles MEGA para Coche de Alta Corriente",
+      "url": "https://shop.hestiat.com/products/portafusibles-mega-para-coche-de-alta-corriente",
+      "imagen": "/img/tienda/portafusibles-mega.jpg"
+    },
+    "busbar-150a": {
+      "titulo": "Bloque Distribuidor de Corriente BusBar 150A 48V",
+      "url": "https://shop.hestiat.com/products/bloque-distribuidor-de-corriente-busbar-150a-48v",
+      "imagen": null
+    },
+    "interruptor-dc": {
+      "titulo": "Interruptor Automático DC 12V 24V 48V 120V para Solar y Baterías",
+      "url": "https://shop.hestiat.com/products/interruptor-automatico-dc-12v-24v-48v-120v-para-solar-y-baterias",
+      "imagen": "/img/tienda/interruptor-dc.jpg"
+    },
+    "pasacables": {
+      "titulo": "Pasacables Solar Doble Impermeable IP68 con Cables 10AWG de 3 m",
+      "url": "https://shop.hestiat.com/products/pasacables-solar-doble-impermeable-ip68-con-cables-10awg-de-3-m-para-rv-y-barco",
+      "imagen": "/img/tienda/pasacables.jpg"
+    },
+    "anl": {
+      "titulo": "Portafusibles ANL Atornillable con Fusible para Coche",
+      "url": "https://shop.hestiat.com/products/portafusibles-anl-atornillable-con-fusible-para-coche",
+      "imagen": null
     }
-  ]
+  },
+  "sistemas": {
+    "12v": {
+      "panel": [
+        "panel-18v",
+        "panel-pv"
+      ],
+      "mppt": [
+        "regulador-12-24"
+      ],
+      "bateria": [
+        "bateria-100ah-12v"
+      ],
+      "inversor": [
+        "inversor-12-24-220"
+      ],
+      "proteccion": [
+        "portafusibles-mega",
+        "desconectador-275a"
+      ],
+      "cable": [
+        "cable-fv"
+      ]
+    },
+    "24v": {
+      "panel": [
+        "panel-pv"
+      ],
+      "mppt": [
+        "regulador-12-24"
+      ],
+      "bateria": [
+        "bateria-100ah-12v"
+      ],
+      "inversor": [
+        "inversor-12-24-220"
+      ],
+      "proteccion": [
+        "interruptor-dc",
+        "desconectador-275a"
+      ],
+      "cable": [
+        "cable-fv"
+      ]
+    },
+    "48v": {
+      "panel": [
+        "panel-pv"
+      ],
+      "inversor": [
+        "inversor-hibrido-48v"
+      ],
+      "proteccion": [
+        "busbar-150a",
+        "interruptor-dc"
+      ],
+      "cable": [
+        "cable-fv"
+      ]
+    }
+  },
+  "kits": {
+    "kit-portatil-1000": {
+      "Estación de energía portátil LiFePO4 1024Wh": [
+        "estacion-1024wh"
+      ],
+      "Cable adaptador solar MC4 a XT60": [
+        "cable-xt60"
+      ]
+    },
+    "kit-camper-100": {
+      "Regulador de carga solar MPPT 20A": [
+        "regulador-12-24"
+      ],
+      "Batería LiFePO4 12.8V 100Ah": [
+        "bateria-100ah-12v"
+      ],
+      "Rollo cable solar 6mm² (10 metros)": [
+        "cable-fv"
+      ],
+      "Portafusibles Mega + Fusible 40A": [
+        "portafusibles-mega"
+      ],
+      "Pasamuros estanco doble ABS": [
+        "pasacables"
+      ]
+    },
+    "kit-camper-200-pro": {
+      "Regulador de carga solar MPPT 30A": [
+        "regulador-12-24"
+      ],
+      "Desconectador rotativo de batería 275A": [
+        "desconectador-275a"
+      ],
+      "Kit embarrado y protecciones ANL": [
+        "busbar-150a",
+        "anl"
+      ]
+    },
+    "kit-jardin-24v": {
+      "Regulador de carga solar MPPT 40A 12V/24V": [
+        "regulador-12-24"
+      ],
+      "Batería LiFePO4 12.8V 100Ah (conexión en serie 24V)": [
+        "bateria-100ah-12v"
+      ],
+      "Cuadro de protecciones DC": [
+        "interruptor-dc"
+      ]
+    },
+    "kit-respaldo-48v": {
+      "Inversor cargador híbrido 48V 3000W": [
+        "inversor-hibrido-48v"
+      ]
+    },
+    "kit-protecciones-pro": {
+      "Cable solar fotovoltaico 6mm² (5m rojo + 5m negro)": [
+        "cable-fv"
+      ],
+      "Desconectador rotativo de batería": [
+        "desconectador-275a"
+      ],
+      "Portafusibles Mega + 2 fusibles de repuesto": [
+        "portafusibles-mega"
+      ],
+      "Juego de embarrados (Busbar) 150A": [
+        "busbar-150a"
+      ]
+    }
+  }
 }

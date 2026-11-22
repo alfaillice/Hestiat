@@ -2,6 +2,7 @@
 import Base from "../../layouts/Base.astro";
 import Esquema from "../../components/Esquema.astro";
 import Ilustra from "../../components/Ilustra.astro";
+import Producto from "../../components/Producto.astro";
 import sistemas from "../../data/sistemas.json";
 import tienda from "../../data/tienda.json";
 
@@ -11,16 +12,23 @@ export function getStaticPaths() {
 
 const { sistema } = Astro.params;
 const s = (sistemas as Record<string, any>)[sistema as string];
-// Fotos reales generadas (Gemini). Los tipos sin foto usan la ilustración vectorial.
-const fotos: Record<string, string> = {
+const t = tienda as any;
+const mapaSistema: Record<string, string[]> = t.sistemas[sistema as string] || {};
+
+// Foto de cada componente: primero la del artículo real de la tienda; si no hay, la ilustración generada.
+const fotosIA: Record<string, string> = {
   bateria: "/img/bateria-lfp.png",
   mppt: "/img/regulador-mppt.png",
 };
-// Solo productos que la tienda vende de verdad, con su foto y enlace; se filtran por sistema.
-const materiales = (Object.values(tienda) as any[][])
-  .flat()
-  .filter((m: any) => m.sistemas.includes(sistema))
-  .filter((m: any, i: number, lista: any[]) => lista.findIndex((x) => x.url === m.url) === i);
+const fotoComponente = (tipo: string): string | undefined => {
+  const ids = mapaSistema[tipo] || [];
+  const con = ids.map((id) => t.productos[id]).find((p: any) => p && p.imagen);
+  return con ? con.imagen : fotosIA[tipo];
+};
+const enlacesComponente = (tipo: string) => (mapaSistema[tipo] || []).map((id) => t.productos[id]).filter(Boolean);
+
+// Material del sistema, sin repetir artículos
+const idsMaterial = [...new Set(Object.values(mapaSistema).flat())];
 ---
 <Base title={`${s.titulo} · esquema de instalación`} description={`Esquema e instalación de un sistema solar ${s.titulo}: componentes, protecciones y cuándo elegirlo.`}>
   <section class="sec">
@@ -36,28 +44,24 @@ const materiales = (Object.values(tienda) as any[][])
       <ul class="comp-grid">
         {s.componentes.map((c: { tipo: string; texto: string }) => (
           <li class="comp">
-            <Ilustra tipo={c.tipo} foto={fotos[c.tipo]} />
+            <Ilustra tipo={c.tipo} foto={fotoComponente(c.tipo)} />
             <p>{c.texto}</p>
+            {enlacesComponente(c.tipo).slice(0, 1).map((p: any) => (
+              <a class="comp-tienda" href={p.url} rel="noopener">Ver en la tienda: {p.titulo}</a>
+            ))}
           </li>
         ))}
       </ul>
 
-      {materiales.length > 0 && (
+      {idsMaterial.length > 0 && (
         <>
           <h2 class="titulo-bloque">Material en la tienda</h2>
           <ul class="material-grid">
-            {materiales.map((m: any) => (
-              <li class="material">
-                <img src={m.imagen} alt={m.titulo} width="800" height="800" loading="lazy" />
-                <div class="material-body">
-                  <h3>{m.titulo}</h3>
-                  <p class="precio">desde {m.precio}</p>
-                  <a class="btn btn-sun" href={m.url} target="_blank" rel="noopener noreferrer">Ver en la tienda</a>
-                </div>
-              </li>
+            {idsMaterial.map((id) => (
+              <li><Producto id={id} /></li>
             ))}
           </ul>
-          <p class="material-nota">Solo aparecen los productos que vendemos. Para el resto de componentes, confirma el modelo con tu instalador.</p>
+          <p class="material-nota">Solo aparecen los artículos que vendemos. Para el resto de componentes, confirma el modelo con tu instalador.</p>
         </>
       )}
 
@@ -79,3 +83,8 @@ const materiales = (Object.values(tienda) as any[][])
     document.getElementById("imprimir")?.addEventListener("click", () => window.print());
   </script>
 </Base>
+
+<style>
+  .comp-tienda { margin-top: 10px; font-size: 14px; font-weight: 600; color: var(--ink); text-decoration: underline; text-decoration-color: var(--sun); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+  .comp-tienda { display: block; }
+</style>

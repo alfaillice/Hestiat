@@ -1,5 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Producto from "../../components/Producto.astro";
 ---
 <Base title="¿Cuándo se paga sola la instalación solar?" description="Cómo calcular la amortización de una instalación solar con tus números reales: inversión, ahorro anual y años de retorno.">
   <article class="sec">
@@ -19,6 +20,7 @@ import Base from "../../layouts/Base.astro";
 
       <p class="aviso-nota">Esta guía explica el método, no promete un ahorro. Haz la cuenta con tus datos en la calculadora y confírmala con un presupuesto real.</p>
       <a class="btn btn-sun" href="/calculadora">Calcular mi caso</a>
+      <div class="producto-guia"><Producto id="panel-pv" compacto /></div>
     </div>
   </article>
 </Base>

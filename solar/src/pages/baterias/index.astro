@@ -1,5 +1,6 @@
 ---
 import Base from "../../layouts/Base.astro";
+import Producto from "../../components/Producto.astro";
 ---
 <Base title="Baterías para solar: LFP frente al resto" description="Cómo elegir la batería de tu instalación solar: química LFP, ciclos, profundidad de descarga y cuánta capacidad necesitas de verdad.">
   <article class="sec">
@@ -19,6 +20,7 @@ import Base from "../../layouts/Base.astro";
 
       <p class="aviso-nota">La capacidad y el número de módulos dependen de tu consumo nocturno y de si tienes red detrás. Calcula tu caso y contrástalo con un instalador.</p>
       <a class="btn btn-sun" href="/calculadora">Dimensionar con batería</a>
+      <div class="producto-guia"><Producto id="bateria-100ah-12v" compacto /></div>
     </div>
   </article>
 </Base>
